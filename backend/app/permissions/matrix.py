@@ -300,7 +300,7 @@ for _code, _perms in ROLE_PERMISSIONS.items():
 # (mirrors CREATOR_ROLE_KEYS in src/Common/Announcement/announcementData.js; Super Admin and the Managing
 # Director already hold every permission).
 _ANNOUNCEMENT_SENDERS = {
-    "admin", "principal", "gatekeepermanager", "itsupportmanager", "housekeepingmanager", "hr",
+    "admin", "principal", "director", "gatekeepermanager", "itsupportmanager", "housekeepingmanager", "hr",
 }
 for _code, _perms in ROLE_PERMISSIONS.items():
     if "announcements.read" not in _perms:
@@ -310,7 +310,7 @@ for _code, _perms in ROLE_PERMISSIONS.items():
 
 # Academic calendar: every role can read it; the school office roles that plan the year can change it
 # (Super Admin and the Managing Director already hold every permission).
-_CALENDAR_EDITORS = {"admin", "principal"}
+_CALENDAR_EDITORS = {"admin", "principal", "director"}
 for _code, _perms in ROLE_PERMISSIONS.items():
     if "calendar.read" not in _perms:
         _perms.append("calendar.read")

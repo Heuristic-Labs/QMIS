@@ -19,7 +19,7 @@ from app.services.audit import write_audit
 from app.services.errors import fail
 from app.services.students import PORTAL_ROLES, ensure_staff_can_view_student, section_key, staff_student_filter
 
-ALLOWED_STATUS = {"Present", "Absent", "Late", "Holiday", "Half Day"}
+ALLOWED_STATUS = {"Present", "Absent", "Late", "Holiday", "Half Day", "Leave", "OD"}
 ALLOWED_SESSIONS = {"FN", "AN"}  # FN = morning→noon, AN = afternoon→evening
 PRESENTISH = {"Present", "Late"}
 
@@ -60,6 +60,10 @@ def derive_day_status(fn_status: str | None, an_status: str | None) -> str:
         return "Holiday"
     if fn == "Half Day" or an == "Half Day":
         return "Half Day"
+    if fn == "Leave" or an == "Leave":
+        return "Leave"
+    if fn == "OD" or an == "OD":
+        return "OD"
     return fn or an
 
 
@@ -533,7 +537,7 @@ def student_month_map(
             StudentAttendance.attendance_date < end,
         )
     ).all()
-    code = {"Present": "P", "Absent": "A", "Late": "P", "Holiday": "H", "Half Day": "HD"}
+    code = {"Present": "P", "Absent": "A", "Late": "P", "Holiday": "H", "Half Day": "HD", "Leave": "L", "OD": "OD"}
     out: dict[str, str] = {}
     by_date: dict[str, dict[str, StudentAttendance]] = {}
     for row in rows:

@@ -55,8 +55,8 @@ export default function MyItTicketsModal({ onClose }) {
             <div className='relative z-10 w-full max-w-3xl bg-white rounded-2xl shadow-lg p-5 max-h-[85vh] overflow-y-auto'>
                 <div className='flex items-start justify-between gap-4'>
                     <div>
-                        <h3 className='text-lg font-semibold text-black'>My IT Tickets</h3>
-                        <p className='text-xs text-[#667085] mt-1'>Tickets you raised, with the IT team&apos;s latest status and remarks.</p>
+                        <h3 className='text-lg font-semibold text-black'>My Requests</h3>
+                        <p className='text-xs text-[#667085] mt-1'>Requests you raised, with the latest status and remarks from the support team.</p>
                     </div>
                     <button type='button' onClick={onClose} className='border border-[#515DEF] text-[#515DEF] px-3 py-1.5 rounded-md text-sm cursor-pointer'>Close</button>
                 </div>
@@ -66,7 +66,7 @@ export default function MyItTicketsModal({ onClose }) {
                 ) : state.error ? (
                     <p className='text-sm text-[#B42318] mt-6'>{state.error}</p>
                 ) : state.rows.length === 0 ? (
-                    <p className='text-sm text-[#667085] mt-6'>You have not raised any IT tickets yet. Use Raise IT Ticket in this menu.</p>
+                    <p className='text-sm text-[#667085] mt-6'>You have not raised any requests yet. Use Raise Request in this menu.</p>
                 ) : (
                     <div className='relative overflow-x-auto mt-4'>
                         <table className='w-full text-sm text-left'>

@@ -5,10 +5,11 @@ import MaterialGatePassForm, {
     createInitialFormData,
     validateMaterialGatePassForm,
 } from './Components/MaterialGatePassForm'
-import { addMaterialGatePass } from './materialGatePassData'
+import { addMaterialGatePass, getMaterialGatePassPaths } from './materialGatePassData'
 
 const AddMaterialGatePass = () => {
     const navigate = useNavigate()
+    const paths = getMaterialGatePassPaths()
     const [formData, setFormData] = useState(createInitialFormData)
     const [errors, setErrors] = useState({})
     const [saving, setSaving] = useState(false)
@@ -22,7 +23,7 @@ const AddMaterialGatePass = () => {
         try {
             await addMaterialGatePass(formData)
             toast.success('Material gate pass saved successfully.')
-            navigate('/front-office/material-gate-pass-list')
+            navigate(paths.list)
         } catch (error) {
             toast.error(error?.message || 'Could not save material gate pass.')
         } finally {
@@ -42,7 +43,7 @@ const AddMaterialGatePass = () => {
             <div className='flex sm:justify-end justify-center gap-x-4 mt-6'>
                 <button
                     type='button'
-                    onClick={() => navigate('/front-office/material-gate-pass-list')}
+                    onClick={() => navigate(paths.list)}
                     className='bg-white text-[#515DEF] text-sm px-12 py-2 rounded-md border border-[#515DEF] hover:bg-[#515DEF] hover:text-white transition-all duration-200 cursor-pointer md:w-auto w-full'
                 >
                     Discard Changes

@@ -45,11 +45,17 @@ import Notifications from '../Pages/Director/Notifications/Notifications'
 import MyAttendance from '../Pages/Director/Attendance/MyAttendance'
 import MarkEntryApproval from '../Pages/Director/MarkEntryApproval/MarkEntryApproval'
 import MarkEntryReview from '../Pages/Director/MarkEntryApproval/MarkEntryReview'
+import MyProfilePage from '../Common/MyProfile/MyProfilePage'
+import Inventory from '../Pages/StationeryStoreManager/Inventory/Inventory'
+import RequestsApprovalsList from '../Pages/StationeryStoreManager/RequestsApprovals/RequestsApprovalsList'
 
 const DirectorRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/director/dashboard" element={<Dashboard />} />
+            <Route path="/director/my-profile" element={<MyProfilePage roleLabel="Director" attendancePath="/director/attendance/my-attendance" leavePath="/director/leave-request/my-requests" />} />
+            <Route path="/director/stores/inventory" element={<Inventory readOnly />} />
+            <Route path="/director/stores/requests" element={<RequestsApprovalsList readOnly />} />
             <Route path="/director/attendance" element={<Navigate to="/director/attendance/my-attendance" replace />} />
             <Route path="/director/attendance/my-attendance" element={<MyAttendance />} />
             <Route path="/director/broadcast" element={<AnnouncementList />} />

@@ -93,6 +93,15 @@ def send_receipt_route(
     return actions.send_receipt(db, user, body)
 
 
+@router.post("/actions/send-payment-link")
+def send_payment_link_route(
+    body: dict = Body(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_any("finance.collect", "finance.write")),
+) -> dict:
+    return actions.send_payment_link(db, user, body)
+
+
 @router.post("/actions/gateway-intent")
 def gateway_intent_route(
     body: dict = Body(...),

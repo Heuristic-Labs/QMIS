@@ -22,6 +22,19 @@ const Field = ({ label, value }) => (
 const selectClass =
     'text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full max-w-xs bg-white'
 
+const formatHistoryAt = (value) => {
+    if (!value) return '—'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return String(value)
+    return date.toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+}
+
 const ViewSupportTicket = () => {
     const navigate = useNavigate()
     const { id } = useParams()
@@ -136,11 +149,20 @@ const ViewSupportTicket = () => {
                             </div>
                         )}
                         {ticket.history?.length > 0 && (
-                            <ul className='mt-4 text-sm text-[#667085] space-y-1'>
-                                {ticket.history.map((event, index) => (
-                                    <li key={`${event.event}-${index}`}>{event.event}: {event.note}</li>
-                                ))}
-                            </ul>
+                            <div className='mt-6'>
+                                <h3 className='text-base font-semibold text-[#1E1E1E] mb-3'>Ticket History</h3>
+                                <ul className='space-y-3 border border-[#EEF0F6] rounded-xl p-4'>
+                                    {ticket.history.map((event, index) => (
+                                        <li key={`${event.event}-${event.at || index}`} className='text-sm border-b border-[#F2F4F7] last:border-0 pb-3 last:pb-0'>
+                                            <div className='flex flex-wrap items-center justify-between gap-2'>
+                                                <span className='font-medium text-[#1E1E1E]'>{event.event}</span>
+                                                <span className='text-xs text-[#667085]'>{formatHistoryAt(event.at)}</span>
+                                            </div>
+                                            <p className='text-[#667085] mt-1'>{event.note || '—'}</p>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                         {saved && (
                             <div className='flex items-center gap-2 mt-4 text-sm text-[#4CAF50] font-medium'>

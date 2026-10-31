@@ -75,6 +75,7 @@ import {
     pullFinanceState,
     pullMyFeesState,
     pushFinanceState,
+    sendPaymentLinkApi,
     sendReceiptApi,
     settleChequeApi,
 } from '../../../services/financeApi'
@@ -903,6 +904,24 @@ export const FinanceProvider = ({ children }) => {
             }
         }
         return { success: false, message: 'Finance API is required to queue receipt delivery.' }
+    }, [applyFinanceData])
+
+    const sendPaymentLink = useCallback(async ({ linkId, reference, channel }) => {
+        if (isApiFinanceEnabled() && apiHydratedRef.current) {
+            try {
+                const result = await sendPaymentLinkApi({ linkId, reference, channel })
+                if (result?.state?.data) applyFinanceData(result.state.data)
+                return {
+                    success: true,
+                    reference: result.link?.reference,
+                    delivery: result.delivery,
+                    queuedStub: result.delivery?.status === 'queued_stub',
+                }
+            } catch (error) {
+                return { success: false, message: error.message || 'Send failed.' }
+            }
+        }
+        return { success: false, message: 'Finance API is required to send payment links.' }
     }, [applyFinanceData])
 
     const buildSnapshotPayload = useCallback((overrides = {}) => ({
@@ -2191,6 +2210,7 @@ export const FinanceProvider = ({ children }) => {
         dismissStaleGatewayLinks,
         reprintReceipt,
         sendReceipt,
+        sendPaymentLink,
         decideApproval,
         applyHrConcessions,
         rechargeWallet,
@@ -2296,6 +2316,7 @@ export const FinanceProvider = ({ children }) => {
         reprintReceipt,
         reverseTransaction,
         sendReceipt,
+        sendPaymentLink,
         settleCheque,
         students,
         setStudents,

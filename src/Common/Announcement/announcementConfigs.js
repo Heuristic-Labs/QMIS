@@ -19,6 +19,7 @@ export const ANNOUNCEMENT_ROUTE_CONFIG = {
     },
     director: {
         list: '/director/broadcast',
+        add: '/director/broadcast/add-broadcast',
         view: '/director/broadcast/view-broadcast',
         sentByDefault: 'Director',
     },

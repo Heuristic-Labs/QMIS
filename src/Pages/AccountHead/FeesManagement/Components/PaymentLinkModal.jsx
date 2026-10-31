@@ -3,6 +3,32 @@ import { toast } from 'react-toastify'
 import { Copy, Link2, Mail, MessageCircle, X } from 'lucide-react'
 import { formatCurrency } from '../../financeDomain/financeHelpers'
 
+const deliveryToast = (channel, result) => {
+    const label = channel === 'whatsapp' ? 'WhatsApp' : 'Email'
+    const status = result?.delivery?.status
+    if (result?.success === false) {
+        toast.error(result.message || `${label} send failed.`)
+        return
+    }
+    if (status === 'MOCK_QUEUED') {
+        toast.info(`${label} MOCK_QUEUED to local outbox — not a real delivery.`)
+        return
+    }
+    if (status === 'NOT_CONFIGURED' || status === 'queued_stub') {
+        toast.info(result?.delivery?.message || `${label} is NOT_CONFIGURED until provider credentials are connected.`)
+        return
+    }
+    if ((status === 'sent' || status === 'SENT') && result?.delivery?.delivered) {
+        toast.success(`${label} accepted by provider.`)
+        return
+    }
+    if (status === 'FAILED' || status === 'failed') {
+        toast.error(result?.delivery?.message || `${label} provider rejected the message.`)
+        return
+    }
+    toast.info(result?.delivery?.message || `${label} status: ${status || 'unknown'}`)
+}
+
 const PaymentLinkModal = ({ isOpen, onClose, link, onSend }) => {
     const [sending, setSending] = useState(false)
     if (!isOpen || !link) return null
@@ -16,14 +42,22 @@ const PaymentLinkModal = ({ isOpen, onClose, link, onSend }) => {
         }
     }
 
-    const send = (channel) => {
+    const send = async (channel) => {
+        if (!onSend) {
+            toast.info(`${channel === 'whatsapp' ? 'WhatsApp' : 'Email'} send is not wired yet.`)
+            return
+        }
         setSending(true)
-        onSend?.(channel, link)
-        const label = channel === 'whatsapp' ? 'WhatsApp' : 'email'
-        toast.info(
-            `${label} for link ${link.reference} is NOT_CONFIGURED until school ${channel === 'whatsapp' ? 'WhatsApp API' : 'SMTP'} credentials are connected.`,
-        )
-        setSending(false)
+        try {
+            const result = await onSend({
+                linkId: link.id,
+                reference: link.reference,
+                channel,
+            })
+            deliveryToast(channel, result)
+        } finally {
+            setSending(false)
+        }
     }
 
     return (
@@ -46,10 +80,10 @@ const PaymentLinkModal = ({ isOpen, onClose, link, onSend }) => {
                         <button type='button' onClick={copyLink} className='inline-flex items-center gap-2 text-sm border border-[#515DEF] text-[#515DEF] px-3 py-2 rounded-md cursor-pointer'>
                             <Copy size={14} /> Copy Link
                         </button>
-                        <button type='button' disabled={sending} onClick={() => send('whatsapp')} className='inline-flex items-center gap-2 text-sm border border-[#515DEF] text-[#515DEF] px-3 py-2 rounded-md cursor-pointer'>
+                        <button type='button' disabled={sending} onClick={() => send('whatsapp')} className='inline-flex items-center gap-2 text-sm border border-[#515DEF] text-[#515DEF] px-3 py-2 rounded-md cursor-pointer disabled:opacity-60'>
                             <MessageCircle size={14} /> WhatsApp
                         </button>
-                        <button type='button' disabled={sending} onClick={() => send('email')} className='inline-flex items-center gap-2 text-sm border border-[#515DEF] text-[#515DEF] px-3 py-2 rounded-md cursor-pointer'>
+                        <button type='button' disabled={sending} onClick={() => send('email')} className='inline-flex items-center gap-2 text-sm border border-[#515DEF] text-[#515DEF] px-3 py-2 rounded-md cursor-pointer disabled:opacity-60'>
                             <Mail size={14} /> Email
                         </button>
                     </div>

@@ -9,6 +9,7 @@ import {
     STATUS_OPTIONS,
     deleteMaterialGatePass,
     formatDisplayTime,
+    getMaterialGatePassPaths,
     getMaterialGatePasses,
     hydrateMaterialGatePassesFromApi,
     statusBadgeColor,
@@ -23,6 +24,7 @@ const parseDate = (value) => {
 }
 
 const MaterialGatePassList = () => {
+    const paths = getMaterialGatePassPaths()
     const location = useLocation()
     const [records, setRecords] = useState(() => (frontOfficeApiOn() ? [] : getMaterialGatePasses()))
     const [loadError, setLoadError] = useState('')
@@ -188,7 +190,7 @@ const MaterialGatePassList = () => {
                     <h2 className='text-xl font-medium text-black'>Material Gate Pass List</h2>
                     <div className='flex gap-x-2'>
                         <NavLink
-                            to='/front-office/add-material-gate-pass'
+                            to={paths.add}
                             className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
                         >
                             <Plus size={16} />
@@ -262,8 +264,8 @@ const MaterialGatePassList = () => {
                                         <td className='px-2 py-4'>{record.createdBy}</td>
                                         <td className='px-2 py-4 text-center rounded-e-lg'>
                                             <Dropdown buttonContent={<EllipsisIcon size={16} className='text-black' />}>
-                                                <NavLink to={`/front-office/material-gate-pass/view/${record.id}`} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>View</NavLink>
-                                                <NavLink to={`/front-office/material-gate-pass/edit/${record.id}`} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>Edit</NavLink>
+                                                <NavLink to={paths.view(record.id)} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>View</NavLink>
+                                                <NavLink to={paths.edit(record.id)} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>Edit</NavLink>
                                                 <button
                                                     type='button'
                                                     onClick={() => {
@@ -274,7 +276,7 @@ const MaterialGatePassList = () => {
                                                 >
                                                     Delete
                                                 </button>
-                                                <NavLink to={`/front-office/material-gate-pass/view/${record.id}?print=1`} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>
+                                                <NavLink to={`${paths.view(record.id)}?print=1`} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>
                                                     <span className='inline-flex items-center gap-1'><Printer size={14} /> Print</span>
                                                 </NavLink>
                                             </Dropdown>

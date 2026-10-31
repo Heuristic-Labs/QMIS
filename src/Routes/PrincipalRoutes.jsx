@@ -46,6 +46,7 @@ import AnnouncementList from '../Pages/Principal/Announcement/AnnouncementList'
 import AddAnnouncement from '../Pages/Principal/Announcement/AddAnnouncement'
 import ViewAnnouncement from '../Pages/Principal/Announcement/ViewAnnouncement'
 import MyAttendance from '../Pages/Principal/Attendance/MyAttendance'
+import MyProfilePage from '../Common/MyProfile/MyProfilePage'
 import {
     PrincipalPendingPlacement,
     PrincipalPlaceStudent,
@@ -61,6 +62,7 @@ const PrincipalRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/principal/dashboard" element={<Dashboard />} />
+            <Route path="/principal/my-profile" element={<MyProfilePage roleLabel="Principal" attendancePath="/principal/attendance/my-attendance" leavePath="/principal/leave-request/my-requests" />} />
             <Route path="/principal/attendance" element={<Navigate to="/principal/attendance/my-attendance" replace />} />
             <Route path="/principal/attendance/my-attendance" element={<MyAttendance />} />
             {TaskManagementRoutes({ basePath: '/principal' })}

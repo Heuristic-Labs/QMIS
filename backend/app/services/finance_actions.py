@@ -643,40 +643,74 @@ def _apply_collection(data: dict, payload: dict, *, actor_email: str) -> tuple[d
 
 
 def _notify_fee_paid(db: Session, campus_id, student_id, receipt: dict) -> None:
-    """In-app confirmation to the student's parent once per receipt (no email / WhatsApp)."""
+    """In-app confirmation + best-effort WhatsApp receipt to the parent phone."""
     from uuid import UUID
 
-    from app.models import Notification, Student
+    from app.models import Admission, Guardian, Notification, Student
+    from app.services.integrations.notify import notify_event
 
     try:
         sid = UUID(str(student_id))
     except (TypeError, ValueError):
         return
     student = db.get(Student, sid)
-    if student is None or student.campus_id != campus_id or not student.parent_user_id:
+    if student is None or student.campus_id != campus_id:
         return
     receipt_no = str(receipt.get("receiptNo") or "")
-    already = db.scalar(
-        select(Notification.id).where(
-            Notification.user_id == student.parent_user_id,
-            Notification.entity_type == "fee_receipt",
-            Notification.entity_id == receipt_no,
-        )
-    )
-    if already is not None:
-        return
     heads = ", ".join(receipt.get("feeHeads") or []) or "School fees"
-    db.add(
-        Notification(
-            campus_id=campus_id,
-            user_id=student.parent_user_id,
-            title=f"Payment received — {_inr_label(receipt.get('amountPaid') or 0)}",
-            body=f"{student.full_name}: {heads}. Receipt {receipt_no} ({_display_date(receipt.get('paymentDate'))}).",
-            entity_type="fee_receipt",
-            entity_id=receipt_no,
+    amount_label = _inr_label(receipt.get("amountPaid") or 0)
+
+    if student.parent_user_id:
+        already = db.scalar(
+            select(Notification.id).where(
+                Notification.user_id == student.parent_user_id,
+                Notification.entity_type == "fee_receipt",
+                Notification.entity_id == receipt_no,
+            )
         )
+        if already is None:
+            db.add(
+                Notification(
+                    campus_id=campus_id,
+                    user_id=student.parent_user_id,
+                    title=f"Payment received — {amount_label}",
+                    body=f"{student.full_name}: {heads}. Receipt {receipt_no} ({_display_date(receipt.get('paymentDate'))}).",
+                    entity_type="fee_receipt",
+                    entity_id=receipt_no,
+                )
+            )
+            db.commit()
+
+    phone = ""
+    guardian = db.scalar(
+        select(Guardian).where(Guardian.student_id == student.id).order_by(Guardian.created_at.asc())
     )
-    db.commit()
+    if guardian and guardian.phone:
+        phone = str(guardian.phone).strip()
+    if not phone and student.admission_id:
+        admission = db.get(Admission, student.admission_id)
+        if admission is not None:
+            phone = str(admission.parent_mobile_number or admission.mobile_number or "").strip()
+    if not phone:
+        return
+    try:
+        from app.services.integrations import whatsapp_events as wa
+
+        text, params = wa.fee_receipt_message(
+            student_name=student.full_name or "",
+            receipt_no=receipt_no,
+            amount_label=amount_label,
+        )
+        notify_event(
+            event_key=f"fee-receipt-whatsapp:{receipt_no}:{phone}",
+            subject="Payment received",
+            body=text,
+            phone=phone,
+            event=wa.EVENT_FEE_RECEIPT,
+            template_params=params,
+        )
+    except Exception:
+        pass
 
 
 def collect_payment(db: Session, actor: User, payload: dict) -> dict:
@@ -827,14 +861,20 @@ def send_receipt(db: Session, actor: User, payload: dict) -> dict:
         )
         delivery = notify.send_email(to=to, subject=subject, body=text, html_body=html)
     else:
+        from app.services.integrations import whatsapp_events as wa
+
         to_phone = payload.get("to") or student.get("guardianPhone") or student.get("phone") or ""
-        text = tpl.fee_receipt_whatsapp(
-            school_name=school,
+        text, params = wa.fee_receipt_message(
+            student_name=student_name,
             receipt_no=str(receipt_no),
             amount_label=amount_label,
-            student_name=student_name,
         )
-        delivery = notify.send_whatsapp(to_phone=to_phone, text=text)
+        delivery = notify.send_whatsapp(
+            to_phone=to_phone,
+            text=text,
+            event=wa.EVENT_FEE_RECEIPT,
+            template_params=params,
+        )
 
     # Finance UI / older clients still key off legacyStatus for unconfigured WhatsApp.
     delivery = dict(delivery or {})
@@ -876,6 +916,95 @@ def _assert_gateway_student_access(db: Session, actor: User, student_id: str) ->
     allowed = fin._child_student_ids_for_actor(db, actor)
     if not student_id or str(student_id) not in allowed:
         fail(403, "forbidden", "You can only pay fees for your linked student.")
+
+
+def send_payment_link(db: Session, actor: User, payload: dict) -> dict:
+    """Send an existing payment link via WhatsApp or email to the parent/guardian."""
+    from app.core.config import settings
+    from app.services.integrations import templates as tpl
+
+    state = fin.get_state(db, actor)
+    data = dict(state["data"])
+    links = list(data.get("paymentLinks") or [])
+    students = list(data.get("students") or [])
+    audit = list(data.get("auditLog") or [])
+    link_id = str(payload.get("linkId") or payload.get("id") or "").strip()
+    reference = str(payload.get("reference") or "").strip()
+    channel = (payload.get("channel") or "whatsapp").lower()
+    if channel not in {"email", "whatsapp"}:
+        fail(400, "validation_error", "channel must be email or whatsapp.")
+    link = next(
+        (
+            row
+            for row in links
+            if str(row.get("id")) == link_id
+            or (reference and str(row.get("reference")) == reference)
+        ),
+        None,
+    )
+    if link is None:
+        fail(404, "not_found", "Payment link not found.")
+
+    student = next((s for s in students if str(s.get("id")) == str(link.get("studentId"))), None) or {}
+    student_name = str(student.get("name") or student.get("shortName") or "")
+    amount_label = _inr_label(link.get("amount") or 0)
+    school = settings.school_display_name
+    url = str(link.get("url") or "")
+    ref = str(link.get("reference") or reference)
+
+    if channel == "email":
+        to = payload.get("to") or student.get("guardianEmail") or student.get("email") or ""
+        subject = f"{school} — Fee payment link {ref}"
+        body = (
+            f"Dear Parent/Guardian,\n\n"
+            f"Please pay school fees for {student_name or 'your child'}.\n"
+            f"Amount: {amount_label}\n"
+            f"Reference: {ref}\n"
+            f"Pay here: {url}\n\n"
+            f"— {school}\n"
+        )
+        delivery = notify.send_email(to=to, subject=subject, body=body)
+    else:
+        from app.services.integrations import whatsapp_events as wa
+
+        to_phone = payload.get("to") or student.get("guardianPhone") or student.get("phone") or ""
+        text, params = wa.payment_link_message(
+            student_name=student_name,
+            amount_label=amount_label,
+            reference=ref,
+            url=url,
+        )
+        delivery = notify.send_whatsapp(
+            to_phone=to_phone,
+            text=text,
+            event=wa.EVENT_PAYMENT_LINK,
+            template_params=params,
+        )
+
+    delivery = dict(delivery or {})
+    status = delivery.get("status") or "NOT_CONFIGURED"
+    if channel == "whatsapp" and status == "NOT_CONFIGURED":
+        status = delivery.get("legacyStatus") or "queued_stub"
+        delivery["status"] = status
+    link[f"last{channel.title()}At"] = _now()
+    link[f"{channel}Status"] = status
+    audit.insert(
+        0,
+        {
+            "id": f"AUD-{uuid4().hex[:8]}",
+            "performedAt": _now(),
+            "performedBy": actor.email,
+            "action": f"PAYMENT_LINK_SEND_{status.upper()}",
+            "entity": "PaymentLink",
+            "entityId": link.get("id"),
+            "newValue": ref,
+            "reason": delivery.get("message") or status,
+        },
+    )
+    data["paymentLinks"] = links
+    data["auditLog"] = audit
+    saved = _save(db, actor, data)
+    return {"success": True, "link": link, "delivery": delivery, "state": saved}
 
 
 def create_gateway_intent(db: Session, actor: User, payload: dict) -> dict:

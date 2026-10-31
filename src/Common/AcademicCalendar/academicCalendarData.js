@@ -5,8 +5,8 @@ import {
     listCalendarApi,
 } from '../../services/calendarApi'
 
-/** Roles that hold calendar.write on the backend (admin, principal; superAdmin has all). */
-export const CALENDAR_WRITE_ROLE_KEYS = new Set(['admin', 'principal', 'superAdmin'])
+/** Roles that hold calendar.write on the backend (admin, principal, director; superAdmin has all). */
+export const CALENDAR_WRITE_ROLE_KEYS = new Set(['admin', 'principal', 'director', 'superAdmin'])
 
 export const canWriteCalendar = (roleKey) => CALENDAR_WRITE_ROLE_KEYS.has(roleKey)
 

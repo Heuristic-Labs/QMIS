@@ -2,7 +2,7 @@ import { getClasses, getSections } from '../../../Common/RBAC/academicsCatalogDa
 import { getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
 import { liveArray } from '../../../Common/RBAC/liveArray'
 
-export const ATTENDANCE_STATUSES = ['Present', 'Absent', 'Half Day']
+export const ATTENDANCE_STATUSES = ['Present', 'Absent', 'Half Day', 'Leave', 'OD']
 
 /** Morning (FN) = before noon; Afternoon (AN) = after noon. */
 export const ATTENDANCE_SESSIONS = [
@@ -14,6 +14,8 @@ export const statusBadgeColor = {
     Present: 'bg-[#4CAF5033] text-[#4CAF50]',
     Absent: 'bg-[#FF000033] text-[#FF0000]',
     'Half Day': 'bg-[#FF980033] text-[#FF9800]',
+    Leave: 'bg-[#2196F333] text-[#2196F3]',
+    OD: 'bg-[#9C27B033] text-[#9C27B0]',
     Late: 'bg-[#FF980033] text-[#FF9800]',
 }
 

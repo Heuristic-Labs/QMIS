@@ -16,6 +16,30 @@ def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _whatsapp_parent(
+    phone: str | None,
+    text: str,
+    *,
+    event_key: str,
+    event: str,
+    template_params: list[str] | None = None,
+) -> None:
+    """Best-effort AskEva/WhatsApp notify. Never raises into the admission flow."""
+    try:
+        from app.services.integrations.notify import notify_event
+
+        notify_event(
+            event_key=event_key,
+            subject="",
+            body=text,
+            phone=phone,
+            event=event,
+            template_params=template_params,
+        )
+    except Exception:
+        pass
+
+
 def _file_url(file_id: UUID | None) -> str | None:
     if file_id is None:
         return None
@@ -278,6 +302,23 @@ def create_enquiry(db: Session, actor: User, payload: EnquiryCreate) -> dict:
     )
     db.commit()
     db.refresh(row)
+    try:
+        from app.services.integrations import whatsapp_events as wa
+
+        text, params = wa.enquiry_message(
+            student_name=name,
+            class_name=class_name,
+            enquiry_code=row.enquiry_code or "",
+        )
+        _whatsapp_parent(
+            mobile,
+            text,
+            event_key=f"enquiry-created:{row.id}",
+            event=wa.EVENT_ENQUIRY,
+            template_params=params,
+        )
+    except Exception:
+        pass
     return enquiry_to_out(row)
 
 
@@ -517,6 +558,24 @@ def create_admission(db: Session, actor: User, payload: AdmissionCreate) -> dict
     )
     db.commit()
     db.refresh(row)
+    try:
+        from app.services.integrations import whatsapp_events as wa
+
+        notify_phone = (row.parent_mobile_number or row.mobile_number or mobile or "").strip()
+        text, params = wa.admission_message(
+            student_name=_full_name(row),
+            class_name=class_name,
+            admission_code=row.admission_code or "",
+        )
+        _whatsapp_parent(
+            notify_phone,
+            text,
+            event_key=f"admission-created:{row.id}",
+            event=wa.EVENT_ADMISSION,
+            template_params=params,
+        )
+    except Exception:
+        pass
     return admission_to_out(row)
 
 
@@ -767,6 +826,23 @@ def enroll_admission(db: Session, actor: User, admission_id: UUID, payload: Enro
     db.commit()
     db.refresh(row)
     db.refresh(student)
+    try:
+        from app.services.integrations import whatsapp_events as wa
+
+        text, params = wa.enrollment_message(
+            student_name=student.full_name,
+            class_name=student.class_name or row.class_name or "",
+            admission_code=row.admission_code or "",
+        )
+        _whatsapp_parent(
+            guardian_phone,
+            text,
+            event_key=f"student-enrolled:{student.id}",
+            event=wa.EVENT_ENROLLMENT,
+            template_params=params,
+        )
+    except Exception:
+        pass
     return {
         "admission": admission_to_out(row),
         "student_id": student.id,

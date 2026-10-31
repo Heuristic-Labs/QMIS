@@ -5,11 +5,12 @@ import MaterialGatePassForm, {
     recordToFormData,
     validateMaterialGatePassForm,
 } from './Components/MaterialGatePassForm'
-import { getMaterialGatePassById, updateMaterialGatePass } from './materialGatePassData'
+import { getMaterialGatePassById, getMaterialGatePassPaths, updateMaterialGatePass } from './materialGatePassData'
 
 const EditMaterialGatePass = () => {
     const { id } = useParams()
     const navigate = useNavigate()
+    const paths = getMaterialGatePassPaths()
     const existingRecord = getMaterialGatePassById(id)
     const [formData, setFormData] = useState(() => (existingRecord ? recordToFormData(existingRecord) : null))
     const [errors, setErrors] = useState({})
@@ -38,7 +39,7 @@ const EditMaterialGatePass = () => {
                 return
             }
             toast.success('Material gate pass updated successfully.')
-            navigate('/front-office/material-gate-pass-list')
+            navigate(paths.list)
         } catch (error) {
             toast.error(error?.message || 'Could not update material gate pass.')
         } finally {
@@ -58,7 +59,7 @@ const EditMaterialGatePass = () => {
             <div className='flex sm:justify-end justify-center gap-x-4 mt-6'>
                 <button
                     type='button'
-                    onClick={() => navigate('/front-office/material-gate-pass-list')}
+                    onClick={() => navigate(paths.list)}
                     className='bg-white text-[#515DEF] text-sm px-12 py-2 rounded-md border border-[#515DEF] hover:bg-[#515DEF] hover:text-white transition-all duration-200 cursor-pointer md:w-auto w-full'
                 >
                     Discard Changes

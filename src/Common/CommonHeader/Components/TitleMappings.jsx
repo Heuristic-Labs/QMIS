@@ -323,6 +323,8 @@ export const singleTitleMapping = {
     "/front-office/add-hostel-gate-pass": "Add Hostel Gate Pass",
     "/front-office/material-gate-pass-list": "Material Gate Pass List",
     "/front-office/add-material-gate-pass": "Add Material Gate Pass",
+    "/stationery-store-manager/material-gate-pass": "Material Gate Pass List",
+    "/stationery-store-manager/material-gate-pass/add": "Add Material Gate Pass",
     "/front-office/goods-received-pass-list": "Goods Received Pass List",
     "/front-office/add-goods-received-pass": "Add Goods Received Pass",
     "/front-office/escalation-management": "Escalation List",
@@ -750,6 +752,7 @@ export const singleTitleMapping = {
 
     // ── Principal Role ──────────────────────────────────────────────────────────
     "/principal/dashboard": "Dashboard",
+    "/principal/my-profile": "My Profile",
     "/principal/task-management/assign-tasks": "Assign Tasks List",
     "/principal/task-management/assign-tasks/add": "Assign Task",
     "/principal/task-management/my-tasks": "My Tasks",
@@ -798,6 +801,9 @@ export const singleTitleMapping = {
 
     // ── Director Role ─────────────────────────────────────────────────────────
     "/director/dashboard": "Dashboard",
+    "/director/my-profile": "My Profile",
+    "/director/stores/inventory": "Stores Inventory",
+    "/director/stores/requests": "Stores Requests",
     "/director/broadcast": "Announcement",
     "/director/broadcast/add-broadcast": "Add Announcement",
     "/director/task-management/assign-tasks": "Assign Tasks List",
@@ -815,7 +821,7 @@ export const singleTitleMapping = {
     "/director/student-transfer": "Student Transfer List",
     "/director/student-transfer/add": "Add Student Transfer",
     "/director/activities/cultural-list": "Cultural List",
-    "/director/activities/add-cultural": "Add Cultural Information",
+    "/director/activities/add-cultural": "Add Activity",
     "/director/activities/sports-list": "Sports List",
     "/director/activities/add-sports": "Add Sports Information",
     "/director/activities/chess-result": "Chess Result",

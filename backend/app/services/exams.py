@@ -879,12 +879,21 @@ def notify_parents_result_published(db: Session, batch_id: str | UUID) -> None:
             )
         parent = parents.get(student.parent_user_id)
         # Best-effort external channels; notify_event never raises and never retries duplicates.
+        from app.services.integrations import whatsapp_events as wa
+
+        wa_text, wa_params = wa.result_message(
+            student_name=student.full_name or "",
+            exam_name=exam.name or "",
+            subject=batch.subject or "",
+        )
         notify_event(
             event_key=f"result_published:{entity_id}",
             subject=title,
-            body=body,
+            body=wa_text or body,
             email=(parent.email if parent else None),
             phone=phones.get(student.id),
+            event=wa.EVENT_RESULT,
+            template_params=wa_params,
         )
 
 

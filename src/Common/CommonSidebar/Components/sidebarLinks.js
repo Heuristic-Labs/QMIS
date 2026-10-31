@@ -308,10 +308,9 @@ export const adminSidebarLinks = [
         to: "#0",
         icon: Trophy,
         subLinks: [
-            { icon: Palette, title: "Cultural", to: "/admin/activities/cultural-list" },
-            { icon: Dumbbell, title: "Sports", to: "/admin/activities/sports-list" },
-            { icon: Trophy, title: "Chess Result", to: "/admin/activities/chess-result" },
-            { icon: Award, title: "Competitions", to: "/admin/activities/competitions-list" },
+            { icon: Trophy, title: "Activities List", to: "/admin/activities/cultural-list" },
+            { icon: Palette, title: "Add Activity", to: "/admin/activities/add-cultural" },
+            { icon: Award, title: "Chess Result", to: "/admin/activities/chess-result" },
         ],
     },
     {
@@ -1106,6 +1105,12 @@ export const stationeryStoreManagerSidebarLinks = [
         icon: ArrowRightLeft,
     },
     {
+        id: 11,
+        title: "Material Gate Pass",
+        to: "/stationery-store-manager/material-gate-pass",
+        icon: ClipboardList,
+    },
+    {
         id: 4,
         title: "Requests & Approvals",
         to: "/stationery-store-manager/requests-approvals",
@@ -1243,8 +1248,7 @@ export const teacherSidebarLinks = [
         to: "#0",
         icon: CalendarCheck,
         subLinks: [
-            { icon: ClipboardList, title: "Class Attendance", to: "/teacher/attendance/class-attendance" },
-            { icon: HeartPulse, title: "Biometric Attendance", to: "/teacher/attendance/biometric" },
+            { icon: ClipboardList, title: "Student Attendance", to: "/teacher/attendance/class-attendance" },
         ],
     },
     {
@@ -1344,7 +1348,7 @@ export const coordinatorSidebarLinks = [
         to: "#0",
         icon: CalendarCheck,
         subLinks: [
-            { icon: ClipboardList, title: "Class Attendance", to: "/coordinator/attendance/class-attendance" },
+            { icon: ClipboardList, title: "Student Attendance", to: "/coordinator/attendance/class-attendance" },
         ],
     },
     {
@@ -1384,7 +1388,6 @@ export const coordinatorSidebarLinks = [
             { icon: BarChart3, title: "Result Summary", to: "/coordinator/student-evaluation/result-summary" },
             { icon: NotebookPen, title: "Lesson Plan Review", to: "/coordinator/lesson-plan-review" },
             { icon: BarChart3, title: "Performance Analytics", to: "/coordinator/student-evaluation/analytics" },
-            { icon: HeartPulse, title: "Biometric Attendance", to: "/coordinator/attendance/biometric" },
             { icon: Sparkles, title: "Home Fun", to: "/coordinator/student-deliverables/home-fun" },
             { icon: BookOpenCheck, title: "Study Materials", to: "/coordinator/student-deliverables/study-materials" },
             { icon: Star, title: "Star of the Month", to: "/coordinator/star-ratings/som-matrix" },
@@ -2135,6 +2138,18 @@ export const driverSidebarLinks = [
 
 export const directorSidebarLinks = [
     {
+        id: "director-dashboard",
+        title: "Dashboard",
+        to: "/director/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: "director-profile",
+        title: "My Profile",
+        to: "/director/my-profile",
+        icon: UserRound,
+    },
+    {
         id: 1,
         title: "Task Management",
         to: "#0",
@@ -2180,10 +2195,19 @@ export const directorSidebarLinks = [
         to: "#0",
         icon: Trophy,
         subLinks: [
-            { icon: Palette, title: "Cultural", to: "/director/activities/cultural-list" },
-            { icon: Dumbbell, title: "Sports", to: "/director/activities/sports-list" },
-            { icon: Trophy, title: "Chess Result", to: "/director/activities/chess-result" },
-            { icon: Award, title: "Competitions", to: "/director/activities/competitions-list" },
+            { icon: Trophy, title: "Activities List", to: "/director/activities/cultural-list" },
+            { icon: Palette, title: "Add Activity", to: "/director/activities/add-cultural" },
+            { icon: Award, title: "Chess Result", to: "/director/activities/chess-result" },
+        ],
+    },
+    {
+        id: "director-stores",
+        title: "Stores Overview",
+        to: "#0",
+        icon: Package,
+        subLinks: [
+            { icon: Package, title: "Inventory", to: "/director/stores/inventory" },
+            { icon: ShoppingCart, title: "Requests", to: "/director/stores/requests" },
         ],
     },
     {
@@ -2269,6 +2293,18 @@ export const directorSidebarLinks = [
 ];
 
 export const principalSidebarLinks = [
+    {
+        id: "principal-dashboard",
+        title: "Dashboard",
+        to: "/principal/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: "principal-profile",
+        title: "My Profile",
+        to: "/principal/my-profile",
+        icon: UserRound,
+    },
     {
         id: 1,
         title: "Task Management",

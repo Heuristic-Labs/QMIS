@@ -87,10 +87,23 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = True
     school_display_name: str = "Queen Mira International School"
 
-    # WhatsApp provider HTTP API. Empty URL + non-demo = NOT_CONFIGURED.
+    # WhatsApp provider HTTP API (AskEva: https://backend.askeva.io/v1/message/send-message).
+    # Empty URL + non-demo = NOT_CONFIGURED. Token alone is not enough without URL.
     whatsapp_api_url: str = ""
     whatsapp_api_token: str = ""
     whatsapp_from: str = ""
+    # Optional Meta-approved AskEva templates. Free-form text is tried first (open session);
+    # these names are used only when AskEva returns "Session is not opened!".
+    # whatsapp_template_name = default for enquiry/admission/generic only (never fees/results).
+    whatsapp_template_name: str = ""
+    whatsapp_template_language: str = "en"
+    whatsapp_template_enquiry: str = ""
+    whatsapp_template_admission: str = ""
+    whatsapp_template_enrollment: str = ""
+    whatsapp_template_fee_receipt: str = ""
+    whatsapp_template_fee_due: str = ""
+    whatsapp_template_payment_link: str = ""
+    whatsapp_template_result: str = ""
     # RFID / eSSL punch import — off until school confirms.
     rfid_import_enabled: bool = False
     # Lowest grade that gets its own student portal login; younger children (pre-primary and

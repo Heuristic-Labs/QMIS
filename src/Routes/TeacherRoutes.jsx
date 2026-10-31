@@ -63,7 +63,7 @@ const TeacherRoutes = () => {
             <Route path="/teacher/attendance" element={<Navigate to="/teacher/attendance/my-attendance" replace />} />
             <Route path="/teacher/attendance-history" element={<Navigate to="/teacher/attendance/my-attendance" replace />} />
             <Route path="/teacher/attendance/my-attendance" element={<MyAttendance />} />
-            <Route path="/teacher/attendance/class-attendance" element={<ClassAttendance />} />
+            <Route path="/teacher/attendance/class-attendance" element={<ClassAttendance canOverrideBiometric />} />
             <Route path="/teacher/class/class-routine" element={<ClassRoutine />} />
             <Route path="/teacher/class/extra-class" element={<ExtraClass />} />
             <Route path="/teacher/class/extra-class/add" element={<AddExtraClass />} />

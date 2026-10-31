@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar, ChevronLeft, ChevronRight, Download, Save } from 'lucide-react'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
+import { BiometricAttendancePage } from '../../../Common/demoDomain/DemoScreens'
 import { listAttendanceApi, listMyAttendanceClassesApi, upsertAttendanceApi } from '../../../services/attendanceApi'
 import { isApiAttendanceEnabled } from '../../../services/apiClient'
 import {
@@ -22,7 +24,9 @@ const toIsoDate = (value) => {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-const ClassAttendance = () => {
+const ClassAttendance = ({ canOverrideBiometric = false }) => {
+    const [searchParams, setSearchParams] = useSearchParams()
+    const activeTab = searchParams.get('tab') === 'biometric' ? 'biometric' : 'manual'
     const api = isApiAttendanceEnabled()
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [exportModal, setExportModal] = useState(false)
@@ -217,8 +221,36 @@ const ClassAttendance = () => {
 
     const sessionMeta = ATTENDANCE_SESSIONS.find((item) => item.id === sessionFilter) || ATTENDANCE_SESSIONS[0]
 
+    const setTab = (tab) => {
+        const next = new URLSearchParams(searchParams)
+        if (tab === 'manual') next.delete('tab')
+        else next.set('tab', tab)
+        setSearchParams(next, { replace: true })
+    }
+
     return (
-        <section>
+        <section className='space-y-4'>
+            <div className='bg-white rounded-2xl shadow-md p-2 inline-flex gap-1'>
+                <button
+                    type='button'
+                    onClick={() => setTab('manual')}
+                    className={`px-4 py-2 text-sm rounded-lg cursor-pointer ${activeTab === 'manual' ? 'bg-[#515DEF] text-white' : 'text-[#667085] hover:bg-[#F5F6FB]'}`}
+                >
+                    Manual Attendance
+                </button>
+                <button
+                    type='button'
+                    onClick={() => setTab('biometric')}
+                    className={`px-4 py-2 text-sm rounded-lg cursor-pointer ${activeTab === 'biometric' ? 'bg-[#515DEF] text-white' : 'text-[#667085] hover:bg-[#F5F6FB]'}`}
+                >
+                    Biometric (ESSL)
+                </button>
+            </div>
+
+            {activeTab === 'biometric' ? (
+                <BiometricAttendancePage canOverride={canOverrideBiometric} />
+            ) : (
+            <>
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <div className='flex justify-between md:items-center sm:items-stretch md:flex-row sm:flex-col flex-col gap-y-4'>
                     <button
@@ -501,6 +533,8 @@ const ClassAttendance = () => {
                 }))}
                 exportDescription={<>You are exporting {displayRows.length} record{displayRows.length === 1 ? '' : 's'}.</>}
             />
+            </>
+            )}
         </section>
     )
 }

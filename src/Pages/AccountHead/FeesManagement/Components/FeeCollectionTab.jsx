@@ -42,6 +42,7 @@ const FeeCollectionTab = () => {
         receipts,
         reprintReceipt,
         sendReceipt,
+        sendPaymentLink,
         bankAccounts,
         posTerminals,
         waiveFine,
@@ -377,8 +378,14 @@ const FeeCollectionTab = () => {
                 onClose={() => setHistoryOpen(false)}
                 receipts={studentReceipts}
                 onViewReceipt={(row) => { setReceipt(row); setHistoryOpen(false) }}
+                onSendWhatsApp={sendReceipt}
             />
-            <PaymentLinkModal isOpen={Boolean(link)} onClose={() => setLink(null)} link={link} />
+            <PaymentLinkModal
+                isOpen={Boolean(link)}
+                onClose={() => setLink(null)}
+                link={link}
+                onSend={sendPaymentLink}
+            />
             <ReceiptDetailsDrawer
                 isOpen={Boolean(receipt)}
                 onClose={() => setReceipt(null)}

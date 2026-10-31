@@ -7,7 +7,7 @@ import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import { getRequests, hydrateRequestsFromApi, REQUEST_TYPE_OPTIONS, statusBadgeColor, stageBadgeColor } from './requestsData'
 
-const RequestsApprovalsList = () => {
+const RequestsApprovalsList = ({ readOnly = false }) => {
     const [requests, setRequests] = useState(() => getRequests())
     useEffect(() => {
         hydrateRequestsFromApi().finally(() => setRequests(getRequests()))
@@ -68,10 +68,12 @@ const RequestsApprovalsList = () => {
                 <div className='flex justify-between items-center sm:flex-row flex-col gap-y-2 mb-4'>
                     <h2 className='text-xl font-medium text-black'>Requests & Approvals</h2>
                     <div className='flex gap-x-2'>
-                        <NavLink to="/stationery-store-manager/requests-approvals/add-request" className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'>
-                            <Plus size={16} />
-                            Add Request
-                        </NavLink>
+                        {!readOnly ? (
+                            <NavLink to="/stationery-store-manager/requests-approvals/add-request" className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'>
+                                <Plus size={16} />
+                                Add Request
+                            </NavLink>
+                        ) : null}
                         <button onClick={() => setExportModal(true)} className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'>
                             <Download size={16} />
                             Export

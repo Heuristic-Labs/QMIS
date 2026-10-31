@@ -17,6 +17,10 @@ import Requirements from '../Pages/StationeryStoreManager/Requirements/Requireme
 import StockIssue from '../Pages/StationeryStoreManager/StockIssue/StockIssue'
 import CriticalAlerts from '../Pages/StationeryStoreManager/CriticalAlerts/CriticalAlerts'
 import PurchaseWorkflow from '../Pages/StationeryStoreManager/PurchaseWorkflow/PurchaseWorkflow'
+import MaterialGatePassList from '../Pages/FrontOffice/MaterialGatePass/MaterialGatePassList'
+import AddMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/AddMaterialGatePass'
+import EditMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/EditMaterialGatePass'
+import ViewMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/ViewMaterialGatePass'
 
 const StationeryStoreManagerRoutes = () => {
     return (
@@ -28,6 +32,10 @@ const StationeryStoreManagerRoutes = () => {
             <Route path="/stationery-store-manager/issue-returns" element={<IssueReturnsList />} />
             <Route path="/stationery-store-manager/issue-returns/add" element={<AddIssueReturn />} />
             <Route path="/stationery-store-manager/issue-returns/view/:id" element={<ViewIssueReturn />} />
+            <Route path="/stationery-store-manager/material-gate-pass" element={<MaterialGatePassList />} />
+            <Route path="/stationery-store-manager/material-gate-pass/add" element={<AddMaterialGatePass />} />
+            <Route path="/stationery-store-manager/material-gate-pass/view/:id" element={<ViewMaterialGatePass />} />
+            <Route path="/stationery-store-manager/material-gate-pass/edit/:id" element={<EditMaterialGatePass />} />
             <Route path="/stationery-store-manager/requests-approvals" element={<RequestsApprovalsList />} />
             <Route path="/stationery-store-manager/requests-approvals/add-request" element={<AddRequest />} />
             <Route path="/stationery-store-manager/requests-approvals/view-request/:id" element={<ViewRequest />} />

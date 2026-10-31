@@ -21,9 +21,37 @@ const ROLE_LABEL = {
     [ROLES.IT_SUPPORT_MANAGER]: 'IT Support Manager',
     [ROLES.GATEKEEPER]: 'Gate Keeper',
     [ROLES.GATEKEEPER_MANAGER]: 'Gate Keeper Manager',
+    [ROLES.STATIONERY_STORE_MANAGER]: 'Stationery Store Manager',
+    [ROLES.CANTEEN_MANAGER]: 'Canteen Manager',
 }
 
-const CATEGORIES = ['Hardware', 'Software', 'Network', 'Printer', 'Other']
+const CATEGORIES = [
+    'Hardware',
+    'Software',
+    'Network',
+    'Printer',
+    'Housekeeping',
+    'Facilities / Maintenance',
+    'Stationery / Stores',
+    'Transport',
+    'Canteen',
+    'Other',
+]
+
+const DEPARTMENTS = [
+    'IT Support',
+    'Housekeeping',
+    'Facilities',
+    'Stationery Store',
+    'Transport',
+    'Canteen',
+    'Academics',
+    'Front Office',
+    'HR',
+    'Finance',
+    'General',
+]
+
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical']
 const inputClass = 'text-sm border border-[#D9D9D9] rounded-md px-2 py-2 w-full'
 
@@ -34,7 +62,7 @@ export default function RaiseItTicketModal({ open, onClose }) {
         subject: '',
         description: '',
         priority: 'Medium',
-        department: '',
+        department: 'IT Support',
         assetId: '',
         attachmentName: '',
     })
@@ -74,11 +102,19 @@ export default function RaiseItTicketModal({ open, onClose }) {
                 assetId: form.assetId,
                 attachmentName: form.attachmentName,
             })
-            toast.success(`Ticket ${ticket.ticketId} sent to IT Support.`)
-            setForm({ category: 'Hardware', subject: '', description: '', priority: 'Medium', department: '', assetId: '', attachmentName: '' })
+            toast.success(`Request ${ticket.ticketId} submitted.`)
+            setForm({
+                category: 'Hardware',
+                subject: '',
+                description: '',
+                priority: 'Medium',
+                department: 'IT Support',
+                assetId: '',
+                attachmentName: '',
+            })
             onClose()
         } catch (error) {
-            toast.error(error?.message || 'The ticket could not be sent. Please try again.')
+            toast.error(error?.message || 'The request could not be sent. Please try again.')
         } finally {
             setBusy(false)
         }
@@ -88,18 +124,27 @@ export default function RaiseItTicketModal({ open, onClose }) {
         <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
             <button type='button' className='absolute inset-0 bg-black/40' onClick={onClose} aria-label='Close' />
             <form onSubmit={submit} className='relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-lg p-5'>
-                <h3 className='text-lg font-semibold text-black'>Raise IT Ticket</h3>
+                <h3 className='text-lg font-semibold text-black'>Raise Request</h3>
                 <p className='text-xs text-[#667085] mt-1'>
                     {usesCampusApiForKey(IT_TICKETS_KEY)
-                        ? 'The ticket goes to the IT Support team. Track it under My IT Tickets.'
-                        : 'The same ticket appears immediately for the IT Support Manager in this browser.'}
+                        ? 'Send a general campus request (IT, Housekeeping, Stores, and more). Track it under My Requests.'
+                        : 'Pick the department and category. The request appears for the campus support team in this browser.'}
                 </p>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4'>
-                    <label className='text-sm flex flex-col gap-1'>Category
-                        <select value={form.category} onChange={set('category')} className={inputClass}>{CATEGORIES.map((item) => <option key={item}>{item}</option>)}</select>
+                    <label className='text-sm flex flex-col gap-1'>Department
+                        <select value={form.department} onChange={set('department')} className={inputClass}>
+                            {DEPARTMENTS.map((item) => <option key={item}>{item}</option>)}
+                        </select>
                     </label>
-                    <label className='text-sm flex flex-col gap-1'>Priority
-                        <select value={form.priority} onChange={set('priority')} className={inputClass}>{PRIORITIES.map((item) => <option key={item}>{item}</option>)}</select>
+                    <label className='text-sm flex flex-col gap-1'>Category
+                        <select value={form.category} onChange={set('category')} className={inputClass}>
+                            {CATEGORIES.map((item) => <option key={item}>{item}</option>)}
+                        </select>
+                    </label>
+                    <label className='text-sm flex flex-col gap-1 sm:col-span-2'>Priority
+                        <select value={form.priority} onChange={set('priority')} className={inputClass}>
+                            {PRIORITIES.map((item) => <option key={item}>{item}</option>)}
+                        </select>
                     </label>
                     <label className='text-sm flex flex-col gap-1 sm:col-span-2'>Subject
                         <input value={form.subject} onChange={set('subject')} className={inputClass} />
@@ -107,20 +152,17 @@ export default function RaiseItTicketModal({ open, onClose }) {
                     <label className='text-sm flex flex-col gap-1 sm:col-span-2'>Description
                         <textarea rows={3} value={form.description} onChange={set('description')} className={inputClass} />
                     </label>
-                    <label className='text-sm flex flex-col gap-1'>Department
-                        <input value={form.department} onChange={set('department')} className={inputClass} />
-                    </label>
                     <label className='text-sm flex flex-col gap-1'>Asset (optional)
                         <input value={form.assetId} onChange={set('assetId')} placeholder='AST-2026-0142' className={inputClass} />
                     </label>
-                    <label className='text-sm flex flex-col gap-1 sm:col-span-2'>Attachment name
+                    <label className='text-sm flex flex-col gap-1'>Attachment name
                         <input value={form.attachmentName} onChange={set('attachmentName')} placeholder='screenshot.png' className={inputClass} />
                     </label>
                 </div>
                 <div className='flex justify-end gap-3 mt-5'>
                     <button type='button' onClick={onClose} className='border border-[#515DEF] text-[#515DEF] px-4 py-2 rounded-md text-sm cursor-pointer'>Cancel</button>
                     <button type='submit' disabled={busy} className='bg-[#515DEF] text-white px-4 py-2 rounded-md text-sm cursor-pointer disabled:opacity-60'>
-                        {busy ? 'Sending…' : 'Submit Ticket'}
+                        {busy ? 'Sending…' : 'Submit Request'}
                     </button>
                 </div>
             </form>

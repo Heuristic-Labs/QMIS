@@ -56,6 +56,7 @@ export const collectPaymentApi = (body) => postAction('collect-payment', body)
 export const payMyFeesApi = (body) => postAction('pay-my-fees', body)
 export const settleChequeApi = (body) => postAction('settle-cheque', body)
 export const sendReceiptApi = (body) => postAction('send-receipt', body)
+export const sendPaymentLinkApi = (body) => postAction('send-payment-link', body)
 export const gatewayIntentApi = (body) => postAction('gateway-intent', body)
 /** Confirm Razorpay payment after Checkout success (signature verified on server). */
 export const gatewayConfirmApi = (body) => postAction('gateway-confirm', body)

@@ -10,6 +10,25 @@ import {
 const STORAGE_KEY = 'material-gate-pass-front-office'
 const MGP_COUNTER_KEY = 'material-gate-pass-mgp-counter'
 
+/** Shared Material Gate Pass routes for Front Office + Stationery Store Manager. */
+export const getMaterialGatePassPaths = () => {
+    const path = typeof window !== 'undefined' ? String(window.location.pathname || '') : ''
+    if (path.startsWith('/stationery-store-manager')) {
+        return {
+            list: '/stationery-store-manager/material-gate-pass',
+            add: '/stationery-store-manager/material-gate-pass/add',
+            view: (id) => `/stationery-store-manager/material-gate-pass/view/${id}`,
+            edit: (id) => `/stationery-store-manager/material-gate-pass/edit/${id}`,
+        }
+    }
+    return {
+        list: '/front-office/material-gate-pass-list',
+        add: '/front-office/add-material-gate-pass',
+        view: (id) => `/front-office/material-gate-pass/view/${id}`,
+        edit: (id) => `/front-office/material-gate-pass/edit/${id}`,
+    }
+}
+
 export const APPROVAL_ROLES = [
     { key: 'storeKeeper', label: 'Store Keeper', useRoleSelect: true },
     { key: 'security', label: 'Security', useRoleSelect: true },

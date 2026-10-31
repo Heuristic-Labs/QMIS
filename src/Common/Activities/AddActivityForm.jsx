@@ -22,10 +22,33 @@ import { getActivityConfig, getActivityRoutes } from './activityConfigs'
 import { getClassSelectOptions } from '../RBAC/academicsCatalogData'
 import MdApprovalSubmitModal from './MdApprovalSubmitModal'
 
-const emptyForm = (personField) => ({
+const ACTIVITY_TYPE_OPTIONS = [
+    { value: 'cultural', label: 'Cultural' },
+    { value: 'sports', label: 'Sports' },
+    { value: 'competition', label: 'Competition' },
+]
+
+const formatClassRange = (from, to) => {
+    if (from === 'All Students' || to === 'All Students') return 'All Students'
+    if (from && to && from !== to) return `${from} – ${to}`
+    return from || to || ''
+}
+
+const parseClassRange = (className) => {
+    const raw = String(className || '').trim()
+    if (!raw) return { classFrom: '', classTo: '' }
+    if (raw === 'All Students') return { classFrom: 'All Students', classTo: 'All Students' }
+    const parts = raw.split(/\s*[–-]\s*/)
+    if (parts.length >= 2) return { classFrom: parts[0].trim(), classTo: parts[1].trim() }
+    return { classFrom: raw, classTo: raw }
+}
+
+const emptyForm = (personField, activityType = 'cultural') => ({
+    activityType,
     eventName: '',
     eventType: '',
-    className: '',
+    classFrom: '',
+    classTo: '',
     eventDate: new Date(),
     startTime: '',
     endTime: '',
@@ -34,22 +57,29 @@ const emptyForm = (personField) => ({
     description: '',
 })
 
-const activityToForm = (activity, personField) => ({
-    eventName: activity.eventName || '',
-    eventType: activity.eventType || '',
-    className: activity.className || '',
-    eventDate: parseEventDateForInput(activity.eventDate),
-    startTime: parseTimeForInput(activity.startTime),
-    endTime: parseTimeForInput(activity.endTime),
-    venue: activity.venue || '',
-    [personField]: activity[personField] || '',
-    description: activity.description || '',
-})
+const activityToForm = (activity, personField) => {
+    const range = parseClassRange(activity.className)
+    return {
+        activityType: activity.type || 'cultural',
+        eventName: activity.eventName || '',
+        eventType: activity.eventType || '',
+        classFrom: range.classFrom,
+        classTo: range.classTo,
+        eventDate: parseEventDateForInput(activity.eventDate),
+        startTime: parseTimeForInput(activity.startTime),
+        endTime: parseTimeForInput(activity.endTime),
+        venue: activity.venue || '',
+        [personField]: activity[personField] || '',
+        description: activity.description || '',
+    }
+}
 
-export default function AddActivityForm({ roleKey, activityType, mode = 'add' }) {
+export default function AddActivityForm({ roleKey, activityType: initialType = 'cultural', mode = 'add' }) {
     const { id } = useParams()
     const isEdit = mode === 'edit'
     const navigate = useNavigate()
+    const [selectedType, setSelectedType] = useState(initialType)
+    const activityType = selectedType
     const config = getActivityConfig(activityType)
     const routes = getActivityRoutes(activityType, roleKey)
     const [hydrated, setHydrated] = useState(!canUseActivitiesApi())
@@ -71,16 +101,17 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
     )
     const classOptions = useMemo(() => getClassSelectOptions(), [])
 
-    const [form, setForm] = useState(() => {
-        if (isEdit && existing && existing.type === activityType) {
-            return activityToForm(existing, config.personField)
-        }
-        return emptyForm(config.personField)
-    })
+    const [form, setForm] = useState(() => emptyForm(config.personField, initialType))
     const [approvalModal, setApprovalModal] = useState(false)
     const [error, setError] = useState('')
 
-    if (isEdit && id && (!existing || existing.type !== activityType)) {
+    useEffect(() => {
+        if (!isEdit || !existing) return
+        setSelectedType(existing.type || initialType)
+        setForm(activityToForm(existing, getActivityConfig(existing.type || initialType).personField))
+    }, [isEdit, existing, initialType])
+
+    if (isEdit && id && hydrated && !existing) {
         return (
             <section className='bg-white rounded-2xl shadow-md p-6'>
                 <p className='text-[#667085]'>Activity not found.</p>
@@ -99,11 +130,21 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
         setForm((current) => ({ ...current, [key]: value }))
     }
 
+    const changeActivityType = (nextType) => {
+        const nextConfig = getActivityConfig(nextType)
+        setSelectedType(nextType)
+        setForm((current) => ({
+            ...current,
+            activityType: nextType,
+            [nextConfig.personField]: current.coordinator || current.coach || '',
+        }))
+    }
+
     const buildPayload = () => ({
         type: activityType,
         eventName: form.eventName.trim(),
         eventType: form.eventType.trim(),
-        className: form.className.trim(),
+        className: formatClassRange(form.classFrom.trim(), form.classTo.trim()),
         eventDate: formatEventDate(form.eventDate),
         startTime: formatTimeLabel(form.startTime),
         endTime: formatTimeLabel(form.endTime),
@@ -121,6 +162,10 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
     const handleSubmit = () => {
         if (!form.eventName.trim()) {
             setError('Event name is required.')
+            return
+        }
+        if (!form.classFrom.trim() || !form.classTo.trim()) {
+            setError('Select both Class From and Class To (or All Students).')
             return
         }
         setError('')
@@ -141,7 +186,7 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
                 }
                 if (roleKey === 'admin') {
                     setApprovalModal(true)
-                    setForm(emptyForm(config.personField))
+                    setForm(emptyForm(config.personField, activityType))
                     toast.success('Activity submitted for Super Admin approval.')
                     return
                 }
@@ -168,7 +213,7 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
 
         if (roleKey === 'admin') {
             setApprovalModal(true)
-            setForm(emptyForm(config.personField))
+            setForm(emptyForm(config.personField, activityType))
             toast.success('Activity submitted for Super Admin approval.')
             return
         }
@@ -181,7 +226,7 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
         <section>
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <h2 className='text-xl font-semibold text-black'>
-                    {isEdit ? `Edit ${config.formTitle}` : config.formTitle}
+                    {isEdit ? 'Edit Activity' : 'Activity Information'}
                 </h2>
                 {roleKey === 'admin' && (
                     <p className='text-sm text-[#667085] mt-2'>
@@ -194,6 +239,19 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
                 )}
 
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 lg:mt-8 mt-2'>
+                    <div className='flex flex-col gap-y-2'>
+                        <label className='text-base font-medium text-[#1E1E1E]'>Activity Group:</label>
+                        <select
+                            value={activityType}
+                            onChange={(e) => changeActivityType(e.target.value)}
+                            disabled={isEdit}
+                            className='text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full bg-white disabled:bg-[#F9F9F9]'
+                        >
+                            {ACTIVITY_TYPE_OPTIONS.map((item) => (
+                                <option key={item.value} value={item.value}>{item.label}</option>
+                            ))}
+                        </select>
+                    </div>
                     <div className='flex flex-col gap-y-2'>
                         <label className='text-base font-medium text-[#1E1E1E]'>Event Name:</label>
                         <input
@@ -213,16 +271,37 @@ export default function AddActivityForm({ roleKey, activityType, mode = 'add' })
                         />
                     </div>
                     <div className='flex flex-col gap-y-2'>
-                        <label className='text-base font-medium text-[#1E1E1E]'>Class:</label>
+                        <label className='text-base font-medium text-[#1E1E1E]'>Class From:</label>
                         <select
-                            value={form.className}
-                            onChange={(e) => updateField('className', e.target.value)}
+                            value={form.classFrom}
+                            onChange={(e) => {
+                                const value = e.target.value
+                                updateField('classFrom', value)
+                                if (value === 'All Students') updateField('classTo', 'All Students')
+                            }}
                             className='text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full'
                         >
                             <option value=''>Select class</option>
                             <option value='All Students'>All Students</option>
                             {classOptions.map((item) => (
-                                <option key={item.value} value={item.value}>
+                                <option key={`from-${item.value}`} value={item.value}>
+                                    {item.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className='flex flex-col gap-y-2'>
+                        <label className='text-base font-medium text-[#1E1E1E]'>Class To:</label>
+                        <select
+                            value={form.classTo}
+                            onChange={(e) => updateField('classTo', e.target.value)}
+                            disabled={form.classFrom === 'All Students'}
+                            className='text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full disabled:bg-[#F9F9F9]'
+                        >
+                            <option value=''>Select class</option>
+                            <option value='All Students'>All Students</option>
+                            {classOptions.map((item) => (
+                                <option key={`to-${item.value}`} value={item.value}>
                                     {item.label}
                                 </option>
                             ))}

@@ -117,7 +117,8 @@ const DEFAULT_REQUESTS = [
     },
 ]
 
-export const REQUEST_TYPE_OPTIONS = ['Purchase', 'Stock Replenishment']
+// Restock is the business label; Stock Replenishment kept for existing records.
+export const REQUEST_TYPE_OPTIONS = ['Purchase', 'Restock', 'Stock Replenishment']
 
 export const PRIORITY_OPTIONS = ['Low', 'Medium', 'High', 'Urgent']
 
@@ -163,7 +164,7 @@ export const priorityBadgeColor = {
 }
 
 export const getRequestById = (id) =>
-    REQUESTS.find((entry) => entry.requestId === id)
+    getRequests().find((entry) => entry.requestId === id)
 
 export const REQUESTS_STORAGE_KEY = 'schoolerp-stationery-requests-v1'
 export function getRequests() {
