@@ -60,6 +60,8 @@ _ROLE_ALIASES = {
     "security": "gatekeeper",
     "prm": "prm",
     "pro": "pro",
+    "fileroom": "fileroom",
+    "cctv": "cctv",
     "itsupportmanager": "itsupportmanager",
     "jointdirector": "jointdirector",
     "jointdirectoraudit": "jointdirectoraudit",

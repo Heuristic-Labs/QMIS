@@ -106,6 +106,7 @@ export default function ActivityListView({ roleKey, activityType }) {
     }
 
     const isApprover = roleKey === 'superadmin'
+    const isReadOnly = roleKey === 'pro'
     const personLabel = config.personLabel
     const approvalStatusHeader =
         roleKey === 'admin' || roleKey === 'superadmin' ? 'Super Admin Approval Status' : 'MD Approval Status'
@@ -226,7 +227,7 @@ export default function ActivityListView({ roleKey, activityType }) {
                 <div className='flex justify-between items-center sm:flex-row flex-col gap-y-2 mb-4'>
                     <h2 className='text-xl font-medium text-black'>{config.listTitle}</h2>
                     <div className='flex gap-x-2'>
-                        {!isApprover && (
+                        {!isApprover && !isReadOnly && (
                             <NavLink
                                 to={routes.add}
                                 className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
@@ -327,7 +328,7 @@ export default function ActivityListView({ roleKey, activityType }) {
                                                             </button>
                                                         </>
                                                     ) : null
-                                                ) : (
+                                                ) : isReadOnly ? null : (
                                                     <>
                                                         <NavLink
                                                             to={getActivityEditPath(activityType, roleKey, activity.id)}

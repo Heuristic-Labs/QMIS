@@ -99,12 +99,23 @@ COLLECTIONS: dict[str, str] = {
     "som-config": "SOMC",
     # Camera register (records only; no video is handled by the ERP).
     "security-cameras": "CAM",
+    # Non-Academics — File Room / CCTV / PRO (JSON campus collections).
+    "fileroom-register": "FRG",
+    "fileroom-issues": "FIS",
+    "cctv-footage-requests": "CFR",
+    "cctv-camera-status": "CCS",
+    "pro-gov-cases": "PGC",
 }
 
 _ADMINS = {"admin", "superadmin", "managing_director"}
 _LIBRARY = {"librarian"} | _ADMINS
 _GATE = {"gatekeeper", "gatekeepermanager"} | _ADMINS
 _TRANSPORT = {"transportmanager", "driver"} | _ADMINS
+_FILE_ROOM = {"fileroom"} | _ADMINS
+_CCTV_ROOM = {"cctv"} | _ADMINS
+_PRO = {"pro"} | _ADMINS
+# Dept Head / JD / MD approve footage and sensitive file access (Non-Academics §4.14–4.15).
+_APPROVER_CHAIN = {"principal", "director", "jointdirector", "managing_director"} | _ADMINS
 # Principal final-approves maintenance/fuel requests and posts the linked expense.
 _TRANSPORT_PRINCIPAL_WRITE = {
     "transport-approval-requests",
@@ -156,7 +167,20 @@ def _writers_for(collection: str) -> set[str]:
     if collection.startswith("som-"):
         return _STAR_OF_MONTH
     if collection == "security-cameras":
-        return _ADMINS | {"gatekeepermanager"}
+        # Camera Room may update daily working/not-working status; Admin/GKM retain full write.
+        return _ADMINS | {"gatekeepermanager", "cctv"}
+    if collection.startswith("fileroom-"):
+        writers = set(_FILE_ROOM)
+        if collection == "fileroom-issues":
+            writers |= _APPROVER_CHAIN
+        return writers
+    if collection.startswith("cctv-"):
+        writers = set(_CCTV_ROOM) | {"gatekeepermanager"}
+        if collection == "cctv-footage-requests":
+            writers |= _APPROVER_CHAIN
+        return writers
+    if collection.startswith("pro-"):
+        return set(_PRO) | _APPROVER_CHAIN
     return _ADMINS
 
 
@@ -176,6 +200,13 @@ def _readers_for(collection: str) -> set[str]:
     # Teachers/coordinators need library issues/members to show Books Borrowed.
     if collection.startswith("library-"):
         return writers | {"principal", "director", "jointdirector", "teacher", "coordinator"}
+    # CCTV Room portal: camera register + footage/status collections.
+    if collection == "security-cameras" or collection.startswith("cctv-"):
+        return writers | {"principal", "director", "jointdirector", "cctv", "gatekeepermanager"}
+    if collection.startswith("fileroom-"):
+        return writers | {"principal", "director", "jointdirector", "pro", "hr"}
+    if collection.startswith("pro-"):
+        return writers | {"principal", "director", "jointdirector", "managing_director"}
     return writers | {"principal", "director", "jointdirector"}
 
 

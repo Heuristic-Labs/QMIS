@@ -17,6 +17,7 @@ export const PROFILE_OPTIONS = [
     { role: ROLES.DRIVER, label: 'Driver', image: driver_profile, alt: 'driver_profile' },
     { role: ROLES.LIBRARIAN, label: 'Librarian', image: librarian_profile, alt: 'librarian_profile' },
     { role: ROLES.PRM, label: 'PRM', image: prm_profile, alt: 'prm_profile', imageClassName: 'rounded-full' },
+    { role: ROLES.PRO, label: 'PRO', image: prm_profile, alt: 'pro_profile', imageClassName: 'rounded-full' },
     { role: ROLES.GATEKEEPER, label: 'Gate Keeper', image: driver_profile, alt: 'gatekeeper_profile' },
     {
         role: ROLES.GATEKEEPER_MANAGER,

@@ -12,7 +12,7 @@ from app.services.files import delete_library_file, get_file, list_files, save_u
 
 router = APIRouter(prefix="/api/v1/files", tags=["files"])
 
-# File Management screen: Administrator / Super Admin / MD (the roles holding users.write).
+# File Management screen: Admin/Super Admin/MD (users.write) or File Room (documents.library.*).
 
 
 @router.get("")
@@ -20,7 +20,7 @@ def list_files_route(
     search: str = Query(""),
     kind: str = Query("", description="'' all, 'library' File Management uploads, 'module' other modules"),
     db: Session = Depends(get_db),
-    user: User = Depends(require_permission("users.write")),
+    user: User = Depends(require_any("users.write", "documents.library.read")),
 ) -> list[dict]:
     return list_files(db, user, search=search, kind=kind)
 
@@ -29,7 +29,7 @@ def list_files_route(
 async def upload_library_route(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    user: User = Depends(require_permission("users.write")),
+    user: User = Depends(require_any("users.write", "documents.library.write")),
 ) -> dict:
     return upload_library_file(db, user, file)
 
@@ -38,7 +38,7 @@ async def upload_library_route(
 def delete_file_route(
     file_id: UUID,
     db: Session = Depends(get_db),
-    user: User = Depends(require_permission("users.write")),
+    user: User = Depends(require_any("users.write", "documents.library.write")),
 ) -> dict:
     return delete_library_file(db, user, file_id)
 

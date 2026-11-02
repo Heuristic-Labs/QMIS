@@ -129,6 +129,7 @@ def _seed_demo_users(db: Session, campus: Campus, roles_by_code: dict[str, Role]
         ("coordinator", settings.coordinator_seed_email, settings.coordinator_seed_password),
         ("principal", settings.principal_seed_email, settings.principal_seed_password),
         ("prm", settings.prm_seed_email, settings.prm_seed_password),
+        ("pro", settings.pro_seed_email, settings.pro_seed_password),
         ("director", settings.director_seed_email, settings.director_seed_password),
         ("jointdirector", "jointdirector@qmis.edu", "jd12345678"),
         ("jointdirectorassistant", "jointdirectorassistant@qmis.edu", "jda1234567"),
@@ -144,6 +145,8 @@ def _seed_demo_users(db: Session, campus: Campus, roles_by_code: dict[str, Role]
         ("itsupportmanager", "itsupportmanager@qmis.edu", "itsupport123"),
         ("stationerystoremanager", "stationerystoremanager@qmis.edu", "stationery123"),
         ("housekeepingmanager", "housekeepingmanager@qmis.edu", "housekeeping123"),
+        ("fileroom", settings.fileroom_seed_email, settings.fileroom_seed_password),
+        ("cctv", settings.cctv_seed_email, settings.cctv_seed_password),
         ("parent", "parent@qmis.edu", "parent123"),
         ("student", "student@qmis.edu", "student123"),
     ):

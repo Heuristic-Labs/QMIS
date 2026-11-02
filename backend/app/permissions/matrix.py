@@ -29,6 +29,8 @@ FRONTEND_ROLES: list[tuple[str, str]] = [
     ("financemanager", "Finance Manager"),
     ("accountassistant", "Account Assistant"),
     ("driver", "Driver"),
+    ("fileroom", "File Room"),
+    ("cctv", "CCTV Room"),
 ]
 
 MD_EXTRA_ROLES: list[tuple[str, str]] = [
@@ -88,6 +90,8 @@ PERMISSIONS: list[tuple[str, str]] = [
     ("documents.students.write", "Upload, replace and remove student documents"),
     ("documents.employees.read", "View and download employee documents"),
     ("documents.employees.write", "Upload, replace and remove employee documents"),
+    ("documents.library.read", "View and download campus file-library uploads"),
+    ("documents.library.write", "Upload and delete campus file-library uploads"),
     ("announcements.read", "View announcements sent to your role"),
     ("announcements.write", "Send announcements"),
     ("calendar.read", "View the academic calendar"),
@@ -179,7 +183,7 @@ ROLE_PERMISSIONS.update(
                 ]
             )
         ),
-        # PRO shares front-office admissions portal with PRM (separate login role).
+        # PRO: government liaison + PR/FO access; ops for gov-case collections.
         "pro": list(
             dict.fromkeys(
                 [
@@ -188,6 +192,8 @@ ROLE_PERMISSIONS.update(
                     "hr.employees.read",
                     "frontoffice.read",
                     "frontoffice.write",
+                    "ops.read",
+                    "ops.write",
                 ]
             )
         ),
@@ -267,6 +273,26 @@ ROLE_PERMISSIONS.update(
                 ]
             )
         ),
+        # File Room: documents + ops collections (register / issue-return).
+        "fileroom": list(
+            dict.fromkeys(
+                [
+                    *_CORE,
+                    "students.read",
+                    "hr.employees.read",
+                    "documents.students.read",
+                    "documents.students.write",
+                    "documents.employees.read",
+                    "documents.employees.write",
+                    "documents.library.read",
+                    "documents.library.write",
+                    "ops.read",
+                    "ops.write",
+                ]
+            )
+        ),
+        # CCTV Room: camera register + footage-request / daily status ops collections.
+        "cctv": list(dict.fromkeys([*_CORE, "ops.read", "ops.write"])),
     }
 )
 

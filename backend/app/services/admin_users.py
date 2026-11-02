@@ -45,8 +45,15 @@ STAFF_ROLES: list[tuple[str, str, str]] = [
     ("housekeepingmanager", "Housekeeping Manager", "HKM"),
 ]
 _ADMIN_ROLE: tuple[str, str, str] = ("admin", "Administrator", "ADM")
+# Super Admin may also provision File Room / CCTV Room (campus Admin cannot escalate).
+_FILE_ROOM_ROLE: tuple[str, str, str] = ("fileroom", "File Room", "FLR")
+_CCTV_ROLE: tuple[str, str, str] = ("cctv", "CCTV Room", "CCTV")
+_SUPERADMIN_ONLY_ROLES: list[tuple[str, str, str]] = [_ADMIN_ROLE, _FILE_ROOM_ROLE, _CCTV_ROLE]
 
-_ROLE_INFO = {code: (label, prefix) for code, label, prefix in [*STAFF_ROLES, _ADMIN_ROLE]}
+_ROLE_INFO = {
+    code: (label, prefix)
+    for code, label, prefix in [*STAFF_ROLES, *_SUPERADMIN_ONLY_ROLES]
+}
 
 # Optional profile fields kept in ``UserProfile.extra``. Anything else a client sends is ignored.
 DETAIL_FIELDS = (
@@ -81,7 +88,7 @@ def creatable_roles_for(actor_role: str) -> list[str]:
     """Role codes the actor may create and afterwards manage."""
     codes = [code for code, _, _ in STAFF_ROLES]
     if actor_role == "superadmin":
-        codes.append(_ADMIN_ROLE[0])
+        codes.extend(code for code, _, _ in _SUPERADMIN_ONLY_ROLES)
     return codes
 
 

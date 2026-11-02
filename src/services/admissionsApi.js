@@ -218,6 +218,7 @@ const withUploadedProfile = async (form, resourceType) => {
 export const listEnquiriesApi = async (status) => {
     const query = status ? `?status=${encodeURIComponent(status)}` : ''
     const rows = await apiRequest(`/admissions/enquiries${query}`)
+    if (!Array.isArray(rows)) return []
     return rows.map(mapEnquiryFromApi)
 }
 

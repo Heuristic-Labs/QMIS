@@ -131,6 +131,12 @@ export const CAMPUS_COLLECTION_BY_STORAGE_KEY = {
     'schoolerp-jd-audit-visibility-rules-v1': { kind: 'audit', collection: 'audit-visibility-rules' },
     'schoolerp-jd-audit-template-versions-v1': { kind: 'audit', collection: 'audit-template-versions' },
     'schoolerp-jd-audit-published-templates-v1': { kind: 'audit', collection: 'audit-published-templates' },
+    // Non-Academics — File Room / CCTV / PRO
+    'schoolerp-fileroom-register-v1': { kind: 'ops', collection: 'fileroom-register' },
+    'schoolerp-fileroom-issues-v1': { kind: 'ops', collection: 'fileroom-issues' },
+    'schoolerp-cctv-footage-requests-v1': { kind: 'ops', collection: 'cctv-footage-requests' },
+    'schoolerp-cctv-camera-status-v1': { kind: 'ops', collection: 'cctv-camera-status' },
+    'schoolerp-pro-gov-cases-v1': { kind: 'ops', collection: 'pro-gov-cases' },
 }
 
 export const resolveCampusCollection = (storageKey) =>

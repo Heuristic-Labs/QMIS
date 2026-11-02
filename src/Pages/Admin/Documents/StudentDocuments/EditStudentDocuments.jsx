@@ -16,13 +16,14 @@ import {
 import { getClassSelectOptions } from '../../../../Common/RBAC/academicsCatalogData'
 import { canUseDocumentsApi } from '../../../../services/documentsApi'
 import useDocumentRecords from '../useDocumentRecords'
+import { ADMIN_STUDENT_DOCUMENT_PATHS } from '../documentRoutePaths'
 
 const inputClass =
     'text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full bg-white'
 const lockedClass =
     'text-sm font-normal text-[#667085] border border-[#D9D9D9] rounded-md px-2 py-3 w-full bg-[#F9FAFB] cursor-not-allowed'
 
-const EditStudentDocumentsForm = ({ record }) => {
+const EditStudentDocumentsForm = ({ record, paths = ADMIN_STUDENT_DOCUMENT_PATHS }) => {
     const navigate = useNavigate()
     // With the server, who the student is and the status (Completed once all four are in) are not editable.
     const apiMode = canUseDocumentsApi()
@@ -62,7 +63,7 @@ const EditStudentDocumentsForm = ({ record }) => {
             }
             setSaving(false)
             toast.success('Student documents updated.')
-            navigate('/admin/documents/student-documents')
+            navigate(paths.list)
             return
         }
 
@@ -75,7 +76,7 @@ const EditStudentDocumentsForm = ({ record }) => {
             documentSlots,
         })
 
-        navigate('/admin/documents/student-documents')
+        navigate(paths.list)
     }
 
     return (
@@ -187,7 +188,7 @@ const EditStudentDocumentsForm = ({ record }) => {
             <div className='flex sm:justify-end justify-center gap-x-4 mt-6'>
                 <button
                     type='button'
-                    onClick={() => navigate('/admin/documents/student-documents')}
+                    onClick={() => navigate(paths.list)}
                     className='bg-white text-[#515DEF] text-sm text-center px-12 py-2 rounded-md border border-[#515DEF] hover:bg-[#515DEF] hover:text-white hover:border-[#515DEF] transition-all duration-200 cursor-pointer md:w-auto w-full'
                 >
                     Discard Changes
@@ -205,7 +206,7 @@ const EditStudentDocumentsForm = ({ record }) => {
     )
 }
 
-const EditStudentDocuments = () => {
+const EditStudentDocuments = ({ paths = ADMIN_STUDENT_DOCUMENT_PATHS } = {}) => {
     const { id } = useParams()
     const { records, status, error } = useDocumentRecords('students')
     const record = records.find((item) => String(item.id) === String(id))
@@ -217,7 +218,7 @@ const EditStudentDocuments = () => {
             <section className='space-y-4'>
                 <p className='text-[#667085]'>Student document record not found.</p>
                 <NavLink
-                    to='/admin/documents/student-documents'
+                    to={paths.list}
                     className='text-[#515DEF] hover:underline text-sm font-medium'
                 >
                     Back to list
@@ -225,7 +226,7 @@ const EditStudentDocuments = () => {
             </section>
         )
     }
-    return <EditStudentDocumentsForm key={record.id} record={record} />
+    return <EditStudentDocumentsForm key={record.id} record={record} paths={paths} />
 }
 
 export default EditStudentDocuments

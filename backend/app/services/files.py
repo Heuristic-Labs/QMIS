@@ -139,6 +139,7 @@ def _can_download_orphan_file(db: Session, actor: User, row: FileAsset) -> bool:
         "admissions.write",
         "documents.students.read",
         "documents.employees.read",
+        "documents.library.read",
         "audit.read",
         "users.write",
     }

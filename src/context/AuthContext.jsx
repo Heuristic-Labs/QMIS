@@ -74,6 +74,8 @@ export const FAKE_CREDENTIALS = {
     [ROLES.ACCOUNT_ASSISTANT]: { email: 'accountassistant@qmis.edu' },
     [ROLES.FINANCE_ASSISTANT]: { email: 'finance.assistant@qmis.edu' },
     [ROLES.DRIVER]: { email: 'driver@qmis.edu' },
+    [ROLES.FILE_ROOM]: { email: 'fileroom@qmis.edu' },
+    [ROLES.CCTV]: { email: 'cctv@qmis.edu' },
 }
 
 export const ROLE_HOME_PATHS = {
@@ -83,7 +85,7 @@ export const ROLE_HOME_PATHS = {
     [ROLES.PARENT]: '/parent/select-child',
     [ROLES.LIBRARIAN]: '/librarian/book-management/book-list',
     [ROLES.PRM]: '/front-office/admission-enquiry',
-    [ROLES.PRO]: '/front-office/admission-enquiry',
+    [ROLES.PRO]: '/pro/dashboard',
     [ROLES.GATEKEEPER]: '/gate-keeper/dashboard',
     [ROLES.GATEKEEPER_MANAGER]: '/gatekeeper-manager/assign-duty-list',
     [ROLES.DIRECTOR]: '/director/broadcast',
@@ -106,6 +108,8 @@ export const ROLE_HOME_PATHS = {
     [ROLES.ACCOUNT_ASSISTANT]: '/account-head/dashboard',
     [ROLES.FINANCE_ASSISTANT]: '/account-head/dashboard',
     [ROLES.DRIVER]: '/driver/vehicle-management/vehicle-details',
+    [ROLES.FILE_ROOM]: '/file-room/dashboard',
+    [ROLES.CCTV]: '/cctv-room/dashboard',
 }
 
 const STORAGE_KEY = 'schoolerp_auth'

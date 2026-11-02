@@ -58,6 +58,11 @@ export const ANNOUNCEMENT_ROUTE_CONFIG = {
         view: '/front-office/announcement/view',
         sentByDefault: 'Front Office',
     },
+    pro: {
+        list: '/pro/announcements',
+        view: '/pro/announcements/view',
+        sentByDefault: 'PRO',
+    },
     superadmin: {
         list: '/super-admin/announcement',
         view: '/super-admin/announcement/view',

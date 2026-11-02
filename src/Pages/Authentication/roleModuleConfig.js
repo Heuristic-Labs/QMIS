@@ -31,6 +31,7 @@ export const ROLE_MODULES = [
             ROLES.DIRECTOR,
             ROLES.PRINCIPAL,
             ROLES.PRM,
+            ROLES.PRO,
             ROLES.TEACHER,
             ROLES.COORDINATOR,
             ROLES.LIBRARIAN,

@@ -43,6 +43,17 @@ export const COMMUNICATION_ROLE_CONFIG = {
             avatarColor: '#0891B2',
         },
     },
+    pro: {
+        roleLabel: 'PRO',
+        routeBase: '/pro/communication',
+        currentUser: {
+            id: 'EMP-PRO-001',
+            name: 'Public Relations Officer',
+            role: 'PRO',
+            department: 'Public Relations',
+            avatarColor: '#0E7490',
+        },
+    },
     gateKeeper: {
         roleLabel: 'Gate Keeper',
         routeBase: '/gate-keeper/communication',

@@ -65,6 +65,10 @@ def map_role_from_designation(designation: str) -> str:
     - Accountant / Accounts Trainee / Senior Accountant → accountassistant
     - HR Executive / Audit Cum HR Facilitator → hr
     - System Administrator → itsupportmanager
+    - HK Supervisor / Housekeeping / Maintenance Officer → housekeepingmanager
+      (no separate Maintenance Manager portal)
+    - Transport Manager → transportmanager
+    - Driver → driver
     - Librarian → librarian
     - Teaching designations → teacher
     """
@@ -149,6 +153,37 @@ def map_role_from_designation(designation: str) -> str:
 
     if "system administrator" in d:
         return "itsupportmanager"
+
+    # Housekeeping / Maintenance share the Housekeeping Manager portal (no separate Maintenance role).
+    if (
+        "hk supervisor" in d
+        or "housekeep" in d
+        or "maintenance officer" in d
+        or "maintenance" in d
+        or compact in {"hksupervisor", "housekeepingmanager", "maintenanceofficer"}
+    ):
+        return "housekeepingmanager"
+
+    if (
+        "transport manager" in d
+        or compact in {"transportmanager", "transportincharge"}
+        or (d.startswith("transport") and "student" not in d)
+    ):
+        return "transportmanager"
+
+    if d == "driver" or d.startswith("driver ") or "bus driver" in d:
+        return "driver"
+
+    if "file room" in d or compact in {"fileroom", "fileroomofficer", "fileroomandincharge"}:
+        return "fileroom"
+
+    if (
+        "control room" in d
+        or "cctv" in d
+        or "camera room" in d
+        or compact in {"cctv", "cctvroom", "controlroom", "controlroomofficer"}
+    ):
+        return "cctv"
 
     teacher_tokens = (
         "prt",

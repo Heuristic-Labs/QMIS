@@ -64,6 +64,8 @@ import {
     Fuel,
     Wrench,
     Cctv,
+    Search,
+    Archive,
 } from "lucide-react";
 
 export const superAdminSidebarLinks = [
@@ -2072,6 +2074,183 @@ export const accountHeadSidebarLinks = [
     },
 ];
 
+export const proSidebarLinks = [
+    {
+        id: 1,
+        title: "Dashboard",
+        to: "/pro/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: 2,
+        title: "Government Liaison Cases",
+        to: "/pro/government-cases",
+        icon: FileText,
+    },
+    {
+        id: 3,
+        title: "Announcements & Circulars",
+        to: "/pro/announcements",
+        icon: BellDot,
+    },
+    {
+        id: 4,
+        title: "Events & School Activities",
+        to: "/pro/events",
+        icon: CalendarDays,
+    },
+    {
+        id: 5,
+        title: "Parent & Community Communication",
+        to: "/pro/communication/inbox",
+        icon: MessageCircle,
+    },
+    {
+        id: 6,
+        title: "Enquiries & Follow-ups",
+        to: "/pro/enquiries",
+        icon: CircleHelp,
+    },
+    {
+        id: 7,
+        title: "Communication Reports",
+        to: "/pro/reports",
+        icon: BarChart3,
+    },
+    {
+        id: 8,
+        title: "Settings",
+        to: "/pro/settings",
+        icon: Settings,
+    },
+];
+
+export const cctvRoomSidebarLinks = [
+    {
+        id: 1,
+        title: "Dashboard",
+        to: "/cctv-room/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: 2,
+        title: "Camera Management",
+        to: "/cctv-room/camera-management",
+        icon: Cctv,
+    },
+    {
+        id: 3,
+        title: "Daily Camera Status",
+        to: "/cctv-room/camera-status",
+        icon: ClipboardCheck,
+    },
+    {
+        id: 4,
+        title: "Footage Requests",
+        to: "/cctv-room/footage-requests",
+        icon: ClipboardList,
+    },
+    {
+        id: 5,
+        title: "Live Monitoring",
+        to: "/cctv-room/live-monitoring",
+        icon: Monitor,
+    },
+    {
+        id: 6,
+        title: "Recording & Playback",
+        to: "/cctv-room/recording-playback",
+        icon: History,
+    },
+    {
+        id: 7,
+        title: "School Locations",
+        to: "/cctv-room/school-locations",
+        icon: MapPin,
+    },
+    {
+        id: 8,
+        title: "Security Reports",
+        to: "/cctv-room/security-reports",
+        icon: BarChart3,
+    },
+    {
+        id: 9,
+        title: "Access Logs",
+        to: "/cctv-room/audit-logs",
+        icon: ClipboardList,
+    },
+    {
+        id: 10,
+        title: "Settings",
+        to: "/cctv-room/settings",
+        icon: Settings,
+    },
+];
+
+export const fileRoomSidebarLinks = [
+    {
+        id: 1,
+        title: "Dashboard",
+        to: "/file-room/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: 2,
+        title: "File Register",
+        to: "/file-room/file-register",
+        icon: FolderOpen,
+    },
+    {
+        id: 3,
+        title: "File Management",
+        to: "/file-room/file-management",
+        icon: FileText,
+    },
+    {
+        id: 4,
+        title: "Student Records",
+        to: "/file-room/student-records",
+        icon: GraduationCap,
+    },
+    {
+        id: 5,
+        title: "Staff Records",
+        to: "/file-room/staff-records",
+        icon: Briefcase,
+    },
+    {
+        id: 6,
+        title: "File Requests",
+        to: "/file-room/file-requests",
+        icon: ClipboardList,
+    },
+    {
+        id: 7,
+        title: "Search & Retrieval",
+        to: "/file-room/search-retrieval",
+        icon: Search,
+    },
+    {
+        id: 8,
+        title: "Archive & Disposal",
+        to: "/file-room/archive-disposal",
+        icon: Archive,
+    },
+    {
+        id: 9,
+        title: "Activity & Reports",
+        to: "/file-room/activity-reports",
+        icon: BarChart3,
+    },
+    {
+        id: 10,
+        title: "Settings",
+        to: "/file-room/settings",
+        icon: Settings,
+    },
+];
+
 export const driverSidebarLinks = [
     {
         id: 1,
@@ -2463,6 +2642,7 @@ export const roleBasedSidebarLinks = {
     Coordinator: coordinatorSidebarLinks,
     Librarian: librarianSidebarLinks,
     PRM: prmSidebarLinks,
+    PRO: proSidebarLinks,
     GateKeeper: gateKeeperSidebarLinks,
     GateKeeperManager: gateKeeperManagerSidebarLinks,
     CanteenManager: canteenManagerSidebarLinks,
@@ -2477,6 +2657,8 @@ export const roleBasedSidebarLinks = {
     QualityAuditor: qualityAuditorSidebarLinks,
     HR: hrSidebarLinks,
     AccountHead: accountHeadSidebarLinks,
+    FileRoom: fileRoomSidebarLinks,
+    CctvRoom: cctvRoomSidebarLinks,
     Driver: driverSidebarLinks,
     Director: directorSidebarLinks,
     Principal: principalSidebarLinks,

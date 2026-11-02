@@ -1,0 +1,46 @@
+"""Regression: Housekeeping / Maintenance / Transport designation → RBAC role."""
+
+from app.services.admin_users import creatable_roles_for
+from app.services.staff_designation_map import map_role_from_designation
+
+
+def test_housekeeping_and_maintenance_map_to_housekeepingmanager():
+    assert map_role_from_designation("Housekeeping Manager") == "housekeepingmanager"
+    assert map_role_from_designation("HK Supervisor") == "housekeepingmanager"
+    assert map_role_from_designation("Maintenance Officer") == "housekeepingmanager"
+    assert map_role_from_designation("maintenance") == "housekeepingmanager"
+
+
+def test_transport_manager_and_driver_map():
+    assert map_role_from_designation("Transport Manager") == "transportmanager"
+    assert map_role_from_designation("transport manager") == "transportmanager"
+    assert map_role_from_designation("Driver") == "driver"
+    assert map_role_from_designation("Bus Driver") == "driver"
+
+
+def test_unrelated_designations_unchanged():
+    assert map_role_from_designation("Public Relations Officer") == "pro"
+    assert map_role_from_designation("Parent Relationship Manager") == "prm"
+    assert map_role_from_designation("System Administrator") == "itsupportmanager"
+    assert map_role_from_designation("File Room Officer") == "fileroom"
+    assert map_role_from_designation("EA to MD") == ""
+
+
+def test_admin_can_create_housekeeping_and_transport_manager():
+    admin = set(creatable_roles_for("admin"))
+    assert "housekeepingmanager" in admin
+    assert "transportmanager" in admin
+    assert "driver" in admin
+    # Privileged / non-staff portal roles stay out of Campus Admin create list.
+    assert "pro" not in admin
+    assert "superadmin" not in admin
+    assert "fileroom" not in admin
+    assert "cctv" not in admin
+
+
+def test_superadmin_can_create_fileroom_cctv_admin():
+    sa = set(creatable_roles_for("superadmin"))
+    assert "fileroom" in sa
+    assert "cctv" in sa
+    assert "admin" in sa
+    assert "housekeepingmanager" in sa

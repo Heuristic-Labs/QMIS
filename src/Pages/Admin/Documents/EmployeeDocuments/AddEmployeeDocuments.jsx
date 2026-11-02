@@ -12,6 +12,7 @@ import {
     saveEmployeeDocumentsViaApi,
 } from './employeeDocumentsData'
 import { canUseDocumentsApi } from '../../../../services/documentsApi'
+import { ADMIN_EMPLOYEE_DOCUMENT_PATHS } from '../documentRoutePaths'
 
 const inputClass =
     'text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full bg-white'
@@ -23,7 +24,7 @@ const createInitialSlot = () => ({
     status: 'Pending',
 })
 
-const AddEmployeeDocuments = () => {
+const AddEmployeeDocuments = ({ paths = ADMIN_EMPLOYEE_DOCUMENT_PATHS } = {}) => {
     const navigate = useNavigate()
     const [employeeId, setEmployeeId] = useState('')
     const [employeeName, setEmployeeName] = useState('')
@@ -65,7 +66,7 @@ const AddEmployeeDocuments = () => {
                 return
             }
             setSaving(false)
-            navigate('/admin/documents/employee-documents')
+            navigate(paths.list)
             return
         }
 
@@ -79,7 +80,7 @@ const AddEmployeeDocuments = () => {
             ),
         })
 
-        navigate('/admin/documents/employee-documents')
+        navigate(paths.list)
     }
 
     return (
@@ -165,7 +166,7 @@ const AddEmployeeDocuments = () => {
             <div className='flex sm:justify-end justify-center gap-x-4 mt-6'>
                 <button
                     type='button'
-                    onClick={() => navigate('/admin/documents/employee-documents')}
+                    onClick={() => navigate(paths.list)}
                     className='bg-white text-[#515DEF] text-sm text-center px-12 py-2 rounded-md border border-[#515DEF] hover:bg-[#515DEF] hover:text-white hover:border-[#515DEF] transition-all duration-200 cursor-pointer md:w-auto w-full'
                 >
                     Discard Changes

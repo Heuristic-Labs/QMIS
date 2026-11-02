@@ -24,8 +24,9 @@ const formatDate = (iso) => {
 }
 
 /**
- * Campus file library for administrators. Files uploaded here (PDF, JPG, PNG up to 10 MB) can be
- * deleted; files that belong to other modules are listed read-only and are removed in that module.
+ * Campus file library for Admin/Super Admin (users.write) and File Room (documents.library.*).
+ * Files uploaded here (PDF, JPG, PNG up to 10 MB) can be deleted; module-owned files are listed
+ * read-only and must be removed in their own module.
  */
 const FileManagement = () => {
     const [rows, setRows] = useState([])

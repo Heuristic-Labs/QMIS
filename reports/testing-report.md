@@ -1,36 +1,36 @@
 # Testing report
 
-**Date:** 29 October 2026  
-**Context:** User Creation crash-fix verification (`getAdminAccessLabel`). Local Vite `:5173` → API `:8000`. No production writes. Not committed/pushed.
+**Date:** 2 November 2026  
+**Context:** Staff credential list role correction (File Room / CCTV / PRO / TM / Maintenance) + Non-Academics portals. Local only. **No production DB writes. No passwords logged or committed.**
 
-## Latest — Crash-fix verification
-
-| Suite / check | Result |
-|---|---|
-| `pytest tests/test_admin_users.py tests/test_admin_employee_directory.py tests/test_frontend_admin_users_static.py tests/test_frontend_superadmin_approvals_static.py -q --import-mode=importlib` | **69 passed** |
-| `pytest tests/test_frontend_admin_users_static.py` (incl. export label guard) | **12 passed** |
-| `npm run build` | **PASS** (`BUILD_EXIT=0`) |
-| Browser list + Export modal (no `getPermissionCount` crash) | **PASS** |
-| Browser create `uat.crashfix.admin@qmis.edu` → list/view labels | **PASS** |
-| Admin cannot create/manage admin; teacher PATCH 403 | **PASS** (API) |
-| ASA-04 `ACT-CUL-006` still Approved | **PASS** (API smoke) |
-
-## Prior same day — Browser UAT ASA-02 / ASA-04
+## Latest — credential sheet verify + designation tests
 
 | Suite / check | Result |
 |---|---|
-| ASA-02 deactivate / reactivate / failure handling | **PASS** (browser; audit §14) |
-| ASA-04 activity approve + demo quarantine | **PASS** (browser; audit §14) |
-| Isolated `:5181`→`:8001` login | **BLOCKED** (CORS) |
+| Local login for 8 target staff (CLIENT sheet passwords via TestClient → localhost) | **8/8 HTTP 200** (roles below) |
+| PRO Vaiyapuri / Jeyakumar | login OK · DB role `pro` matches sheet |
+| Maintenance Kausik (Kowsic) | login OK · DB role `housekeepingmanager` matches sheet |
+| Karthick (sheet `transportmanager`) | login OK · DB still `jointdirectorassistant` (mismatch; no DB write) |
+| Control Room Vengadeswari / Meena (sheet `cctv`) | login OK · DB still `gatekeeper` (mismatch; no DB write) |
+| File Room Shanmugavalli / Sivasankari (sheet `fileroom`) | login OK · DB still `stationerystoremanager` (mismatch; no DB write) |
+| `pytest` designation + File/CCTV/PRO map slice | **8 passed** |
+| CLIENT xlsx gitignored | **yes** |
+| Prep CSVs password column | placeholders only (0 real secrets) |
+
+## Prior same day — Non-Academics ops collections
+
+| Suite / check | Result |
+|---|---|
+| File/CCTV/PRO portal + static + designation maps | **49 passed** |
+| `npm run build` | **PASS** |
 
 ## Coverage notes
 
-- Crash path: Export/list no longer calls unbound `getPermissionCount`.
-- Unused exports of `getPermissionCount` remain in `adminUsersData.js` / `rolePermissionsData.js` (not broken call sites).
-- Disposable admins `uat.asa02.admin@qmis.edu` and `uat.crashfix.admin@qmis.edu` left Active.
+- Credentials list now aligns with `staff_designation_map` for File Room, CCTV, PRO, Transport Manager, Maintenance→HK.
+- Working passwords preserved on the CLIENT sheet; verification script clears password values from memory after each attempt and never prints them.
+- DB role remaps intentionally not applied (preserve working portal access until authorized remap).
 
 ## Not run / blockers
 
-- Full browser re-run of ASA-02/ASA-04 decide flows (already §14).
-- Product confirmation for non-activity approval domains (§10 Q5).
-- ASA-05+.
+- AWS / production login re-check not run.
+- Full `pytest tests/` not re-run this slice.

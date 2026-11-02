@@ -2,7 +2,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronDown } from "lucide-react"
 import { PORTAL_LOGO, PORTAL_LOGO_ICON, PORTAL_LOGO_ALT } from "../../constants/portalLogo"
-import { superAdminSidebarLinks, canteenManagerSidebarLinks, gateKeeperManagerSidebarLinks, gateKeeperSidebarLinks, directorSidebarLinks, principalSidebarLinks, librarianSidebarLinks, prmSidebarLinks, studentSidebarLinks, parentSidebarLinks, teacherSidebarLinks, coordinatorSidebarLinks, itSupportManagerSidebarLinks, stationeryStoreManagerSidebarLinks, housekeepingManagerSidebarLinks, transportManagerSidebarLinks, jointDirectorSidebarLinks, jointDirectorAssistantSidebarLinks, jointDirectorAuditSidebarLinks, processAuditorSidebarLinks, qualityAuditorSidebarLinks, hrSidebarLinks, accountHeadSidebarLinks, driverSidebarLinks } from './Components/sidebarLinks'
+import { superAdminSidebarLinks, canteenManagerSidebarLinks, gateKeeperManagerSidebarLinks, gateKeeperSidebarLinks, directorSidebarLinks, principalSidebarLinks, librarianSidebarLinks, prmSidebarLinks, proSidebarLinks, studentSidebarLinks, parentSidebarLinks, teacherSidebarLinks, coordinatorSidebarLinks, itSupportManagerSidebarLinks, stationeryStoreManagerSidebarLinks, housekeepingManagerSidebarLinks, transportManagerSidebarLinks, jointDirectorSidebarLinks, jointDirectorAssistantSidebarLinks, jointDirectorAuditSidebarLinks, processAuditorSidebarLinks, qualityAuditorSidebarLinks, hrSidebarLinks, accountHeadSidebarLinks, driverSidebarLinks, fileRoomSidebarLinks, cctvRoomSidebarLinks } from './Components/sidebarLinks'
 import { getFilteredAdminSidebarLinks } from '../../Pages/SuperAdmin/UserCreation/adminUsersData'
 import {
     getFilteredCoordinatorSidebarLinks,
@@ -10,6 +10,7 @@ import {
 } from '../RBAC/rolePermissionsData'
 import { useAuth } from '../../context/AuthContext'
 import { filterAccountHeadSidebarForRole } from '../../Pages/AccountHead/financeDomain/financeRoleAccess'
+import { isPathUnder } from '../../utils/pathPrefix'
 
 const CommonSidebar = ({ sidebarHidden, toggleSidebar }) => {
     const { role: authRole } = useAuth()
@@ -41,6 +42,8 @@ const CommonSidebar = ({ sidebarHidden, toggleSidebar }) => {
         if (location.pathname.startsWith('/process-auditor')) return processAuditorSidebarLinks
         if (location.pathname.startsWith('/quality-auditor')) return qualityAuditorSidebarLinks
         if (location.pathname.startsWith('/hr')) return hrSidebarLinks
+        if (location.pathname.startsWith('/file-room')) return fileRoomSidebarLinks
+        if (location.pathname.startsWith('/cctv-room')) return cctvRoomSidebarLinks
         if (location.pathname.startsWith('/account-head')) {
             return filterAccountHeadSidebarForRole(accountHeadSidebarLinks, authRole)
         }
@@ -53,6 +56,8 @@ const CommonSidebar = ({ sidebarHidden, toggleSidebar }) => {
         if (location.pathname.startsWith('/director')) return directorSidebarLinks
         if (location.pathname.startsWith('/principal')) return principalSidebarLinks
         if (location.pathname.startsWith('/front-office')) return prmSidebarLinks
+        // Segment match — must not treat `/process-auditor` as PRO.
+        if (isPathUnder(location.pathname, '/pro')) return proSidebarLinks
         return getFilteredAdminSidebarLinks()
     }, [location.pathname, authRole]);
 

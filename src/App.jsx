@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import ChangePassword from "./Pages/Authentication/ChangePassword";
 import { ROLE_HOME_PATHS, ROLES, useAuth } from "./context/AuthContext";
+import { isPathUnder } from "./utils/pathPrefix";
 import './App.css'
 
 const AuthLayout = lazy(() => import("./Layout/AuthLayout"));
@@ -28,6 +29,9 @@ const HRLayout = lazy(() => import("./Layout/HRLayout"));
 const AccountHeadLayout = lazy(() => import("./Layout/AccountHeadLayout"));
 const DriverLayout = lazy(() => import("./Layout/DriverLayout"));
 const PRMLayout = lazy(() => import("./Layout/PRMLayout"));
+const ProLayout = lazy(() => import("./Layout/ProLayout"));
+const FileRoomLayout = lazy(() => import("./Layout/FileRoomLayout"));
+const CctvRoomLayout = lazy(() => import("./Layout/CctvRoomLayout"));
 const StudentLayout = lazy(() => import("./Layout/StudentLayout"));
 const ParentLayout = lazy(() => import("./Layout/ParentLayout"));
 
@@ -107,9 +111,17 @@ const App = () => {
     return withSuspense(<LibrarianLayout />);
   }
 
-  if (role === ROLES.PRM || role === ROLES.PRO) {
-    if (!pathname.startsWith("/front-office")) {
-      return <Navigate to={ROLE_HOME_PATHS[role] ?? ROLE_HOME_PATHS[ROLES.PRM]} replace />;
+  if (role === ROLES.PRO) {
+    // Use segment match so `/process-auditor` is never treated as the PRO portal.
+    if (!isPathUnder(pathname, "/pro")) {
+      return <Navigate to={ROLE_HOME_PATHS[ROLES.PRO]} replace />;
+    }
+    return withSuspense(<ProLayout />);
+  }
+
+  if (role === ROLES.PRM) {
+    if (!isPathUnder(pathname, "/front-office")) {
+      return <Navigate to={ROLE_HOME_PATHS[ROLES.PRM]} replace />;
     }
     return withSuspense(<PRMLayout />);
   }
@@ -212,6 +224,20 @@ const App = () => {
     return withSuspense(<HRLayout />);
   }
 
+  if (role === ROLES.FILE_ROOM) {
+    if (!pathname.startsWith("/file-room")) {
+      return <Navigate to={ROLE_HOME_PATHS[ROLES.FILE_ROOM]} replace />;
+    }
+    return withSuspense(<FileRoomLayout />);
+  }
+
+  if (role === ROLES.CCTV) {
+    if (!pathname.startsWith("/cctv-room")) {
+      return <Navigate to={ROLE_HOME_PATHS[ROLES.CCTV]} replace />;
+    }
+    return withSuspense(<CctvRoomLayout />);
+  }
+
   if (
     role === ROLES.ACCOUNT_HEAD
     || role === ROLES.FINANCE_MANAGER
@@ -274,6 +300,9 @@ const App = () => {
     pathname.startsWith("/super-admin") ||
     pathname.startsWith("/librarian") ||
     pathname.startsWith("/front-office") ||
+    isPathUnder(pathname, "/pro") ||
+    pathname.startsWith("/file-room") ||
+    pathname.startsWith("/cctv-room") ||
     pathname.startsWith("/student") ||
     pathname.startsWith("/parent") ||
     pathname.startsWith("/coordinator") ||

@@ -61,6 +61,8 @@ dist-ssr
 !docs/QMIS_Class_Section_Leave_Permission_Audit.md
 !docs/QMIS_End_to_End_Academic_Examination_Results_Audit.md
 !docs/QMIS_Academic_Workflow_Gap_Fix_Report.md
+!docs/QMIS_FileRoom_CCTV_PRO_Portal_Audit.md
+!docs/QMIS_PRO_Portal_Build_Guide.md
 !local/credentials/README.md
 
 # Local credential / seed dumps must never be committed
@@ -76,6 +78,11 @@ docs/**/*Credentials*.xlsx
 docs/**/*credentials*.xlsx
 docs/Staff Name*.xlsx
 docs/__pycache__/
+Queen_Mira_Staff_Login_Credentials*.xlsx
+*Staff_Login_Credentials*.xlsx
+**/irulappan-role-accounts.json
+**/hk-kausik-aarthy-reissue.json
+**/ops-managers-reissue.json
 
 # Python / FastAPI backend
 backend/.venv/

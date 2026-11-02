@@ -8,6 +8,24 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 2 November 2026 — Staff credential list role correction + Non-Academics portals
+
+**Status:** CLIENT credentials sheet + prep CSVs corrected for File Room / CCTV / PRO / TM Karthick / Maintenance Kausik (Kowsic). Passwords not written into repo. Local login OK for all targets; local DB roles still on older temporary mappings (no DB/prod writes). No commit/push/deploy.
+
+### Done
+- Reviewed CLIENT xlsx + `docs/QMIS_Staff_Credential_Prep.csv` (and erp prep CSVs).
+- Corrected sheet roles (passwords untouched): Control Room → `cctv`; File Room officers → `fileroom`; PRO unchanged; Karthick → Transport Manager / `transportmanager`; Kausik (Maintenance / aka Kowsic) kept `housekeepingmanager`.
+- Local login check (TestClient → localhost DB): **8/8 HTTP 200** for target emails using CLIENT passwords (passwords never logged).
+- Designation/portal pytest slice **8 passed**. Earlier same day: Non-Academics File/CCTV/PRO ops workflows; portal pytest **49 passed**; `npm run build` PASS.
+
+### Still open
+- **Local/prod DB role remaps** for Karthick (`jointdirectorassistant`→`transportmanager`), Control Room (`gatekeeper`→`cctv`), File Room (`stationerystoremanager`→`fileroom`) — credentials list is correct; DB still has temporary roles until an authorized Admin/Super Admin remap (not done; preserves current working logins).
+- Archive/disposal automation, NVR live/playback, News & Media, Communication Reports/Settings
+- Irulappan / AWS HK reissue still blocked on production Admin
+- Commit/push when asked
+
+---
+
 ## 29 October 2026 — Fix missing `exams.schedule` + academic workflow gap fixes
 
 **Status:** Local Postgres `exams.schedule` fixed earlier today. End-to-end audit written; approved gaps implemented. Evening: `:5173`→`:8000` UAT + closure pass. Later: **audit only** for dynamic class/section + leave/permission (implementation blocked on A1/A2/AEP/NA + leave policy questions). Full ERP Phase 1 audit written — **no** broad fixes, accounts, or permission changes. No commit/push/deploy.

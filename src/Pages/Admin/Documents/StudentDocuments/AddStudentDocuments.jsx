@@ -19,6 +19,7 @@ import {
 import { hydrateEnrolledStudentsFromApi } from '../../../../Common/StudentDatabase/enrolledStudentsData'
 import { isApiStudentsEnabled } from '../../../../services/apiClient'
 import { canUseDocumentsApi } from '../../../../services/documentsApi'
+import { ADMIN_STUDENT_DOCUMENT_PATHS } from '../documentRoutePaths'
 
 const readOnlyClass =
     'text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full bg-[#F9FAFB] cursor-not-allowed'
@@ -59,7 +60,7 @@ const buildInitialSlots = () =>
         status: 'Pending',
     }))
 
-const AddStudentDocuments = () => {
+const AddStudentDocuments = ({ paths = ADMIN_STUDENT_DOCUMENT_PATHS } = {}) => {
     const navigate = useNavigate()
     const [studentId, setStudentId] = useState('')
     const [admissionNumber, setAdmissionNumber] = useState('')
@@ -172,7 +173,7 @@ const AddStudentDocuments = () => {
             }
             setSaving(false)
             toast.success('Student documents submitted successfully.')
-            navigate('/admin/documents/student-documents')
+            navigate(paths.list)
             return
         }
 
@@ -188,7 +189,7 @@ const AddStudentDocuments = () => {
         })
 
         toast.success('Student documents submitted successfully.')
-        navigate('/admin/documents/student-documents')
+        navigate(paths.list)
     }
 
     return (
@@ -306,7 +307,7 @@ const AddStudentDocuments = () => {
             <div className='flex sm:justify-end justify-center gap-x-4 mt-6'>
                 <button
                     type='button'
-                    onClick={() => navigate('/admin/documents/student-documents')}
+                    onClick={() => navigate(paths.list)}
                     className='bg-white text-[#515DEF] text-sm text-center px-12 py-2 rounded-md border border-[#515DEF] hover:bg-[#515DEF] hover:text-white hover:border-[#515DEF] transition-all duration-200 cursor-pointer md:w-auto w-full'
                 >
                     Discard Changes

@@ -28,4 +28,6 @@ export const ROLES = {
     ACCOUNT_ASSISTANT: 'accountassistant',
     FINANCE_ASSISTANT: 'finance_assistant',
     DRIVER: 'driver',
+    FILE_ROOM: 'fileroom',
+    CCTV: 'cctv',
 }

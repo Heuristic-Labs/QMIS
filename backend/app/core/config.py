@@ -47,8 +47,16 @@ class Settings(BaseSettings):
     principal_seed_password: str = "principal123"
     prm_seed_email: str = "prm@qmis.edu"
     prm_seed_password: str = "prm12345"
+    # Local/demo only when seed_demo_accounts is enabled — never for production CI.
+    pro_seed_email: str = "pro@qmis.edu"
+    pro_seed_password: str = "pro12345"
     director_seed_email: str = "director@qmis.edu"
     director_seed_password: str = "director123"
+    # Local/demo only when seed_demo_accounts is enabled — never for production CI.
+    fileroom_seed_email: str = "fileroom@qmis.edu"
+    fileroom_seed_password: str = "fileroom123"
+    cctv_seed_email: str = "cctv@qmis.edu"
+    cctv_seed_password: str = "cctv12345"
     upload_dir: str = "uploads"
     # Campus wall-clock time, used where a rule depends on the local date/period (substitute duty).
     campus_timezone: str = "Asia/Kolkata"

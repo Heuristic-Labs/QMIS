@@ -14,8 +14,9 @@ import {
     RECORD_STATUS_OPTIONS,
 } from './employeeDocumentsData'
 import useDocumentRecords from '../useDocumentRecords'
+import { ADMIN_EMPLOYEE_DOCUMENT_PATHS } from '../documentRoutePaths'
 
-const EmployeeDocuments = () => {
+const EmployeeDocuments = ({ paths = ADMIN_EMPLOYEE_DOCUMENT_PATHS } = {}) => {
     const [fromDate, setFromDate] = useState(new Date())
     const [toDate, setToDate] = useState(new Date())
     const [search, setSearch] = useState('')
@@ -133,7 +134,7 @@ const EmployeeDocuments = () => {
                     </div>
                     <div className='flex gap-x-2'>
                         <NavLink
-                            to='/admin/documents/add-employee-documents'
+                            to={paths.add}
                             className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
                         >
                             <Plus size={16} />
@@ -245,7 +246,7 @@ const EmployeeDocuments = () => {
                                                     View
                                                 </button>
                                                 <NavLink
-                                                    to={`/admin/documents/edit-employee-documents/${record.id}`}
+                                                    to={paths.edit(record.id)}
                                                     className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'
                                                 >
                                                     Edit

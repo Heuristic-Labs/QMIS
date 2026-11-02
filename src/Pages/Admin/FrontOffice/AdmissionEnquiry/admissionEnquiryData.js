@@ -8,24 +8,32 @@ import {
     listEnquiriesApi,
     updateEnquiryApi,
 } from '../../../../services/admissionsApi'
+import { isPathUnder } from '../../../../utils/pathPrefix'
 
 const STORAGE_KEY = 'schoolerp-admin-admission-enquiries'
 const apiAdmissionsEnabled = () => isApiAdmissionsEnabled()
 export const ROUTE_BASE = '/admin/front-office/admission-enquiry'
 export const FRONT_OFFICE_ROUTE_BASE = '/front-office/admission-enquiry'
+export const PRO_ENQUIRY_ROUTE_BASE = '/pro/enquiries'
 
-export const getEnquiryRouteBase = (pathname = '') =>
-    pathname.startsWith('/front-office') ? FRONT_OFFICE_ROUTE_BASE : ROUTE_BASE
+export const getEnquiryRouteBase = (pathname = '') => {
+    if (isPathUnder(pathname, '/pro')) return PRO_ENQUIRY_ROUTE_BASE
+    if (pathname.startsWith('/front-office')) return FRONT_OFFICE_ROUTE_BASE
+    return ROUTE_BASE
+}
 
-export const getAddAdmissionPath = (pathname = '') =>
-    pathname.startsWith('/front-office')
-        ? '/front-office/add-admission'
-        : '/admin/front-office/add-admission'
+export const getAddAdmissionPath = (pathname = '') => {
+    // PRO portal is enquiry-focused; conversion still uses Front Office / Admin admission screens when opened from those portals.
+    if (pathname.startsWith('/front-office')) return '/front-office/add-admission'
+    if (isPathUnder(pathname, '/pro')) return '/pro/enquiries'
+    return '/admin/front-office/add-admission'
+}
 
-export const getAdmissionListPath = (pathname = '') =>
-    pathname.startsWith('/front-office')
-        ? '/front-office/admission-list'
-        : '/admin/front-office/admission-list'
+export const getAdmissionListPath = (pathname = '') => {
+    if (pathname.startsWith('/front-office')) return '/front-office/admission-list'
+    if (isPathUnder(pathname, '/pro')) return '/pro/enquiries'
+    return '/admin/front-office/admission-list'
+}
 
 export const isAdminFrontOfficePath = (pathname = '') =>
     pathname.startsWith('/admin/front-office')
