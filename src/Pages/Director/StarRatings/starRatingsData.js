@@ -102,9 +102,8 @@ export const getSomRatings = () => {
     } catch {
         /* ignore corrupt cache */
     }
-    const seed = SEED_SOM_RATINGS.map((row) => ({ ...row }))
-    saveSomRatings(seed)
-    return seed
+    // No auto-seed of SEED_SOM_RATINGS — empty until real ratings are saved.
+    return []
 }
 
 export const nextSomRatingId = (items = getSomRatings()) => {

@@ -196,15 +196,16 @@ export const complianceBadgeColor = {
 
 export const FINDINGS_STORAGE_KEY = 'schoolerp-jd-audit-findings-v1'
 export function getFindings() {
-    return ensureCampusSeed('schoolerp-jd-audit-findings-v1', DEFAULT_FINDINGS)
+    // Never auto-seed DEFAULT_FINDINGS into the UI — empty until real rows / hydrate.
+    return ensureCampusSeed('schoolerp-jd-audit-findings-v1', [])
 }
 export function saveFindings(rows) {
     return saveCampusJson('schoolerp-jd-audit-findings-v1', rows)
 }
 export function hydrateFindingsFromApi() {
     if (!usesCampusApiForKey('schoolerp-jd-audit-findings-v1')) return Promise.resolve(false)
-    return hydrateCampusKey('schoolerp-jd-audit-findings-v1', DEFAULT_FINDINGS)
+    return hydrateCampusKey('schoolerp-jd-audit-findings-v1', [])
 }
-/** Static seed / fallback — list pages should call getFindings() after hydrate */
-export const FINDINGS = DEFAULT_FINDINGS
+/** @deprecated Use getFindings() after hydrate — constant was the old mock seed. */
+export const FINDINGS = []
 

@@ -1,9 +1,7 @@
 import React from 'react'
 import { Route, Routes as ReactRoutes, Navigate } from 'react-router-dom'
 import Dashboard from '../Pages/Principal/Dashboard/Dashboard'
-import StarRatings from '../Pages/Principal/StarRatings/StarRatings'
 import { TaskManagementRoutes } from '../Common/TaskManagement/TaskManagementRoutes'
-import AddRatings from '../Pages/Principal/StarRatings/AddRatings'
 import ExaminationTimetableList from '../Pages/Principal/ExaminationTimetable/ExaminationTimetableList'
 import CreateExaminationTimetable from '../Pages/Principal/ExaminationTimetable/CreateExaminationTimetable'
 import PrincipalMarkEntryApproval from '../Pages/Principal/MarkEntryApproval/MarkEntryApproval'
@@ -66,10 +64,8 @@ const PrincipalRoutes = () => {
             <Route path="/principal/attendance" element={<Navigate to="/principal/attendance/my-attendance" replace />} />
             <Route path="/principal/attendance/my-attendance" element={<MyAttendance />} />
             {TaskManagementRoutes({ basePath: '/principal' })}
-            {/* Staff star ratings (legacy Principal panel) */}
-            <Route path="/principal/star-ratings/staff/star-of-month" element={<StarRatings view="som" />} />
-            <Route path="/principal/star-ratings/staff/star-of-year" element={<StarRatings view="soy" />} />
-            <Route path="/principal/star-ratings/staff/add-ratings" element={<AddRatings />} />
+            {/* Staff star ratings are mock-only — redirect to student SOM matrix / dashboard. */}
+            <Route path="/principal/star-ratings/staff/*" element={<Navigate to="/principal/star-ratings/som-matrix" replace />} />
             {/* Student SOM/SOY — same campus APIs as Teacher/Coordinator */}
             {StudentStarRatingsRoutes({ basePath: '/principal' })}
             <Route path="/principal/star-ratings-list" element={<Navigate to="/principal/star-ratings/som-matrix" replace />} />

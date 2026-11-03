@@ -28,13 +28,14 @@ export default function ActivityListView({ roleKey, activityType }) {
     const location = useLocation()
     const config = getActivityConfig(activityType)
     const routes = getActivityRoutes(activityType, roleKey)
-    const [fromDate, setFromDate] = useState(new Date())
-    const [toDate, setToDate] = useState(new Date())
+    const [fromDate, setFromDate] = useState(null)
+    const [toDate, setToDate] = useState(null)
     const [exportModal, setExportModal] = useState(false)
     const [statusFilter, setStatusFilter] = useState('')
     const [classFilter, setClassFilter] = useState('')
     const [search, setSearch] = useState('')
     const [refreshKey, setRefreshKey] = useState(0)
+    const [loading, setLoading] = useState(canUseActivitiesApi())
     const [feeActivityNames, setFeeActivityNames] = useState(() => getFeeActivitiesVisibleInModule())
     const classOptions = useMemo(() => getClassSelectOptions(), [])
 
@@ -48,14 +49,21 @@ export default function ActivityListView({ roleKey, activityType }) {
     }, [location.pathname])
 
     useEffect(() => {
-        if (!canUseActivitiesApi()) return undefined
+        if (!canUseActivitiesApi()) {
+            setLoading(false)
+            return undefined
+        }
         let active = true
+        setLoading(true)
         hydrateActivitiesFromApi(activityType)
             .then(() => {
                 if (active) setRefreshKey((value) => value + 1)
             })
             .catch(() => {
-                if (active) toast.error('Activities could not be loaded.')
+                if (active) toast.error('Activities could not be loaded from the API.')
+            })
+            .finally(() => {
+                if (active) setLoading(false)
             })
         return () => {
             active = false
@@ -275,10 +283,18 @@ export default function ActivityListView({ roleKey, activityType }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredActivities.length === 0 ? (
+                            {loading ? (
                                 <tr>
                                     <td colSpan={showPlayersColumn ? 12 : 11} className='px-2 py-8 text-center text-[#667085]'>
-                                        No activities found.
+                                        Loading activities from the API…
+                                    </td>
+                                </tr>
+                            ) : filteredActivities.length === 0 ? (
+                                <tr>
+                                    <td colSpan={showPlayersColumn ? 12 : 11} className='px-2 py-8 text-center text-[#667085]'>
+                                        {canUseActivitiesApi()
+                                            ? 'No activities on the server yet. Ask Admin to submit a cultural, sports, or competition activity.'
+                                            : 'No activities found.'}
                                     </td>
                                 </tr>
                             ) : (

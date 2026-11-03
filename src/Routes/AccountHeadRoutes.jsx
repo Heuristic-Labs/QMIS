@@ -9,7 +9,6 @@ import WalletManagement from '../Pages/AccountHead/WalletManagement/WalletManage
 import Accounting from '../Pages/AccountHead/Accounting/Accounting'
 import Approvals from '../Pages/AccountHead/Approvals/Approvals'
 import ReportsAnalytics from '../Pages/AccountHead/ReportsAnalytics/ReportsAnalytics'
-import Settings from '../Pages/AccountHead/Settings/Settings'
 import { TaskManagementRoutes } from '../Common/TaskManagement/TaskManagementRoutes'
 import { BookFeePage, BudgetPage, FeeProjectionPanel, MfpPlaceholder } from '../Common/demoDomain/DemoScreens'
 import PaymentVouchers from '../Pages/AccountHead/PaymentVouchers/PaymentVouchers'
@@ -42,7 +41,7 @@ const AccountHeadRoutes = () => {
             <Route path="/account-head/accounting/:section" element={<Accounting />} />
             <Route path="/account-head/approvals" element={<HeadOnlyOr><Approvals /></HeadOnlyOr>} />
             <Route path="/account-head/reports-analytics" element={<ReportsAnalytics />} />
-            <Route path="/account-head/settings" element={<HeadOnlyOr><Settings /></HeadOnlyOr>} />
+            <Route path="/account-head/settings" element={<Navigate to="/account-head/dashboard" replace />} />
             <Route path="/account-head/payment-vouchers" element={<HeadOnlyOr><PaymentVouchers /></HeadOnlyOr>} />
             <Route path="/account-head/book-fee" element={<HeadOnlyOr><BookFeePage /></HeadOnlyOr>} />
             <Route path="/account-head/annual-budget" element={<HeadOnlyOr><BudgetPage /></HeadOnlyOr>} />

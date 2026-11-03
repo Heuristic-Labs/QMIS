@@ -192,6 +192,10 @@ export const APPROVER_DECISION_TITLES = {
 export const resolveRoleKey = (roleKey) => {
     if (!roleKey) return null
     if (roleKey === 'vandriver') return ROLES.DRIVER
+    // Normalize camelCase / spaced labels used in a few page props.
+    if (roleKey === 'superAdmin' || roleKey === 'Super Admin') return ROLES.SUPER_ADMIN
+    if (roleKey === 'gateKeeperManager' || roleKey === 'Gate Keeper Manager') return ROLES.GATEKEEPER_MANAGER
+    if (roleKey === 'transportManager' || roleKey === 'Transport Manager') return ROLES.TRANSPORT_MANAGER
     return roleKey
 }
 

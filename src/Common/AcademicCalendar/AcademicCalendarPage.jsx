@@ -55,11 +55,12 @@ const emptyEventForm = () => ({
 const AcademicCalendarPage = ({ roleKey }) => {
     const roleConfig = getAcademicCalendarRoleConfig(roleKey)
     const showAddForm = canWriteCalendar(roleKey) && canUseCalendarApi()
-    const [currentDate, setCurrentDate] = useState(() => new Date(2026, 6, 1)) // Jul 2026 — has sample exams
+    const [currentDate, setCurrentDate] = useState(() => new Date()) // live month — never pinned to demo sample year
     const [selectedDate, setSelectedDate] = useState(null)
     const [activeTypes, setActiveTypes] = useState(() => new Set(TYPE_KEYS))
     const [calendarRefresh, setCalendarRefresh] = useState(0)
     const [serverItems, setServerItems] = useState(null)
+    const [loadingCalendar, setLoadingCalendar] = useState(canUseCalendarApi())
     const [loadError, setLoadError] = useState('')
     const [eventForm, setEventForm] = useState(emptyEventForm)
     const [formError, setFormError] = useState('')
@@ -77,17 +78,28 @@ const AcademicCalendarPage = ({ roleKey }) => {
     }, [])
 
     useEffect(() => {
-        if (!canUseCalendarApi()) return undefined
+        if (!canUseCalendarApi()) {
+            setLoadingCalendar(false)
+            return undefined
+        }
         let active = true
+        setLoadingCalendar(true)
         hydrateCalendarFromApi()
             .then((rows) => {
                 if (active) {
-                    setServerItems(rows)
+                    setServerItems(Array.isArray(rows) ? rows : [])
                     setLoadError('')
+                    setCalendarRefresh((value) => value + 1)
                 }
             })
             .catch((error) => {
-                if (active) setLoadError(error?.message || 'The calendar could not be loaded.')
+                if (active) {
+                    setServerItems([])
+                    setLoadError(error?.message || 'The calendar could not be loaded from the API.')
+                }
+            })
+            .finally(() => {
+                if (active) setLoadingCalendar(false)
             })
         return () => {
             active = false
@@ -124,7 +136,10 @@ const AcademicCalendarPage = ({ roleKey }) => {
 
     const filteredItems = useMemo(() => {
         void calendarRefresh
-        const source = canUseCalendarApi() ? (serverItems ?? []) : getAllCalendarItems()
+        // API mode: only server payload (incl. activity overlays from GET /calendar). Never static ACADEMIC_CALENDAR_ITEMS.
+        const source = canUseCalendarApi()
+            ? (serverItems ?? getAllCalendarItems())
+            : getAllCalendarItems()
         return source.filter((item) => activeTypes.has(item.type))
     }, [activeTypes, calendarRefresh, serverItems])
 
@@ -181,7 +196,15 @@ const AcademicCalendarPage = ({ roleKey }) => {
                         <p className="mt-0.5 text-sm text-[#667085]">
                             View holidays, exam timelines, and school events including Cultural, Sports & Competition activities.
                         </p>
+                        {loadingCalendar ? (
+                            <p className="mt-1 text-sm text-[#667085]">Loading calendar from the server…</p>
+                        ) : null}
                         {loadError ? <p className="mt-1 text-sm text-[#B42318]">{loadError}</p> : null}
+                        {!loadingCalendar && canUseCalendarApi() && !loadError && filteredItems.length === 0 ? (
+                            <p className="mt-1 text-sm text-[#667085]">
+                                No calendar events yet. Use Add Event to create holidays, exams, or school events.
+                            </p>
+                        ) : null}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                         {showAddForm ? (

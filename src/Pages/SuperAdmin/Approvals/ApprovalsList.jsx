@@ -7,14 +7,12 @@ import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import {
     APPROVAL_STATUSES,
-    DEMO_APPROVAL_SEEDS_NOTICE,
     categoryBadgeColor,
     filterApprovalRequests,
     formatAmount,
     getAllApprovalRequests,
     getApprovalSummary,
     hydrateApprovalsFromApi,
-    includeDemoApprovalSeeds,
     liveApprovalCategories,
     priorityBadgeColor,
     ROUTE_BASE,
@@ -81,13 +79,9 @@ const ApprovalsList = () => {
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <h1 className='text-xl font-semibold text-black'>Approvals</h1>
                 <p className='text-sm text-[#667085] mt-2'>
-                    {includeDemoApprovalSeeds()
-                        ? 'Live Activity Approvals plus demo sample rows (finance/HR/procurement/etc.). Only Activity Approvals are decided on the server.'
-                        : 'Live Activity Approvals only (cultural / sports / competitions). Demo finance/HR/procurement samples are hidden under API auth (ASA-04).'}
+                    Live Activity Approvals from GET /activities (cultural / sports / competitions). Approve or reject updates the server.
                 </p>
-                {!includeDemoApprovalSeeds() && (
-                    <p className='text-xs text-[#92400E] mt-2'>{DEMO_APPROVAL_SEEDS_NOTICE}</p>
-                )}
+                {loading ? <p className='text-sm text-[#667085] mt-2'>Loading approvals…</p> : null}
             </div>
 
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6'>
@@ -251,7 +245,9 @@ const ApprovalsList = () => {
                             {filteredRecords.length === 0 ? (
                                 <tr>
                                     <td colSpan={10} className='px-2 py-8 text-center text-[#667085]'>
-                                        {loading ? 'Loading approval requests…' : 'No approval requests found.'}
+                                        {loading
+                                            ? 'Loading approval requests…'
+                                            : 'No activity approvals yet. When Admin submits a cultural, sports, or competition activity it appears here for decision.'}
                                     </td>
                                 </tr>
                             ) : (

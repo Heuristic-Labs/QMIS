@@ -183,14 +183,34 @@ const toIso = (value) => {
     return `${date.getFullYear()}-${month}-${day}`
 }
 
+const ROLE_LABELS = {
+    superadmin: 'Super Admin',
+    admin: 'Admin',
+    director: 'Director',
+    principal: 'Principal',
+    teacher: 'Teacher',
+    coordinator: 'Coordinator',
+    hr: 'HR',
+    prm: 'Front Office',
+    pro: 'PRO',
+    gatekeeper: 'Gate Keeper',
+    gatekeepermanager: 'Gate Keeper Manager',
+    transportmanager: 'Transport Manager',
+    driver: 'Driver',
+}
+
 const mapApiLeave = (item) => {
     const submitterRole = resolveRoleKey(item.submitterRole)
-    const profile = getSubmitterProfile(submitterRole, {})
     const chain = Array.isArray(item.chain) ? item.chain : []
     const email = String(item.requestedBy || '').trim()
+    // Prefer the live requester identity from the API — never substitute DEFAULT_SUBMITTER_PROFILES
+    // demo names ("Demo Teacher", etc.) which made the Super Admin inbox look unwired.
     const displayName = email.includes('@')
-        ? (profile.requestedBy && profile.requestedBy !== 'Demo Driver' ? profile.requestedBy : email.split('@')[0])
-        : (item.requestedBy || profile.requestedBy)
+        ? (email.split('@')[0] || email)
+        : (email || 'Staff')
+    const roleLabel =
+        ROLE_LABELS[submitterRole]
+        || (submitterRole ? String(submitterRole).replace(/^\w/, (c) => c.toUpperCase()) : 'Staff')
     return {
         id: item.id,
         leaveRequestId: item.leaveRequestId,
@@ -198,8 +218,8 @@ const mapApiLeave = (item) => {
         requestedBy: displayName,
         requestedByEmail: email.includes('@') ? email : '',
         submitterRole,
-        role: profile.role,
-        department: profile.department,
+        role: roleLabel,
+        department: roleLabel,
         leaveType: item.leaveType,
         fromDate: isoToDmy(item.fromDate),
         toDate: isoToDmy(item.toDate),
@@ -231,9 +251,20 @@ const purgeBrowserLeaveCopies = () => {
 export const hydrateLeaveRequestsFromApi = async () => {
     if (!canUseLeaveApi()) return false
     try {
-        const [mine, received] = await Promise.all([listLeaveApi('mine'), listLeaveApi('received')])
+        // Super Admin / Admin / HR can list campus-wide leave via box=all (403 for other roles).
+        // Isolate each call so one failing box does not wipe the inbox.
+        const settled = await Promise.allSettled([
+            listLeaveApi('mine'),
+            listLeaveApi('received'),
+            listLeaveApi('all'),
+        ])
         const merged = new Map()
-        ;[...mine, ...received].forEach((item) => merged.set(item.id, mapApiLeave(item)))
+        settled.forEach((result) => {
+            if (result.status !== 'fulfilled' || !Array.isArray(result.value)) return
+            result.value.forEach((item) => {
+                if (item?.id) merged.set(item.id, mapApiLeave(item))
+            })
+        })
         const rows = [...merged.values()]
         saveRawToStorage(rows)
         purgeBrowserLeaveCopies()

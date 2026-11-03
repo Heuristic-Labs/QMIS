@@ -1,24 +1,6 @@
 import { ROLES } from '../../constants/roles'
 
 const STORAGE_KEY = 'schoolerp-parent-accounts'
-const DEFAULT_SEED_PASSWORD = 'Parent@123'
-
-const SEED_PARENT_ACCOUNTS = [
-    {
-        id: 'PAR-001',
-        email: 'parent@school.com',
-        name: 'Raj Kumar',
-        phone: '+91 98765 11111',
-        studentIds: ['STU-PAR-001', 'STU-PAR-002', 'STU-PAR-003'],
-    },
-    {
-        id: 'PAR-002',
-        email: 'parent-single@school.com',
-        name: 'Meera Sharma',
-        phone: '+91 98765 22222',
-        studentIds: ['STU-2024-1042'],
-    },
-]
 
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase()
 
@@ -41,30 +23,8 @@ const saveParents = (records) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records))
 }
 
-const seedParentAccounts = () => {
-    const now = new Date().toISOString()
-    const records = SEED_PARENT_ACCOUNTS.map((parent) => ({
-        id: parent.id,
-        email: normalizeEmail(parent.email),
-        password: DEFAULT_SEED_PASSWORD,
-        name: parent.name,
-        phone: parent.phone,
-        studentIds: [...parent.studentIds],
-        status: 'Active',
-        role: ROLES.PARENT,
-        source: 'seed',
-        createdAt: now,
-        updatedAt: now,
-    }))
-    saveParents(records)
-    return records
-}
-
-const ensureParentStoreInitialized = () => {
-    const records = loadParents()
-    if (records.length > 0) return records
-    return seedParentAccounts()
-}
+/** Returns stored parent accounts only — never auto-seeds demo parents. */
+const ensureParentStoreInitialized = () => loadParents()
 
 export const resolveParentAccountEmail = (admission) =>
     normalizeEmail(admission?.parentAccountEmail || admission?.parentEmail)

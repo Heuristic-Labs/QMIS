@@ -24,14 +24,17 @@ const MyAttendance = () => {
     const [fromDate, setFromDate] = useState(new Date())
     const [toDate, setToDate] = useState(new Date())
     const [exportModal, setExportModal] = useState(false)
-    const [rows, setRows] = useState(() => [...MY_ATTENDANCE_LIST])
-    const [loadError, setLoadError] = useState('')
     const api = isApiAuthEnabled() && Boolean(getAccessToken())
+    const [rows, setRows] = useState(() => (api ? [] : [...MY_ATTENDANCE_LIST]))
+    const [loadError, setLoadError] = useState('')
 
     useEffect(() => {
-        if (!api) return undefined
+        if (!api) {
+            setRows([...MY_ATTENDANCE_LIST])
+            return undefined
+        }
         let active = true
-        apiRequest('/hr/attendance')
+        apiRequest('/hr/attendance/mine')
             .then((payload) => {
                 if (!active) return
                 const list = Array.isArray(payload) ? payload : payload?.items || payload?.records || []

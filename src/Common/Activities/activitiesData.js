@@ -5,6 +5,7 @@ import {
     updateActivityApi,
     approveActivityApi as approveActivityOnServer,
 } from '../../services/activitiesApi'
+import { isApiActivitiesEnabled } from '../../services/apiClient'
 import { dmyToIso, isoToDmy } from '../../services/documentsApi'
 
 const STORAGE_KEY = 'school-erp-activities'
@@ -120,23 +121,22 @@ export const approveActivityViaApi = async (id, status) => {
 }
 
 export const getActivities = () => {
-    if (canUseActivitiesApi()) return [...apiActivities]
+    // API auth / activities flag: never paint DEFAULT chess-tournament seed into the UI.
+    if (canUseActivitiesApi() || isApiActivitiesEnabled()) {
+        return [...apiActivities]
+    }
     try {
         const stored = localStorage.getItem(STORAGE_KEY)
         if (stored) {
             const parsed = JSON.parse(stored)
             const records = Array.isArray(parsed) ? parsed : []
-            const merged = mergeDefaultActivities(records)
-            if (merged.length !== records.length) {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(merged))
-            }
-            return merged
+            // Offline-only: still avoid auto-merging demo defaults into an empty wiped store.
+            return Array.isArray(records) ? records.map((activity) => ({ ...activity })) : []
         }
     } catch {
         /* ignore */
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ACTIVITIES))
-    return DEFAULT_ACTIVITIES.map((activity) => ({ ...activity }))
+    return []
 }
 
 export const saveActivities = (records) => {

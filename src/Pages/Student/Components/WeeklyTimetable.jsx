@@ -43,40 +43,15 @@ const DEFAULT_TIME_SLOTS = [
     { time: "11:15 AM -\n12:00 PM", label: "11:15 AM - 12:00 PM" },
 ];
 
-const DEFAULT_SCHEDULE = {
-    "09:00 AM - 09:45 AM": {
-        Monday: { subject: "Mathematics", teacher: "Sandy Selva" },
-        Tuesday: { subject: "English", teacher: "Kamal" },
-        Wednesday: { subject: "Social", teacher: "Mr. Karthik" },
-        Thursday: { subject: "Tamil", teacher: "Mrs. Priya" },
-        Friday: { subject: "Science", teacher: "Vichu" },
-        Saturday: { subject: "Mathematics", teacher: "Sandy Selva" },
-    },
-    "09:45 AM - 10:30 AM": {
-        Monday: { subject: "English", teacher: "Kamal" },
-        Tuesday: { subject: "Science", teacher: "Vichu" },
-        Wednesday: { subject: "Mathematics", teacher: "Sandy Selva" },
-        Thursday: { subject: "English", teacher: "Kamal" },
-        Friday: { subject: "Tamil", teacher: "Mrs. Priya" },
-        Saturday: { subject: "Social", teacher: "Mr. Karthik" },
-    },
-    "10:30 AM - 11:15 AM": {
-        Monday: { subject: "Mathematics", teacher: "Sandy Selva" },
-        Tuesday: { subject: "English", teacher: "Kamal" },
-        Wednesday: { subject: "Social", teacher: "Mr. Karthik" },
-        Thursday: { subject: "Tamil", teacher: "Mrs. Priya" },
-        Friday: { subject: "Science", teacher: "Vichu" },
-        Saturday: { subject: "Mathematics", teacher: "Sandy Selva" },
-    },
-    "11:15 AM - 12:00 PM": {
-        Monday: { subject: "English", teacher: "Kamal" },
-        Tuesday: { subject: "Science", teacher: "Vichu" },
-        Wednesday: { subject: "Mathematics", teacher: "Sandy Selva" },
-        Thursday: { subject: "English", teacher: "Kamal" },
-        Friday: { subject: "Tamil", teacher: "Mrs. Priya" },
-        Saturday: { subject: "Social", teacher: "Mr. Karthik" },
-    },
-};
+const emptyPeriod = () => ({ subject: "", teacher: "" })
+
+/** Empty period grid — never seed fake subjects/teachers when schedule prop is omitted. */
+const DEFAULT_SCHEDULE = Object.fromEntries(
+    DEFAULT_TIME_SLOTS.map((slot) => [
+        slot.label,
+        Object.fromEntries(DEFAULT_DAYS.map((day) => [day, emptyPeriod()])),
+    ]),
+);
 
 // Soft pastel subject color map — extend or override via props
 const DEFAULT_SUBJECT_COLORS = {

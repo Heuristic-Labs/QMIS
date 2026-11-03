@@ -4,9 +4,7 @@ import Dashboard from '../Pages/Director/Dashboard/Dashboard'
 import AnnouncementList from '../Pages/Director/Announcement/AnnouncementList'
 import AddAnnouncement from '../Pages/Director/Announcement/AddAnnouncement'
 import ViewAnnouncement from '../Pages/Director/Announcement/ViewAnnouncement'
-import StarRatings from '../Pages/Director/StarRatings/StarRatings'
 import { TaskManagementRoutes } from '../Common/TaskManagement/TaskManagementRoutes'
-import AddRatings from '../Pages/Director/StarRatings/AddRatings'
 import ExamApprovals from '../Pages/Director/ExamApprovals/ExamApprovals'
 import ClassTimetableApprovals from '../Pages/Director/ClassTimetable/ClassTimetableApprovals'
 import CreateExaminationTimetable from '../Pages/Principal/ExaminationTimetable/CreateExaminationTimetable'
@@ -62,10 +60,9 @@ const DirectorRoutes = () => {
             <Route path="/director/broadcast/add-broadcast" element={<AddAnnouncement />} />
             <Route path="/director/broadcast/view-broadcast/:id" element={<ViewAnnouncement />} />
             {TaskManagementRoutes({ basePath: '/director' })}
-            <Route path="/director/star-ratings/star-of-month" element={<StarRatings view="som" />} />
-            <Route path="/director/star-ratings/star-of-year" element={<StarRatings view="soy" />} />
-            <Route path="/director/star-ratings/add-ratings" element={<AddRatings />} />
-            <Route path="/director/star-ratings-list" element={<Navigate to="/director/star-ratings/star-of-month" replace />} />
+            {/* Staff SOM is mock-only — redirect away from demo star-ratings. */}
+            <Route path="/director/star-ratings/*" element={<Navigate to="/director/dashboard" replace />} />
+            <Route path="/director/star-ratings-list" element={<Navigate to="/director/dashboard" replace />} />
             <Route path="/director/examination-approvals" element={<ExamApprovals />} />
             <Route path="/director/edit-examination-timetable/:id" element={<CreateExaminationTimetable />} />
             <Route path="/director/class-timetable-approvals" element={<ClassTimetableApprovals />} />

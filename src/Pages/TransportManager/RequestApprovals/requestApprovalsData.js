@@ -1,3 +1,4 @@
+import { liveArray } from '../../../Common/RBAC/liveArray'
 import { getTransportRows, hydrateTransportRows, nextPrefixedId, saveTransportRows } from '../transportCampus'
 import {
     getMaintenanceRecords,
@@ -645,5 +646,6 @@ export async function hydrateTransportApprovalRequestsFromApi() {
         hydrateDriverMaintenanceRequestsFromApi(),
     ])
 }
-export const MAINTENANCE_REQUESTS = DEFAULT_MAINTENANCE_REQUESTS
-export const FUEL_REQUESTS = DEFAULT_FUEL_REQUESTS
+/** Prefer getters after hydrate — empty in API mode via getTransportRows. */
+export const MAINTENANCE_REQUESTS = liveArray(getMaintenanceRequests)
+export const FUEL_REQUESTS = liveArray(getFuelRequests)

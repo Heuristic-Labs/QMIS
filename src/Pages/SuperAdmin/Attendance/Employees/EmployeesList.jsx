@@ -5,10 +5,7 @@ import { Calendar, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import ExportModal from '../../../../Common/CommonComponents/ExportModal'
 import AttendanceOverviewSection from '../Components/AttendanceOverviewSection'
 import {
-    EMPLOYEE_ATTENDANCE,
     filterEmployeeAttendance,
-    ROLE_OPTIONS,
-    STATUS_OPTIONS,
     statusBadgeColor,
 } from '../../../Admin/Attendance/Employees/employeeAttendanceData'
 import { canUseAdminAttendanceApi, loadEmployeeAttendance, toIsoDate } from '../../../../services/adminAttendanceApi'
@@ -32,16 +29,20 @@ const EmployeesList = () => {
     const apiMode = canUseAdminAttendanceApi()
     const query = useAttendanceQuery(apiMode, loadEmployeeAttendance, noParams)
     const apiRecords = query.data?.records
+    const warnings = query.data?.warnings || []
+    const dailyTrend = query.data?.dailyTrend || { labels: [], rates: [] }
     const selectedIso = selectedDate ? toIsoDate(selectedDate) : ''
-    const roleOptions = apiMode ? (query.options?.roleOptions ?? []) : ROLE_OPTIONS
-    const statusOptions = apiMode ? (query.options?.statusOptions ?? []) : STATUS_OPTIONS
+    const roleOptions = query.options?.roleOptions ?? []
+    const statusOptions = query.options?.statusOptions ?? []
 
-    // Backend HR attendance may not have rows for "today". On first successful load, jump to the
-    // latest date that has marks so Super Admin sees live data instead of an empty table.
+    // Jump to the latest punch date so Super Admin sees live HR rows instead of an empty "today".
     useEffect(() => {
         if (!apiMode || didAutoPickDate.current || query.status !== 'ready') return
         const records = apiRecords ?? []
-        if (!records.length) return
+        if (!records.length) {
+            didAutoPickDate.current = true
+            return
+        }
         const onSelected = selectedIso
             ? records.filter((record) => record.date === selectedIso)
             : records
@@ -54,19 +55,31 @@ const EmployeesList = () => {
         if (parsed) {
             didAutoPickDate.current = true
             setSelectedDate(parsed)
+        } else {
+            didAutoPickDate.current = true
         }
     }, [apiMode, query.status, apiRecords, selectedIso])
 
     const filteredRecords = useMemo(() => {
-        if (!apiMode) return filterEmployeeAttendance(EMPLOYEE_ATTENDANCE, filters)
         const onDate = (apiRecords ?? []).filter((record) => !selectedIso || record.date === selectedIso)
         return filterEmployeeAttendance(onDate, filters)
-    }, [apiMode, apiRecords, selectedIso, filters])
+    }, [apiRecords, selectedIso, filters])
 
     const clearFilters = () => {
         setFilters(emptyFilters)
         setSelectedDate(null)
         didAutoPickDate.current = true
+    }
+
+    if (!apiMode) {
+        return (
+            <section className='bg-white rounded-2xl shadow-md p-8 text-center'>
+                <h2 className='text-xl font-semibold text-[#0C1E5B]'>Employee Attendance</h2>
+                <p className='text-sm text-[#667085] mt-2 max-w-lg mx-auto'>
+                    Live HR attendance API is off for this session. Sign in with a campus API account to view real punches — demo rows are not shown.
+                </p>
+            </section>
+        )
     }
 
     return (
@@ -75,7 +88,8 @@ const EmployeesList = () => {
                 records={filteredRecords}
                 groupKey='role'
                 groupChartTitle='Role-wise Attendance Rate'
-                weeklyTrendLabel='Employee Attendance'
+                dailyTrend={dailyTrend}
+                trendTitle='Employee attendance (last 7 days)'
             />
 
             <div className='bg-white rounded-2xl shadow-md p-4'>
@@ -122,6 +136,7 @@ const EmployeesList = () => {
                                 onChange={setSelectedDate}
                                 dateFormat='dd/MM/yyyy'
                                 isClearable
+                                placeholderText='All dates'
                                 className='w-full text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-3 py-2 pr-10 focus:outline-none'
                             />
                             <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
@@ -149,10 +164,11 @@ const EmployeesList = () => {
                     <div>
                         <h2 className='text-xl font-medium text-black'>Employee Attendance</h2>
                         <p className='text-sm text-[#667085] mt-1'>
-                            {apiMode
-                                ? 'HR attendance + employee directory from the API — same flow as Admin. Clear the date to see all days.'
-                                : 'Local demo rows (API attendance flag off).'}
+                            Live HR collection GET /hr/attendance joined to the employee directory. Clear the date to see all days.
                         </p>
+                        {warnings.length ? (
+                            <p className='text-xs text-[#B54708] mt-1'>{warnings.join(' ')}</p>
+                        ) : null}
                     </div>
                     <button
                         type='button'
@@ -163,9 +179,9 @@ const EmployeesList = () => {
                         Export
                     </button>
                 </div>
-                {apiMode && query.status === 'loading' ? (
+                {query.status === 'loading' ? (
                     <div role='status' className='py-16 text-center text-sm text-[#667085]'>Loading attendance…</div>
-                ) : apiMode && query.status === 'error' ? (
+                ) : query.status === 'error' ? (
                     <div role='alert' className='py-16 text-center'>
                         <h3 className='text-lg font-semibold text-[#B42318]'>Could not load attendance</h3>
                         <p className='text-sm text-[#667085] mt-2 max-w-md mx-auto'>{query.error}</p>
@@ -181,6 +197,7 @@ const EmployeesList = () => {
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-s-lg'>Employee ID</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Employee Name</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Employee Role</th>
+                                    <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Date</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Punch In Time</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Out Time</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-e-lg'>Status</th>
@@ -189,8 +206,8 @@ const EmployeesList = () => {
                             <tbody>
                                 {filteredRecords.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className='px-2 py-10 text-center text-[#667085]'>
-                                            No attendance rows for this filter.
+                                        <td colSpan={7} className='px-2 py-10 text-center text-[#667085]'>
+                                            No HR attendance punches for this filter. Rows appear when HR / biometric posts to the attendance collection.
                                         </td>
                                     </tr>
                                 ) : (
@@ -199,10 +216,11 @@ const EmployeesList = () => {
                                             <td className='px-2 py-4 font-medium text-[#1E1E1E] rounded-s-lg'>{record.employeeId}</td>
                                             <td className='px-2 py-4'>{record.employeeName}</td>
                                             <td className='px-2 py-4'>{record.role}</td>
+                                            <td className='px-2 py-4'>{record.date || '—'}</td>
                                             <td className='px-2 py-4'>{record.punchInTime}</td>
                                             <td className='px-2 py-4'>{record.punchOutTime}</td>
                                             <td className='px-2 py-4 rounded-e-lg'>
-                                                <span className={`px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap ${statusBadgeColor[record.status]}`}>
+                                                <span className={`px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap ${statusBadgeColor[record.status] || 'bg-[#66708533] text-[#667085]'}`}>
                                                     {record.status}
                                                 </span>
                                             </td>
@@ -217,7 +235,7 @@ const EmployeesList = () => {
 
             <div className='flex justify-between items-center px-4'>
                 <p className='text-sm font-medium text-[#515DEF]'>
-                    {apiMode && query.status !== 'ready'
+                    {query.status !== 'ready'
                         ? ''
                         : `Showing 1 to ${filteredRecords.length} of ${filteredRecords.length} entries`}
                 </p>
@@ -243,6 +261,7 @@ const EmployeesList = () => {
                     employee_id: row.employeeId,
                     employee_name: row.employeeName,
                     role: row.role,
+                    date: row.date,
                     punch_in: row.punchInTime,
                     punch_out: row.punchOutTime,
                     status: row.status,

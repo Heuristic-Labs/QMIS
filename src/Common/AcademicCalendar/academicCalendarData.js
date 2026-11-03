@@ -4,9 +4,10 @@ import {
     createCalendarApi,
     listCalendarApi,
 } from '../../services/calendarApi'
+import { isApiCalendarEnabled } from '../../services/apiClient'
 
-/** Roles that hold calendar.write on the backend (admin, principal, director; superAdmin has all). */
-export const CALENDAR_WRITE_ROLE_KEYS = new Set(['admin', 'principal', 'director', 'superAdmin'])
+/** Roles that hold calendar.write on the backend (admin, principal, director; superadmin has all). */
+export const CALENDAR_WRITE_ROLE_KEYS = new Set(['admin', 'principal', 'director', 'superAdmin', 'superadmin'])
 
 export const canWriteCalendar = (roleKey) => CALENDAR_WRITE_ROLE_KEYS.has(roleKey)
 
@@ -203,11 +204,11 @@ export const clearCalendarMemory = () => {
     apiItems = []
 }
 
-/** Server events (including activity overlays) when signed in; otherwise the static year plus local activities. */
-export const getAllCalendarItems = () =>
-    canUseCalendarApi()
-        ? [...apiItems]
-        : [...ACADEMIC_CALENDAR_ITEMS, ...getActivityCalendarItems()]
+/** Server events when calendar API flag is on; never fall back to ACADEMIC_CALENDAR_ITEMS seed in API mode. */
+export const getAllCalendarItems = () => {
+    if (canUseCalendarApi() || isApiCalendarEnabled()) return [...apiItems]
+    return [...ACADEMIC_CALENDAR_ITEMS, ...getActivityCalendarItems()]
+}
 
 export const ACADEMIC_CALENDAR_ROLE_CONFIG = {
     superAdmin: { roleLabel: 'Super Admin', routeBase: '/super-admin/academic-calendar' },

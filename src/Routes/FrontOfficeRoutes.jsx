@@ -76,7 +76,9 @@ const FrontOfficeRoutes = () => {
             <Route path="/front-office/parent-management" element={<ParentsList />} />
             <Route path="/front-office/view-student" element={<Navigate to="/front-office/student-management" replace />} />
             <Route path="/front-office/view-teacher" element={<Navigate to="/front-office/teacher-management" replace />} />
-            <Route path="/front-office/view-parent" element={<ViewParent />} />
+            <Route path="/front-office/view-parent" element={<Navigate to="/front-office/parent-management" replace />} />
+            <Route path="/front-office/view-parent/:id" element={<ViewParent />} />
+            <Route path="/front-office/parent-management/view/:id" element={<ViewParent />} />
             <Route path="/front-office/student-transfer" element={<StudentTransfer />} />
             <Route path="/front-office/student-transfer/add" element={<AddStudentTransfer />} />
             <Route path="/front-office/student-re-enrollment" element={<StudentReEnrollmentList />} />

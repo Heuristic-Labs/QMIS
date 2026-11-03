@@ -6,21 +6,22 @@ import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import noProfile from '../../../assets/images/no-profile.png'
 import { isApiStudentsEnabled } from '../../../services/apiClient'
 import { listStaffParentsApi } from '../../../services/parentsStaffApi'
+import { getParentsList } from './parentsListData'
 
 const ParentsList = () => {
     const [fromDate, setFromDate] = useState(null)
     const [toDate, setToDate] = useState(null)
     const [exportModal, setExportModal] = useState(false)
-    const [rows, setRows] = useState([])
-    const [loading, setLoading] = useState(true)
+    const [rows, setRows] = useState(() => (isApiStudentsEnabled() ? [] : getParentsList()))
+    const [loading, setLoading] = useState(isApiStudentsEnabled())
     const [error, setError] = useState('')
     const [search, setSearch] = useState('')
 
     useEffect(() => {
         let cancelled = false
         if (!isApiStudentsEnabled()) {
-            setRows([])
-            setError('Parents list requires API auth — connect to the database to load real parent records.')
+            setRows(getParentsList())
+            setError('')
             setLoading(false)
             return undefined
         }
@@ -44,8 +45,8 @@ const ParentsList = () => {
             })
             .catch((err) => {
                 if (!cancelled) {
-                    setRows([])
-                    setError(err.message || 'Failed to load parents.')
+                    setRows(getParentsList())
+                    setError(err.message || 'Failed to load parents from API; showing local parent accounts.')
                 }
             })
             .finally(() => {

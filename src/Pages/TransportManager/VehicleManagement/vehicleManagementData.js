@@ -1,3 +1,4 @@
+import { liveArray } from '../../../Common/RBAC/liveArray'
 import { getTransportRows, hydrateTransportRows, saveTransportRows, nextPrefixedId } from '../transportCampus'
 
 export const VEHICLE_CATEGORIES = ['Bus', 'Car']
@@ -175,6 +176,6 @@ export async function deleteVehicle(id) {
     return saveVehicles(next)
 }
 
-/** Static seed / fallback — list pages should call getVehicles() after hydrate */
-export const VEHICLES = DEFAULT_VEHICLES
+/** Prefer getVehicles() after hydrate — empty in API mode via getTransportRows. */
+export const VEHICLES = liveArray(getVehicles)
 

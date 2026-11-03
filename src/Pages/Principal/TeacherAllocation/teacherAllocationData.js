@@ -184,9 +184,6 @@ const DEMO_TEACHERS = [
     },
 ]
 
-/** @deprecated Prefer getTeachers() — seed list kept for offline demos. */
-export const TEACHERS = DEMO_TEACHERS
-
 let teacherRoster = null
 let teacherRosterHydrating = null
 // 'idle' | 'loading' | 'ready' | 'empty' | 'error' — server mode only; offline uses the demo roster.
@@ -249,13 +246,15 @@ const rebuildDepartments = (teachers) => {
 
 export const getDepartments = () => [...DEPARTMENTS]
 
-// With the server on, never show the demo TEA-* roster: allocating one of those people saves an
-// allocation that matches no real employee, so their subjects never reach timetables.
+// With API/catalog mode on (or after an empty HR hydrate), never show the demo TEA-* roster:
+// allocating one of those people saves an allocation that matches no real employee.
 export const getTeachers = () => {
     if (Array.isArray(teacherRoster) && teacherRoster.length) return [...teacherRoster]
-    if (canUseEmployeeDirectoryApi()) return []
-    return [...DEMO_TEACHERS]
+    return []
 }
+
+/** @deprecated Prefer getTeachers() — live proxy; empty when API/catalog mode is on. */
+export const TEACHERS = liveArray(getTeachers)
 
 export const setTeacherRoster = (teachers) => {
     teacherRoster = Array.isArray(teachers) ? teachers : []
@@ -270,7 +269,7 @@ export const clearTeacherRosterMemory = () => {
 
 /**
  * Load teachers from HR Employee Directory (same source as Principal Employee Database).
- * Falls back to demo TEA-* roster when the API is off or returns no teaching staff.
+ * In API/catalog mode an empty directory yields [] (never DEMO_TEACHERS).
  */
 export const hydrateTeachersFromDirectory = async ({ force = false } = {}) => {
     if (!force && Array.isArray(teacherRoster) && teacherRoster.length) return true
@@ -278,7 +277,7 @@ export const hydrateTeachersFromDirectory = async ({ force = false } = {}) => {
 
     teacherRosterHydrating = (async () => {
         if (!canUseEmployeeDirectoryApi()) {
-            teacherRoster = null
+            teacherRoster = apiCatalogMode() ? [] : null
             teacherRosterStatus = 'idle'
             emitUpdated()
             return false
@@ -300,12 +299,13 @@ export const hydrateTeachersFromDirectory = async ({ force = false } = {}) => {
                 setTeacherRoster(teachers)
                 return true
             }
-            teacherRoster = null
+            // Empty directory: keep [] so getters never fall through to DEMO_TEACHERS.
+            teacherRoster = []
             teacherRosterStatus = 'empty'
             emitUpdated()
             return false
         } catch {
-            teacherRoster = null
+            teacherRoster = []
             teacherRosterStatus = 'error'
             emitUpdated()
             return false
@@ -409,7 +409,7 @@ export const hydrateTeacherAllocationsFromApi = async ({ force = false } = {}) =
 }
 
 export const getAllocations = () => {
-    if (usesApiMemory()) {
+    if (usesApiMemory() || apiCatalogMode()) {
         // CA-03: never surface demo rows as live allocations when API mode is on.
         if (!Array.isArray(apiMemoryAllocations)) return []
         return [...apiMemoryAllocations]
@@ -420,12 +420,11 @@ export const getAllocations = () => {
     } catch {
         /* ignore */
     }
-    // Explicit offline demo only (API auth off).
-    return DEMO_ALLOCATIONS.map((row) => ({ ...row, mappings: [...(row.mappings || [])] }))
+    return []
 }
 
-/** True when offline demo allocations are in use (API auth off). */
-export const isUsingDemoAllocations = () => !usesApiMemory()
+/** True when offline demo allocations would previously apply — always false (demos removed). */
+export const isUsingDemoAllocations = () => false
 
 export const saveAllocations = async (records) => {
     const list = Array.isArray(records) ? records : []
@@ -499,9 +498,8 @@ export const getTeacherAllocationRow = (teacher) => {
 export const getTeacherAllocationRows = () =>
     getTeachers().map((teacher) => getTeacherAllocationRow(teacher))
 
-/** True when the list is still the offline demo TEA-* seed (not HR). */
-export const isUsingDemoTeacherRoster = () =>
-    !canUseEmployeeDirectoryApi() && (!Array.isArray(teacherRoster) || teacherRoster.length === 0)
+/** True when the list is still the offline demo TEA-* seed (not HR / not API mode). */
+export const isUsingDemoTeacherRoster = () => false
 
 export const emptyTeacherAllocationFilters = {
     search: '',

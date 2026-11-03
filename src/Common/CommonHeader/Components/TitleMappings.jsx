@@ -312,6 +312,7 @@ export const singleTitleMapping = {
     "/front-office/view-student": "View Student",
     "/front-office/view-teacher": "View Teacher",
     "/front-office/view-parent": "View Parent",
+    "/front-office/parent-management/view": "View Parent",
     "/front-office/student-transfer": "Student Transfer List",
     "/front-office/student-transfer/add": "Add Student Transfer",
     "/front-office/student-re-enrollment": "Student Re-Enrollment List",
@@ -892,6 +893,8 @@ export const singleTitleMapping = {
 
 /** Paths with params never equal `location.pathname`; match with prefixes / patterns here */
 const dynamicTitleMatchers = [
+    { test: (p) => /^\/front-office\/view-parent\/[^/]+$/.test(p), title: 'View Parent' },
+    { test: (p) => /^\/front-office\/parent-management\/view\/[^/]+$/.test(p), title: 'View Parent' },
     { test: (p) => /^\/teacher\/lesson-plan-approval\/group\/[^/]+\/[^/]+$/.test(p), title: 'Lesson Plan Group' },
     { test: (p) => /^\/teacher\/lesson-plan\/my-lesson-plan\/group\/[^/]+\/[^/]+$/.test(p), title: 'My Lesson Plan Group' },
     { test: (p) => /^\/coordinator\/lesson-plan-approval\/group\/[^/]+\/[^/]+$/.test(p), title: 'Lesson Plan Group' },

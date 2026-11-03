@@ -78,10 +78,9 @@ export const filterFuelRequests = ({
 })
 
 export function getDriverFuelRequests() {
-    if (usesCampusApiForKey(FUEL_REQUESTS_STORAGE_KEY)) {
-        return ensureCampusSeed(FUEL_REQUESTS_STORAGE_KEY, [])
-    }
-    return ensureCampusSeed(FUEL_REQUESTS_STORAGE_KEY, DEMO_FUEL_REQUESTS)
+    // API mode: never surface DEMO_FUEL_REQUESTS as table rows.
+    const seed = usesCampusApiForKey(FUEL_REQUESTS_STORAGE_KEY) ? [] : DEMO_FUEL_REQUESTS
+    return ensureCampusSeed(FUEL_REQUESTS_STORAGE_KEY, seed)
 }
 
 export function saveDriverFuelRequests(rows) {

@@ -23,10 +23,9 @@ import EmployeesList from '../Pages/SuperAdmin/UserManagement/EmployeeDatabase/E
 import ViewEmployee from '../Pages/SuperAdmin/UserManagement/EmployeeDatabase/ViewEmployee'
 import GatePassList from '../Pages/SuperAdmin/GatePass/GatePassList'
 import ViewGatePass from '../Pages/SuperAdmin/GatePass/ViewGatePass'
-import StarRatings from '../Pages/SuperAdmin/StarRatings/StarRatings'
 import ActivityLogList from '../Pages/SuperAdmin/ActivityLogs/ActivityLogList'
 import ViewActivityLog from '../Pages/SuperAdmin/ActivityLogs/ViewActivityLog'
-import { DemoActivityPage, ReentryPage } from '../Common/demoDomain/DemoScreens'
+import { ReentryPage } from '../Common/demoDomain/DemoScreens'
 import { CriticalInventoryPage } from '../Common/demoDomain/WorkflowScreens'
 import TransportOverview from '../Pages/SuperAdmin/TransportOverview/TransportOverview'
 import ApprovalsList from '../Pages/SuperAdmin/Approvals/ApprovalsList'
@@ -73,9 +72,9 @@ const SuperAdminRoutes = () => {
 
             <Route path="/super-admin/transport-overview" element={<TransportOverview />} />
 
-            <Route path="/super-admin/star-ratings" element={<Navigate to="/super-admin/star-ratings/star-of-month" replace />} />
-            <Route path="/super-admin/star-ratings/star-of-month" element={<StarRatings view="som" />} />
-            <Route path="/super-admin/star-ratings/star-of-year" element={<StarRatings view="soy" />} />
+            <Route path="/super-admin/star-ratings" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="/super-admin/star-ratings/star-of-month" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="/super-admin/star-ratings/star-of-year" element={<Navigate to="/super-admin/dashboard" replace />} />
 
             {TaskManagementRoutes({ basePath: '/super-admin' })}
 
@@ -121,14 +120,15 @@ const SuperAdminRoutes = () => {
             <Route path="/super-admin/escalation-management/add-escalation" element={<AddEscalation />} />
             <Route path="/super-admin/escalation-management/view/:id" element={<ViewEscalation />} />
 
-            <Route path="/super-admin/activity-logs" element={<Navigate to="/super-admin/activity-logs/login-history" replace />} />
-            <Route path="/super-admin/activity-logs/login-history" element={<ActivityLogList logType="login-history" />} />
+            <Route path="/super-admin/activity-logs" element={<Navigate to="/super-admin/activity-logs/audit-logs" replace />} />
+            <Route path="/super-admin/activity-logs/login-history" element={<Navigate to="/super-admin/activity-logs/audit-logs" replace />} />
             <Route path="/super-admin/activity-logs/data-changes" element={<ActivityLogList logType="data-changes" />} />
             <Route path="/super-admin/activity-logs/deleted-records" element={<ActivityLogList logType="deleted-records" />} />
             <Route path="/super-admin/activity-logs/approval-actions" element={<ActivityLogList logType="approval-actions" />} />
             <Route path="/super-admin/activity-logs/audit-logs" element={<ActivityLogList logType="audit-logs" />} />
-            <Route path="/super-admin/activity-logs/failed-logins" element={<ActivityLogList logType="failed-logins" />} />
-            <Route path="/super-admin/activity-logs/demo-activity" element={<DemoActivityPage />} />
+            <Route path="/super-admin/activity-logs/failed-logins" element={<Navigate to="/super-admin/activity-logs/audit-logs" replace />} />
+            <Route path="/super-admin/activity-logs/demo-activity" element={<Navigate to="/super-admin/activity-logs/audit-logs" replace />} />
+            <Route path="/super-admin/star-ratings/*" element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="/super-admin/reentry" element={<ReentryPage />} />
             <Route path="/super-admin/module-health" element={<CriticalInventoryPage />} />
             <Route path="/super-admin/activity-logs/view/:id" element={<ViewActivityLog />} />

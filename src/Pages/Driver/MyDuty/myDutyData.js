@@ -1,4 +1,6 @@
+import { getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
 import { hydrateCampusKey, loadCampusJson, saveCampusJson, usesCampusApiForKey } from '../../../services/campusJsonStore'
+import { liveArray } from '../../../Common/RBAC/liveArray'
 
 export const SHIFTS = ['Morning', 'Afternoon', 'Evening']
 
@@ -103,8 +105,10 @@ const asDuty = (row) => ({
     assignedBy: row.assignedBy || 'Transport Manager',
 })
 
+const apiCatalogMode = () => isApiAuthEnabled() && Boolean(getAccessToken())
+
 export function getMyDuties() {
-    const ownFallback = usesCampusApiForKey(MY_DUTIES_STORAGE_KEY) ? [] : DEFAULT_MY_DUTIES
+    const ownFallback = (usesCampusApiForKey(MY_DUTIES_STORAGE_KEY) || apiCatalogMode()) ? [] : DEFAULT_MY_DUTIES
     const own = loadCampusJson(MY_DUTIES_STORAGE_KEY, ownFallback).map(asDuty)
     const assigned = loadCampusJson(ASSIGNED_DUTIES_KEY, []).map(asDuty)
     const seen = new Set()
@@ -159,7 +163,8 @@ export function hydrateMyDutiesFromApi() {
         hydrateCampusKey(ASSIGNED_DUTIES_KEY, []),
     ]).then(() => true)
 }
-export const MY_DUTIES = DEFAULT_MY_DUTIES
+/** Prefer getMyDuties() — empty when API mode is on (never DEFAULT_MY_DUTIES). */
+export const MY_DUTIES = liveArray(getMyDuties)
 
 export const dutyStatusBadgeColor = {
     Assigned: 'bg-[#515DEF1A] text-[#515DEF]',

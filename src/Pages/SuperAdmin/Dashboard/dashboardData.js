@@ -219,6 +219,7 @@ export const DEPARTMENT_STATUS_COLORS = {
     Good: 'bg-[#515DEF33] text-[#515DEF]',
     Watch: 'bg-[#FF980033] text-[#FF9800]',
     Critical: 'bg-[#FF000033] text-[#FF0000]',
+    'No data': 'bg-[#66708533] text-[#667085]',
 }
 
 export const PROGRESS_METRICS = [
@@ -298,6 +299,11 @@ export const MODULE_STATUS_COLORS = {
     Operational: 'bg-[#4CAF5033] text-[#4CAF50]',
     Monitoring: 'bg-[#FF980033] text-[#FF9800]',
     Attention: 'bg-[#FF000033] text-[#FF0000]',
+    'No students yet': 'bg-[#66708533] text-[#667085]',
+    'Not loaded': 'bg-[#66708533] text-[#667085]',
+    'No inventory yet': 'bg-[#66708533] text-[#667085]',
+    'No findings yet': 'bg-[#66708533] text-[#667085]',
+    'No vehicles yet': 'bg-[#66708533] text-[#667085]',
 }
 
 export const INVENTORY_ALERTS = ASSETS_INVENTORY

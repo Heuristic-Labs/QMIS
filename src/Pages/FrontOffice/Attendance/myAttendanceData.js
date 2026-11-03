@@ -1,3 +1,6 @@
+import { getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
+import { liveArray } from '../../../Common/RBAC/liveArray'
+
 import { SEED } from '../../HR/domain/hrSeed'
 
 export const ATTENDANCE_STATUSES = ['Present', 'Absent', 'Half Day', 'Late', 'On Duty']
@@ -14,7 +17,7 @@ const prm = SEED.employees.find((row) => row.role === 'prm') || SEED.employees[0
 const sampleStatuses = ['Present', 'Late', 'Absent', 'Half Day', 'On Duty', 'Present']
 const sampleDates = ['28-10-2026', '27-10-2026', '26-10-2026', '25-10-2026', '24-10-2026', '23-10-2026']
 
-export const MY_ATTENDANCE_LIST = sampleStatuses.map((status, index) => ({
+const DEMO_MY_ATTENDANCE_LIST = sampleStatuses.map((status, index) => ({
     id: `FO-ATT-${String(index + 1).padStart(3, '0')}`,
     employeeId: prm?.id || 'EMP-QMIS-082',
     name: prm?.name || 'Front Office',
@@ -23,3 +26,10 @@ export const MY_ATTENDANCE_LIST = sampleStatuses.map((status, index) => ({
     attendanceStatus: status,
     date: sampleDates[index],
 }))
+
+const apiCatalogMode = () => isApiAuthEnabled() && Boolean(getAccessToken())
+
+export const getMyAttendanceList = () => (apiCatalogMode() ? [] : DEMO_MY_ATTENDANCE_LIST.map((row) => ({ ...row })))
+
+/** Offline demo only — empty when campus API auth is enabled. */
+export const MY_ATTENDANCE_LIST = liveArray(getMyAttendanceList)

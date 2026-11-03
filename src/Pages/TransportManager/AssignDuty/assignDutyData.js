@@ -1,3 +1,4 @@
+import { liveArray } from '../../../Common/RBAC/liveArray'
 import { getTransportRows, hydrateTransportRows, saveTransportRows, nextPrefixedId } from '../transportCampus'
 import { getDriverOptions } from '../DriverManagement/driverManagementData'
 import { getRoutes } from '../RouteManagement/routeManagementData'
@@ -172,4 +173,5 @@ export async function deleteDuty(id) {
     return saveDuties(next)
 }
 
-export const DUTIES = DEFAULT_DUTIES
+/** Prefer getDuties() after hydrate — empty in API mode via getTransportRows. */
+export const DUTIES = liveArray(getDuties)

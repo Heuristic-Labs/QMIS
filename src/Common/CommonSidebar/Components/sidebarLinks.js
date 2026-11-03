@@ -143,16 +143,6 @@ export const superAdminSidebarLinks = [
         ],
     },
     {
-        id: 9,
-        title: "Star Ratings",
-        to: "#0",
-        icon: Star,
-        subLinks: [
-            { icon: Star, title: "Star of the Month", to: "/super-admin/star-ratings/star-of-month" },
-            { icon: Trophy, title: "Star of the Year", to: "/super-admin/star-ratings/star-of-year" },
-        ],
-    },
-    {
         id: 10,
         title: "Task Management",
         to: "/super-admin/task-management/assign-tasks",
@@ -229,13 +219,10 @@ export const superAdminSidebarLinks = [
         to: "#0",
         icon: History,
         subLinks: [
-            { icon: History, title: "Login History", to: "/super-admin/activity-logs/login-history" },
             { icon: FileText, title: "Data Changes", to: "/super-admin/activity-logs/data-changes" },
             { icon: FileX, title: "Deleted Records", to: "/super-admin/activity-logs/deleted-records" },
             { icon: ClipboardCheck, title: "Approval Actions", to: "/super-admin/activity-logs/approval-actions" },
             { icon: ShieldCheck, title: "Audit Logs", to: "/super-admin/activity-logs/audit-logs" },
-            { icon: AlertTriangle, title: "Failed Logins", to: "/super-admin/activity-logs/failed-logins" },
-            { icon: History, title: "Demo Activity", to: "/super-admin/activity-logs/demo-activity" },
         ],
     },
     {
@@ -2049,12 +2036,6 @@ export const accountHeadSidebarLinks = [
         icon: ClipboardList,
     },
     {
-        id: 10,
-        title: "Settings",
-        to: "/account-head/settings",
-        icon: Settings,
-    },
-    {
         id: 11,
         title: "Payment Vouchers",
         to: "/account-head/payment-vouchers",
@@ -2339,16 +2320,6 @@ export const directorSidebarLinks = [
         ],
     },
     {
-        id: 2,
-        title: "Star Ratings",
-        to: "#0",
-        icon: Star,
-        subLinks: [
-            { icon: Star, title: "Star of the Month", to: "/director/star-ratings/star-of-month" },
-            { icon: Trophy, title: "Star of the Year", to: "/director/star-ratings/star-of-year" },
-        ],
-    },
-    {
         id: 3,
         title: "Timetable Approvals",
         to: "#0",
@@ -2502,7 +2473,6 @@ export const principalSidebarLinks = [
         subLinks: [
             { icon: Star, title: "Star of the Month", to: "/principal/star-ratings/som-matrix" },
             { icon: Trophy, title: "Star of the Year", to: "/principal/star-ratings/star-of-year" },
-            { icon: Star, title: "Staff Star Ratings", to: "/principal/star-ratings/staff/star-of-month" },
         ],
     },
     {

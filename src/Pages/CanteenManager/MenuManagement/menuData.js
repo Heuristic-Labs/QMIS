@@ -1,4 +1,5 @@
 import { ensureCampusSeed, saveCampusJson, hydrateCampusKey, usesCampusApiForKey } from '../../../services/campusJsonStore'
+import { liveArray } from '../../../Common/RBAC/liveArray'
 
 const DEFAULT_MENU_ITEMS = [
     {
@@ -104,15 +105,16 @@ export const comboBadgeColor = {
 
 export const MENU_ITEMS_STORAGE_KEY = 'schoolerp-canteen-menu-v1'
 export function getMenuItems() {
-    return ensureCampusSeed('schoolerp-canteen-menu-v1', DEFAULT_MENU_ITEMS)
+    const seed = usesCampusApiForKey(MENU_ITEMS_STORAGE_KEY) ? [] : DEFAULT_MENU_ITEMS
+    return ensureCampusSeed(MENU_ITEMS_STORAGE_KEY, seed)
 }
 export function saveMenuItems(rows) {
-    return saveCampusJson('schoolerp-canteen-menu-v1', rows)
+    return saveCampusJson(MENU_ITEMS_STORAGE_KEY, rows)
 }
 export function hydrateMenuItemsFromApi() {
-    if (!usesCampusApiForKey('schoolerp-canteen-menu-v1')) return Promise.resolve(false)
-    return hydrateCampusKey('schoolerp-canteen-menu-v1', DEFAULT_MENU_ITEMS)
+    if (!usesCampusApiForKey(MENU_ITEMS_STORAGE_KEY)) return Promise.resolve(false)
+    return hydrateCampusKey(MENU_ITEMS_STORAGE_KEY, [])
 }
-/** Static seed / fallback — list pages should call getMenuItems() after hydrate */
-export const MENU_ITEMS = DEFAULT_MENU_ITEMS
+/** Prefer getMenuItems() after hydrate — empty seed when API mode is on. */
+export const MENU_ITEMS = liveArray(getMenuItems)
 

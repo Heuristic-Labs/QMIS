@@ -1,3 +1,4 @@
+import { liveArray } from '../../../Common/RBAC/liveArray'
 import { getDriverOptions } from '../DriverManagement/driverManagementData'
 import { getVehicles } from '../VehicleManagement/vehicleManagementData'
 import { getTransportRows, hydrateTransportRows, saveTransportRows, nextPrefixedId } from '../transportCampus'
@@ -236,5 +237,6 @@ export async function deleteRoute(id) {
     return saveRoutes(next)
 }
 
-export const ROUTES = DEFAULT_ROUTES
+/** Prefer getRoutes() after hydrate — empty in API mode via getTransportRows. */
+export const ROUTES = liveArray(getRoutes)
 

@@ -1,35 +1,8 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useMemo } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import mo_user from '../../../assets/images/no-profile.png'
-
-const MOCK_PARENT = {
-    profileImage: null,
-    parentId: 'PAR-1001',
-    parentName: 'Rajesh Sharma',
-    gender: 'Male',
-    relation: 'Father',
-    occupation: 'Software Engineer',
-    yearlyIncome: '₹12,00,000',
-    address: {
-        address: '42, Green Park Extension, Near Metro Station',
-        country: 'India',
-        state: 'Delhi',
-        city: 'New Delhi',
-        zipCode: '110016',
-    },
-    contact: {
-        mobileNumber: '+91 98123 45678',
-        alternativeNumber: '+91 98123 45679',
-        email: 'rajesh.sharma@example.com',
-    },
-    student: {
-        name: 'Arjun Sharma',
-        admissionNumber: 'ADM-2024-1042',
-        class: 'Class 10',
-        section: 'Section A',
-    },
-}
+import { getParentDetailById } from './parentDatabaseData'
 
 const Section = ({ title, children }) => (
     <div className='bg-white rounded-2xl shadow-md p-4'>
@@ -41,13 +14,35 @@ const Section = ({ title, children }) => (
 const Field = ({ label, value }) => (
     <div className='flex flex-col gap-y-1'>
         <span className='text-base font-medium text-[#808080]'>{label}</span>
-        <span className='text-sm text-[#1E1E1E] whitespace-pre-wrap wrap-break-word'>{value}</span>
+        <span className='text-sm text-[#1E1E1E] whitespace-pre-wrap wrap-break-word'>{value || '—'}</span>
     </div>
 )
 
 const ViewParent = () => {
+    const { id } = useParams()
     const navigate = useNavigate()
-    const parent = MOCK_PARENT
+    const parent = useMemo(() => getParentDetailById(id), [id])
+
+    if (!parent) {
+        return (
+            <section className='space-y-6'>
+                <div className='flex flex-wrap items-center gap-3'>
+                    <button
+                        type='button'
+                        onClick={() => navigate('/front-office/parent-management')}
+                        className='inline-flex items-center gap-2 text-sm text-[#515DEF] border border-[#515DEF] rounded-md px-4 py-2 hover:bg-[#515DEF] hover:text-white transition-colors cursor-pointer'
+                    >
+                        <ArrowLeft size={18} />
+                        Back to list
+                    </button>
+                </div>
+                <div className='bg-white rounded-2xl shadow-md p-8 text-center text-[#667085]'>
+                    Parent not found.
+                </div>
+            </section>
+        )
+    }
+
     const addr = parent.address
     const contact = parent.contact
     const student = parent.student
@@ -78,6 +73,8 @@ const ViewParent = () => {
                             <span className='font-medium text-[#1E1E1E]'>Parent ID: {parent.parentId}</span>
                             {' · '}
                             <span className='text-[#808080]'>{parent.relation}</span>
+                            {' · '}
+                            <span className='text-[#808080]'>{parent.studentIds.length} linked student{parent.studentIds.length === 1 ? '' : 's'}</span>
                         </p>
                     </div>
                 </div>

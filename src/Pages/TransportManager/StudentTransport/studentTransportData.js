@@ -234,7 +234,9 @@ export const getStudentTransportById = (id) =>
 export const STUDENT_TRANSPORTS_STORAGE_KEY = 'schoolerp-transport-students-v1'
 
 export function getStudentTransports() {
-    return getTransportRows(STUDENT_TRANSPORTS_STORAGE_KEY, DEFAULT_STUDENT_TRANSPORTS)
+    // API/catalog mode: never surface Sandy Selva (etc.) offline seed rows.
+    const seed = apiCatalogMode() ? [] : DEFAULT_STUDENT_TRANSPORTS
+    return getTransportRows(STUDENT_TRANSPORTS_STORAGE_KEY, seed)
 }
 
 export function saveStudentTransports(rows) {
@@ -264,4 +266,5 @@ export async function deleteStudentTransport(id) {
     return saveStudentTransports(next)
 }
 
-export const STUDENT_TRANSPORTS = DEFAULT_STUDENT_TRANSPORTS
+/** Prefer getStudentTransports() — empty when API catalog mode is on. */
+export const STUDENT_TRANSPORTS = liveArray(getStudentTransports)

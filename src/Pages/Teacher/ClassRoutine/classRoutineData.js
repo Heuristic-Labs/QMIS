@@ -1,8 +1,4 @@
-export const TEACHER_TIMETABLE_INFO = {
-    employeeId: 'TEA-1001',
-    teacherName: 'Anita Verma',
-    subject: 'Mathematics',
-}
+import { getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
 
 export const WEEKLY_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
@@ -14,7 +10,29 @@ export const TIME_SLOTS = [
     { time: '01:15 PM -\n02:00 PM', label: '01:15 PM - 02:00 PM' },
 ]
 
-export const WEEKLY_SCHEDULE = {
+const apiCatalogMode = () => isApiAuthEnabled() && Boolean(getAccessToken())
+
+const DEMO_TEACHER_TIMETABLE_INFO = {
+    employeeId: 'TEA-1001',
+    teacherName: 'Anita Verma',
+    subject: 'Mathematics',
+}
+
+const emptyTeacherInfo = () => ({
+    employeeId: '',
+    teacherName: '',
+    subject: '',
+})
+
+const emptyWeeklySchedule = () =>
+    Object.fromEntries(
+        TIME_SLOTS.map((slot) => [
+            slot.label,
+            Object.fromEntries(WEEKLY_DAYS.map((day) => [day, null])),
+        ]),
+    )
+
+const DEMO_WEEKLY_SCHEDULE = {
     '09:00 AM - 09:45 AM': {
         Monday: { subject: 'Mathematics', className: '10-A' },
         Tuesday: { subject: 'Mathematics', className: '10-B' },
@@ -56,6 +74,36 @@ export const WEEKLY_SCHEDULE = {
         Saturday: { subject: 'Mathematics', className: '10-A' },
     },
 }
+
+export const getTeacherTimetableInfo = () =>
+    (apiCatalogMode() ? emptyTeacherInfo() : { ...DEMO_TEACHER_TIMETABLE_INFO })
+
+export const getWeeklySchedule = () =>
+    (apiCatalogMode() ? emptyWeeklySchedule() : structuredClone(DEMO_WEEKLY_SCHEDULE))
+
+/** Offline demo only — empty identity when API auth is on. */
+export const TEACHER_TIMETABLE_INFO = new Proxy(emptyTeacherInfo(), {
+    get(_, prop) {
+        return getTeacherTimetableInfo()[prop]
+    },
+})
+
+/** Offline demo schedule only — empty period grid when API auth is on. */
+export const WEEKLY_SCHEDULE = new Proxy({}, {
+    get(_, prop) {
+        const schedule = getWeeklySchedule()
+        if (prop === Symbol.iterator) return undefined
+        return schedule[prop]
+    },
+    ownKeys() {
+        return Reflect.ownKeys(getWeeklySchedule())
+    },
+    getOwnPropertyDescriptor(_, prop) {
+        const schedule = getWeeklySchedule()
+        if (!(prop in schedule)) return undefined
+        return { configurable: true, enumerable: true, value: schedule[prop] }
+    },
+})
 
 export const SUBJECT_COLORS = {
     Mathematics: 'bg-blue-50 text-blue-700 border border-blue-100',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
@@ -8,7 +8,15 @@ import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import EditRequestModal from '../../../Common/CommonComponents/EditRequestModal'
 import DeleteRequestModal from '../../../Common/CommonComponents/DeleteRequestModal'
 import { useEditRequestFlow } from '../../../Common/CommonComponents/useEditRequestFlow'
-import { EXTRA_CLASSES, SUBJECTS, CLASSES, SECTIONS } from './extraClassData'
+import { canUseAcademicsApi } from '../../../services/academicsApi'
+import {
+    EXTRA_CLASSES_UPDATED_EVENT,
+    getExtraClasses,
+    hydrateExtraClassesFromApi,
+    SUBJECTS,
+    CLASSES,
+    SECTIONS,
+} from './extraClassData'
 
 const ExtraClass = ({
     canCreate = false,
@@ -22,6 +30,33 @@ const ExtraClass = ({
     const [exportModal, setExportModal] = useState(false)
     const { editRequestModal, setEditRequestModal, requestEdit, confirmEditRequest } = useEditRequestFlow()
     const [deleteRequestModal, setDeleteRequestModal] = useState(false)
+    const [rows, setRows] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        let cancelled = false
+        const refresh = () => {
+            if (!cancelled) setRows(getExtraClasses())
+        }
+        setLoading(true)
+        setError('')
+        ;(async () => {
+            if (canUseAcademicsApi()) {
+                const ok = await hydrateExtraClassesFromApi()
+                if (!ok && !cancelled) setError('Could not load extended classes from the campus API.')
+            }
+            if (!cancelled) {
+                setRows(getExtraClasses())
+                setLoading(false)
+            }
+        })()
+        window.addEventListener(EXTRA_CLASSES_UPDATED_EVENT, refresh)
+        return () => {
+            cancelled = true
+            window.removeEventListener(EXTRA_CLASSES_UPDATED_EVENT, refresh)
+        }
+    }, [])
 
     return (
         <section>
@@ -120,6 +155,7 @@ const ExtraClass = ({
                         </button>
                     </div>
                 </div>
+                {error && <p className='text-sm text-[#B54708] mb-3'>{error}</p>}
                 <div className='flex gap-x-2 items-center my-2'>
                     <select className='px-2 py-1.5 bg-white text-[#515DEF] border border-[#515DEF] rounded-md'>
                         <option value='10'>10</option>
@@ -130,6 +166,9 @@ const ExtraClass = ({
                     </select>
                     <span className='text-sm font-normal text-[#515DEF]'>Entries Per Page</span>
                 </div>
+                {loading ? (
+                    <p className='text-sm text-[#667085] py-8 text-center'>Loading…</p>
+                ) : (
                 <div className='relative overflow-x-auto'>
                     <table className='w-full text-sm text-left rtl:text-right'>
                         <thead className='text-xs bg-[#EDEEF5] whitespace-nowrap rounded-lg'>
@@ -147,7 +186,14 @@ const ExtraClass = ({
                             </tr>
                         </thead>
                         <tbody>
-                            {EXTRA_CLASSES.map((record) => (
+                            {rows.length === 0 && (
+                                <tr>
+                                    <td colSpan={10} className='px-2 py-10 text-center text-[#667085]'>
+                                        No extended classes yet.
+                                    </td>
+                                </tr>
+                            )}
+                            {rows.map((record) => (
                                 <tr key={record.id} className='border-b text-[#667085] border-[#f2f4f7] hover:bg-[#f2f4f7] rounded-lg'>
                                     <td className='px-2 py-4 font-medium text-[#1E1E1E] rounded-s-lg'>{record.extraClassId}</td>
                                     <td className='px-2 py-4 font-medium text-[#1E1E1E]'>{record.subject}</td>
@@ -183,11 +229,16 @@ const ExtraClass = ({
                         </tbody>
                     </table>
                 </div>
+                )}
             </div>
 
             <div className='flex justify-between items-center px-4 mt-4'>
                 <p className='text-sm font-medium text-[#515DEF]'>
-                    Showing 1 to {EXTRA_CLASSES.length} of {EXTRA_CLASSES.length} entries
+                    {loading
+                        ? 'Loading…'
+                        : rows.length === 0
+                            ? 'Showing 0 of 0 entries'
+                            : `Showing 1 to ${rows.length} of ${rows.length} entries`}
                 </p>
                 <div className='flex justify-center gap-x-2 flex-wrap'>
                     <button type='button' className='size-8 flex justify-center items-center p-2 bg-white text-[#515DEF] border border-[#E2E8F0] hover:bg-[#515DEF] hover:text-white rounded-full cursor-pointer'>
@@ -206,8 +257,8 @@ const ExtraClass = ({
                 exportModal={exportModal}
                 setExportModal={setExportModal}
                 filename='extra-class'
-                rows={Array.isArray(EXTRA_CLASSES) ? EXTRA_CLASSES : []}
-                exportDescription={<>You are exporting {Array.isArray(EXTRA_CLASSES) ? EXTRA_CLASSES.length : 0} record(s).</>}
+                rows={Array.isArray(rows) ? rows : []}
+                exportDescription={<>You are exporting {Array.isArray(rows) ? rows.length : 0} record(s).</>}
             />
             <EditRequestModal
                 editRequestModal={editRequestModal}

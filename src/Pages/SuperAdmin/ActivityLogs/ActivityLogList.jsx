@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar, ChevronLeft, ChevronRight, Download, EllipsisIcon } from 'lucide-react'
 import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
+import { apiRequest, getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
 import {
     LOG_TYPES,
     ROUTE_BASE,
@@ -13,18 +14,75 @@ import {
     getListColumns,
     getLogStatusOptions,
     getLogSummary,
-    getLogsByType,
     statusBadgeColor,
 } from './activityLogsData'
 
+const mapAuditApiRows = (rows = [], logType) =>
+    (Array.isArray(rows) ? rows : []).map((row) => ({
+        id: row.id,
+        logType,
+        timestamp: row.created_at || row.createdAt || row.timestamp || '—',
+        user: row.actor_name || row.actor || row.user || 'System',
+        userEmail: row.actor_email || row.email || '—',
+        role: row.actor_role || row.role || '—',
+        auditId: row.id,
+        auditType: row.action || row.entity_type || 'Audit',
+        scope: row.entity_type || '—',
+        result: row.action || 'Completed',
+        findings: typeof row.details === 'string' ? row.details : JSON.stringify(row.details || {}),
+        module: row.entity_type || '—',
+        recordId: row.entity_id || '—',
+        recordName: row.entity_id || '—',
+        changeType: row.action || 'Update',
+        fieldChanged: '—',
+        oldValue: '—',
+        newValue: typeof row.details === 'string' ? row.details : JSON.stringify(row.details || {}),
+        action: row.action || 'Updated',
+        referenceId: row.entity_id || '—',
+        referenceTitle: row.entity_type || '—',
+        remarks: typeof row.details === 'string' ? row.details : '—',
+        ipAddress: row.ip || row.ipAddress || '—',
+        status: row.action || 'Completed',
+    }))
+
 const ActivityLogList = ({ logType }) => {
     const config = LOG_TYPES[logType]
-    const [records] = useState(() => getLogsByType(logType))
+    const useLiveAudit = logType === 'audit-logs' || logType === 'data-changes' || logType === 'approval-actions'
+    const [records, setRecords] = useState([])
+    const [loading, setLoading] = useState(useLiveAudit)
+    const [loadError, setLoadError] = useState('')
     const [fromDate, setFromDate] = useState(new Date())
     const [toDate, setToDate] = useState(new Date())
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('')
     const [exportModal, setExportModal] = useState(false)
+
+    useEffect(() => {
+        if (!useLiveAudit) return undefined
+        if (!(isApiAuthEnabled() && getAccessToken())) {
+            setRecords([])
+            setLoadError('Sign in with API auth to load live audit logs.')
+            setLoading(false)
+            return undefined
+        }
+        let active = true
+        setLoading(true)
+        apiRequest('/audit-logs')
+            .then((rows) => {
+                if (!active) return
+                setRecords(mapAuditApiRows(rows, logType))
+                setLoadError('')
+            })
+            .catch((err) => {
+                if (!active) return
+                setRecords([])
+                setLoadError(err?.message || 'Audit logs could not be loaded.')
+            })
+            .finally(() => {
+                if (active) setLoading(false)
+            })
+        return () => { active = false }
+    }, [logType, useLiveAudit])
 
     const columns = useMemo(() => getListColumns(logType), [logType])
     const statusOptions = useMemo(() => getLogStatusOptions(records), [records])
@@ -53,6 +111,13 @@ const ActivityLogList = ({ logType }) => {
 
     return (
         <section>
+            {loading ? <p className='text-sm text-[#667085] mb-4'>Loading live logs…</p> : null}
+            {loadError ? <p className='text-sm text-[#B42318] mb-4'>{loadError}</p> : null}
+            {!useLiveAudit ? (
+                <p className='text-sm text-[#667085] mb-4'>
+                    This log type has no dedicated backend feed yet. Use Audit Logs / Data Changes for live `GET /audit-logs` records.
+                </p>
+            ) : null}
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
                 {summaryCards.map((card) => (
                     <div key={card.label} className='bg-white rounded-2xl shadow-md p-4'>

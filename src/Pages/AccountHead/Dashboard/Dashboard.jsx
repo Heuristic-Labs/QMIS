@@ -197,8 +197,70 @@ const Dashboard = () => {
     } = useFinance()
 
     const apiLive = Boolean(financePersistence?.apiEnabled)
-    const collectionSplit = useMemo(() => buildCollectionSplit(receipts || []), [receipts])
-    const approvalStatus = useMemo(() => buildApprovalStatus(approvals || []), [approvals])
+
+    const periodBounds = useMemo(() => {
+        const end = customDate instanceof Date && !Number.isNaN(customDate.getTime()) ? new Date(customDate) : new Date()
+        end.setHours(23, 59, 59, 999)
+        const start = new Date(end)
+        if (timeFilter === 'Week') start.setDate(end.getDate() - 6)
+        else if (timeFilter === 'Month') start.setDate(1)
+        else if (timeFilter === 'Year') start.setMonth(0, 1)
+        else start.setHours(0, 0, 0, 0) // Today
+        start.setHours(0, 0, 0, 0)
+        return { start, end }
+    }, [timeFilter, customDate])
+
+    const inPeriod = (isoDate) => {
+        if (!isoDate) return false
+        const value = new Date(isoDate)
+        if (Number.isNaN(value.getTime())) return false
+        return value >= periodBounds.start && value <= periodBounds.end
+    }
+
+    const periodCollection = useMemo(
+        () => (transactions || [])
+            .filter((item) => (
+                item.direction === TRANSACTION_DIRECTIONS.IN
+                && item.status === TRANSACTION_STATUSES.POSTED
+                && inPeriod(item.transactionDate || item.date)
+            ))
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+        [transactions, periodBounds, timeFilter, customDate],
+    )
+
+    const periodExpenses = useMemo(
+        () => (transactions || [])
+            .filter((item) => (
+                item.direction === TRANSACTION_DIRECTIONS.OUT
+                && item.status === TRANSACTION_STATUSES.POSTED
+                && inPeriod(item.transactionDate || item.date)
+            ))
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+        [transactions, periodBounds, timeFilter, customDate],
+    )
+
+    const periodApprovals = useMemo(() => {
+        const rows = approvals || []
+        if (approvalPeriod === 'Daily') {
+            const today = new Date().toISOString().slice(0, 10)
+            return rows.filter((row) => String(row.createdAt || row.date || '').startsWith(today))
+        }
+        if (approvalPeriod === 'Weekly') {
+            const start = new Date()
+            start.setDate(start.getDate() - 6)
+            return rows.filter((row) => {
+                const value = new Date(row.createdAt || row.date || '')
+                return !Number.isNaN(value.getTime()) && value >= start
+            })
+        }
+        return rows
+    }, [approvals, approvalPeriod])
+
+    const collectionSplit = useMemo(
+        () => buildCollectionSplit((receipts || []).filter((row) => inPeriod(row.paymentDate || row.date))),
+        [receipts, periodBounds, timeFilter, customDate],
+    )
+    const approvalStatus = useMemo(() => buildApprovalStatus(periodApprovals), [periodApprovals])
     const [transportOpsExpenses, setTransportOpsExpenses] = useState([])
 
     useEffect(() => {
@@ -232,7 +294,8 @@ const Dashboard = () => {
         if (card.label === "Today's Collection") {
             return {
                 ...card,
-                value: formatCurrency(dashboardMetrics.todaysCollection || 0),
+                label: `${timeFilter} Collection`,
+                value: formatCurrency(periodCollection || 0),
                 trend: undefined,
                 badge: apiLive ? 'LIVE' : card.badge,
                 badgeTone: 'info',
@@ -241,14 +304,18 @@ const Dashboard = () => {
         if (card.label === "Today's Expenses") {
             return {
                 ...card,
-                value: formatCurrency(dashboardMetrics.todaysExpenses || 0),
+                label: `${timeFilter} Expenses`,
+                value: formatCurrency(periodExpenses || 0),
                 trend: undefined,
                 badge: apiLive ? 'LIVE' : card.badge,
                 badgeTone: 'info',
             }
         }
         if (card.label === 'Pending Requests') {
-            const count = dashboardMetrics.pendingApprovals || 0
+            const count = periodApprovals.filter((row) => {
+                const status = String(row.status || '').toLowerCase()
+                return status === 'pending' || status === ''
+            }).length
             return {
                 ...card,
                 value: String(count),

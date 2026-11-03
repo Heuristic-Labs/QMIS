@@ -92,10 +92,9 @@ export const filterMaintenanceRequests = ({
 })
 
 export function getDriverMaintenanceRequests() {
-    if (usesCampusApiForKey(MAINTENANCE_REQUESTS_STORAGE_KEY)) {
-        return ensureCampusSeed(MAINTENANCE_REQUESTS_STORAGE_KEY, [])
-    }
-    return ensureCampusSeed(MAINTENANCE_REQUESTS_STORAGE_KEY, DEMO_MAINTENANCE_REQUESTS)
+    // API mode: never surface DEMO_MAINTENANCE_REQUESTS as table rows.
+    const seed = usesCampusApiForKey(MAINTENANCE_REQUESTS_STORAGE_KEY) ? [] : DEMO_MAINTENANCE_REQUESTS
+    return ensureCampusSeed(MAINTENANCE_REQUESTS_STORAGE_KEY, seed)
 }
 
 export function saveDriverMaintenanceRequests(rows) {

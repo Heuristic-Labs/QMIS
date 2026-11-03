@@ -5,7 +5,7 @@ import {
     hydrateActivitiesFromApi,
 } from '../../../Common/Activities/activitiesData'
 import { getActivityViewPath } from '../../../Common/Activities/activityConfigs'
-import { isApiAuthEnabled, isDemoLoginEnabled } from '../../../services/apiClient'
+import { getAccessToken, isApiAuthEnabled, isDemoLoginEnabled } from '../../../services/apiClient'
 import { canUseActivitiesApi } from '../../../services/activitiesApi'
 
 const STORAGE_KEY = 'schoolerp-super-admin-approvals'
@@ -42,8 +42,11 @@ export const PRIORITY_LEVELS = ['High', 'Normal', 'Low']
 export const DEMO_APPROVAL_SEEDS_NOTICE =
     'Demo sample — not a live workflow. Decisions here are not saved on the server. Live Super Admin approvals are Activity Approvals only.'
 
-export const includeDemoApprovalSeeds = () =>
-    !isApiAuthEnabled() || isDemoLoginEnabled()
+export const includeDemoApprovalSeeds = () => {
+    // Never paint demo SA-APR rows when a real API session exists.
+    if (isApiAuthEnabled() && getAccessToken()) return false
+    return !isApiAuthEnabled() || isDemoLoginEnabled()
+}
 
 export const statusBadgeColor = {
     Pending: 'bg-[#FF980033] text-[#FF9800]',
@@ -318,9 +321,13 @@ export const getPendingActivityApprovals = () =>
         .filter((item) => item.mdApprovalStatus === MD_APPROVAL_STATUS.PENDING)
         .map(activityToApprovalRequest)
 
+/** All live activity rows as approval records (pending + decided) for Super Admin oversight. */
+export const getLiveActivityApprovals = () =>
+    getActivities().map(activityToApprovalRequest)
+
 /** Live activity approvals; demo seeds only when includeDemoApprovalSeeds(). */
 export const getAllApprovalRequests = () => {
-    const live = getPendingActivityApprovals()
+    const live = getLiveActivityApprovals()
     if (!includeDemoApprovalSeeds()) return live
     const seeded = loadRequests()
     const liveIds = new Set(live.map((row) => row.id))

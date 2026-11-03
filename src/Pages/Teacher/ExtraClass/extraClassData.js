@@ -20,24 +20,6 @@ export const VENUES = [
     'Online Class',
 ]
 
-/** Offline seed only — never shown when academics API mode is on. */
-const DEMO_EXTRA_CLASSES = [
-    {
-        id: 'EC-1001',
-        extraClassId: 'EC-1001',
-        subject: 'Mathematics',
-        className: '10',
-        section: 'A',
-        classSection: '10-A',
-        topic: 'Quadratic Equations — Problem Solving',
-        date: '12-06-2026',
-        startTime: '03:30 PM',
-        endTime: '04:30 PM',
-        venue: 'Room 204 — Science Block',
-        reason: 'Board exam preparation for weak performers',
-    },
-]
-
 let apiMemory = null
 let hydratePromise = null
 let persistPromise = null
@@ -158,11 +140,8 @@ export const getExtraClasses = () => {
     } catch {
         /* ignore */
     }
-    return DEMO_EXTRA_CLASSES.map((item) => ({ ...item }))
+    return []
 }
-
-/** Kept for older imports that expected a constant array. */
-export const EXTRA_CLASSES = DEMO_EXTRA_CLASSES
 
 export const saveExtraClasses = async (records) => {
     const list = (Array.isArray(records) ? records : []).map(normalizeRecord).filter((item) => item.id)
@@ -266,5 +245,4 @@ export const deleteExtraClass = async (id) => {
     await saveExtraClasses(next)
 }
 
-export const isUsingDemoExtraClasses = () =>
-    !canUseAcademicsApi() && !localStorage.getItem(STORAGE_KEY)
+export const isUsingDemoExtraClasses = () => false

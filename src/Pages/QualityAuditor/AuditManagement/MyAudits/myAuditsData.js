@@ -1,4 +1,10 @@
-import { loadCampusJson, saveCampusJson, hydrateCampusKey, usesCampusApiForKey } from '../../../../services/campusJsonStore'
+import {
+    loadCampusJson,
+    saveCampusJson,
+    hydrateCampusKey,
+    usesCampusApiForKey,
+    ensureCampusSeed,
+} from '../../../../services/campusJsonStore'
 export const DEPARTMENTS = [
     'Finance',
     'HR',
@@ -179,9 +185,12 @@ export const saveMyAudits = (records) => {
 }
 
 export const getMyAudits = () => {
+    if (usesCampusApiForKey(STORAGE_KEY)) {
+        return ensureCampusSeed(STORAGE_KEY, [])
+    }
     try {
         const stored = loadCampusJson(STORAGE_KEY, null)
-    if (stored) return stored
+        if (stored) return stored
     } catch {
         /* ignore */
     }
@@ -201,5 +210,8 @@ export const updateAuditStatus = (id, status) => {
 export const getAuditById = (id) =>
     getMyAudits().find((item) => item.id === id || item.auditId === id) ?? null
 
-export const hydrateFromApi = (seed = DEFAULT_MY_AUDITS) => hydrateCampusKey(STORAGE_KEY, seed)
+export const hydrateFromApi = (seed = []) => {
+    if (!usesCampusApiForKey(STORAGE_KEY)) return Promise.resolve(false)
+    return hydrateCampusKey(STORAGE_KEY, seed)
+}
 export const usesApiStore = () => usesCampusApiForKey(STORAGE_KEY)
