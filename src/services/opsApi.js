@@ -10,6 +10,19 @@ export const canUseOpsApi = () => isApiOpsEnabled() && Boolean(getAccessToken())
 
 const enc = encodeURIComponent
 
+/** Collections that reject whole-list PUT — save via upsertOpsItemApi instead. */
+export const OPS_ITEM_UPSERT_COLLECTIONS = new Set([
+    'som-matrix',
+    'som-config',
+    'security-cameras',
+    'gate-visitors',
+    'gate-registers',
+    'gate-handover',
+    'gate-vendors',
+    'gate-incidents',
+    'gate-duty-assignments',
+])
+
 export const listOpsCollectionApi = (collection) => apiRequest(`/ops/${enc(collection)}`)
 
 /** Save one record of an item-saved collection (e.g. som-matrix) without replacing the rest. */
@@ -25,6 +38,19 @@ export const listMyItTicketsApi = () => apiRequest('/ops/it-support-tickets/mine
 
 export const replaceOpsCollectionApi = (collection, items) =>
     apiRequest(`/ops/${enc(collection)}`, { method: 'PUT', body: items })
+
+/** Atomic stationery issue/return with inventory update. */
+export const stationeryIssueReturnApi = (body) =>
+    apiRequest('/ops/stationery/issue-return', { method: 'POST', body })
+
+export const stationeryDecideRequestApi = (requestId, body) =>
+    apiRequest(`/ops/stationery/requests/${enc(requestId)}/decide`, { method: 'POST', body })
+
+export const stationeryDecideProcurementApi = (procurementId, body) =>
+    apiRequest(`/ops/stationery/procurement/${enc(procurementId)}/decide`, { method: 'POST', body })
+
+export const stationeryReceiveGoodsApi = (procurementId, body) =>
+    apiRequest(`/ops/stationery/procurement/${enc(procurementId)}/receive-goods`, { method: 'POST', body })
 
 export const stripOpsMeta = (row) => {
     if (!row || typeof row !== 'object') return row

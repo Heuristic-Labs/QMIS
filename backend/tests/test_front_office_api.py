@@ -105,6 +105,15 @@ def test_gatekeeper_can_read_gate_passes_but_not_change_them(client):
         json={"studentName": "Should Fail", "reason": "No", "date": "23-10-2026", "status": "Pending"},
     )
     assert write.status_code == 403
+    # Verification-only update is allowed; inventing a new pass is not.
+    verify = client.put(
+        f"/api/v1/front-office/student-gate-passes/{created.json()['id']}",
+        headers=gate,
+        json={"gateKeeperStatus": "Verified", "studentName": "Should Be Ignored"},
+    )
+    assert verify.status_code == 200, verify.text
+    assert verify.json()["gateKeeperStatus"] == "Verified"
+    assert verify.json()["studentName"] == "Gate Visible Student"
 
 
 def test_admin_can_create_update_and_list_hostel_gate_pass(client):

@@ -1,9 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
+import { toast } from 'react-toastify'
 import pdf_icon from '../../../assets/images/pdf-icon.png'
 import {
+    decideStationeryRequest,
     getRequestById,
+    hydrateRequestsFromApi,
     WORKFLOW_STAGES,
     statusBadgeColor,
     stageBadgeColor,
@@ -27,7 +30,35 @@ const Field = ({ label, value }) => (
 const ViewRequest = () => {
     const navigate = useNavigate()
     const { id } = useParams()
-    const request = getRequestById(id)
+    const [request, setRequest] = useState(() => getRequestById(id))
+    const [comment, setComment] = useState('')
+    const [saving, setSaving] = useState(false)
+
+    useEffect(() => {
+        let active = true
+        hydrateRequestsFromApi().finally(() => {
+            if (active) setRequest(getRequestById(id))
+        })
+        return () => { active = false }
+    }, [id])
+
+    const pending = ['Pending', 'Submitted', 'Pending Approval', 'Draft'].includes(String(request?.status || ''))
+
+    const decide = async (decision) => {
+        if (!request) return
+        setSaving(true)
+        try {
+            const result = await decideStationeryRequest(request.requestId, decision, comment)
+            if (result?.success === false) {
+                toast.error(result.message || 'Could not save decision.')
+                return
+            }
+            setRequest(getRequestById(id) || result.record)
+            toast.success(decision === 'approve' ? 'Request approved.' : 'Request rejected.')
+        } finally {
+            setSaving(false)
+        }
+    }
 
     return (
         <section className='space-y-6'>
@@ -82,7 +113,7 @@ const ViewRequest = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {request.lineItems.map((row) => (
+                                    {(request.lineItems || []).map((row) => (
                                         <tr key={row.item} className="border-b border-[#f2f4f7]">
                                             <td className="px-2 py-3 text-[#1E1E1E]">{row.item}</td>
                                             <td className="px-2 py-3 text-[#667085]">{row.quantity}</td>
@@ -131,7 +162,40 @@ const ViewRequest = () => {
                             <Field label='Sent To' value={request.sentTo} />
                             <Field label='Status' value={request.status} />
                             <Field label='Current Stage' value={request.currentStage} />
+                            <Field label='Decided By' value={request.decidedBy || '—'} />
+                            <Field label='Decision Comment' value={request.decisionComment || '—'} />
                         </div>
+                        {pending && (
+                            <div className='mt-6 space-y-3'>
+                                <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>
+                                    Decision comment
+                                    <textarea
+                                        rows={2}
+                                        value={comment}
+                                        onChange={(event) => setComment(event.target.value)}
+                                        className='text-sm text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-2'
+                                    />
+                                </label>
+                                <div className='flex flex-wrap gap-3'>
+                                    <button
+                                        type='button'
+                                        disabled={saving}
+                                        onClick={() => decide('approve')}
+                                        className='bg-[#4CAF50] text-white text-sm px-4 py-2 rounded-md disabled:opacity-50 cursor-pointer'
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        type='button'
+                                        disabled={saving}
+                                        onClick={() => decide('reject')}
+                                        className='bg-[#FF0000] text-white text-sm px-4 py-2 rounded-md disabled:opacity-50 cursor-pointer'
+                                    >
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </Section>
 
                     {request.attachments?.length > 0 && (

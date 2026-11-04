@@ -63,6 +63,7 @@ dist-ssr
 !docs/QMIS_Academic_Workflow_Gap_Fix_Report.md
 !docs/QMIS_FileRoom_CCTV_PRO_Portal_Audit.md
 !docs/QMIS_PRO_Portal_Build_Guide.md
+!docs/QMIS_Store_Gatekeeper_Workflow_API_Audit.md
 !local/credentials/README.md
 
 # Local credential / seed dumps must never be committed

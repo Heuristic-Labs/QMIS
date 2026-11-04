@@ -1,12 +1,23 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Download, Plus } from 'lucide-react'
+import { Download, Pencil, Plus } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { ensureSeed, nextSerial, saveJson } from './storage'
-import { hydrateCampusKey, usesCampusApiForKey } from '../../services/campusJsonStore'
+import { ensureSeed, nextSerial } from './storage'
+import {
+    hydrateCampusKey,
+    persistCampusJson,
+    persistCampusJsonItem,
+    usesCampusApiForKey,
+} from '../../services/campusJsonStore'
+import { useAuth } from '../../context/AuthContext'
 import { logActivity } from './activityLog'
 import { StatusBadge } from './statusBadge.jsx'
 
 const inputClass = 'text-sm text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-2 w-full bg-white'
+
+const nowTimeValue = () => {
+    const d = new Date()
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 export default function RegisterPage({
     title,
@@ -30,6 +41,17 @@ export default function RegisterPage({
     const [pageSize, setPageSize] = useState(10)
     const [open, setOpen] = useState(false)
     const [draft, setDraft] = useState({})
+    const [editingId, setEditingId] = useState(null)
+    const [saving, setSaving] = useState(false)
+    const { email: sessionEmail } = useAuth() || {}
+
+    const fieldKeys = useMemo(() => new Set(fields.map((field) => field.key)), [fields])
+    const apiMode = usesCampusApiForKey(storageKey)
+    const canMarkExit = Boolean(
+        statusKey
+        && fieldKeys.has(statusKey)
+        && fields.some((field) => field.key === statusKey && Array.isArray(field.options) && field.options.includes('Exited')),
+    )
 
     useEffect(() => {
         if (!usesCampusApiForKey(storageKey)) return undefined
@@ -70,13 +92,60 @@ export default function RegisterPage({
         setToDate('')
     }
 
-    const persist = (next, action, recordId, details) => {
-        setItems(next)
-        saveJson(storageKey, next)
-        logActivity({ action, module: title, recordId, details })
+    const closeForm = () => {
+        setOpen(false)
+        setDraft({})
+        setEditingId(null)
     }
 
-    const submit = (event) => {
+    const persistRecord = async (record, action, details) => {
+        setSaving(true)
+        try {
+            if (apiMode) {
+                const result = await persistCampusJsonItem(storageKey, record)
+                if (result?.success === false) {
+                    toast.error(result.message || 'Could not save. Check your connection and try again.')
+                    return false
+                }
+                const saved = result.record || record
+                const id = saved[idField]
+                setItems((prev) => [saved, ...prev.filter((row) => row[idField] !== id)])
+                logActivity({ action, module: title, recordId: id, details })
+                return true
+            }
+            const next = action === 'CREATE'
+                ? [record, ...items]
+                : items.map((row) => (row[idField] === record[idField] ? record : row))
+            const result = await persistCampusJson(storageKey, next)
+            if (result?.success === false) {
+                toast.error(result.message || 'Could not save. Check your connection and try again.')
+                return false
+            }
+            setItems(next)
+            logActivity({ action, module: title, recordId: record[idField], details })
+            return true
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const openCreate = () => {
+        setEditingId(null)
+        setDraft({})
+        setOpen(true)
+    }
+
+    const openEdit = (item) => {
+        const nextDraft = {}
+        fields.forEach((field) => {
+            nextDraft[field.key] = item[field.key] ?? ''
+        })
+        setEditingId(item[idField])
+        setDraft(nextDraft)
+        setOpen(true)
+    }
+
+    const submit = async (event) => {
         event.preventDefault()
         for (const field of fields) {
             if (field.required && !String(draft[field.key] ?? '').trim()) {
@@ -84,16 +153,49 @@ export default function RegisterPage({
                 return
             }
         }
+
+        if (editingId) {
+            const current = items.find((item) => item[idField] === editingId) || {}
+            const record = {
+                ...current,
+                ...draft,
+                [idField]: editingId,
+                updatedAt: new Date().toISOString(),
+            }
+            const ok = await persistRecord(record, 'UPDATE', title)
+            if (!ok) return
+            toast.success(`${title} updated.`)
+            closeForm()
+            return
+        }
+
         const id = nextSerial(idPrefix, items, idField)
         const record = {
             [idField]: id,
             ...draft,
             createdAt: new Date().toISOString(),
         }
-        persist([record, ...items], 'CREATE', id, title)
+        const ok = await persistRecord(record, 'CREATE', title)
+        if (!ok) return
         toast.success(`${title} saved.`)
-        setOpen(false)
-        setDraft({})
+        closeForm()
+    }
+
+    const markExited = async (item) => {
+        if (!canMarkExit || String(item[statusKey] || '') === 'Exited') return
+        const patch = {
+            ...item,
+            [statusKey]: 'Exited',
+            updatedAt: new Date().toISOString(),
+            exitedAt: new Date().toISOString(),
+            exitedByEmail: sessionEmail || '',
+        }
+        if (fieldKeys.has('outTime') && !String(item.outTime || '').trim()) {
+            patch.outTime = nowTimeValue()
+        }
+        const ok = await persistRecord(patch, 'UPDATE', 'Marked Exited')
+        if (!ok) return
+        toast.success('Marked as Exited.')
     }
 
     const exportCsv = () => {
@@ -152,7 +254,7 @@ export default function RegisterPage({
                     <p className='text-sm text-[#515DEF]'>Total Records: {filtered.length}</p>
                     <div className='flex gap-2'>
                         {!readOnly && (
-                            <button type='button' onClick={() => setOpen(true)} className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md cursor-pointer inline-flex items-center gap-2'>
+                            <button type='button' onClick={openCreate} className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md cursor-pointer inline-flex items-center gap-2'>
                                 <Plus size={16} /> Add Entry
                             </button>
                         )}
@@ -175,11 +277,14 @@ export default function RegisterPage({
                                 {columns.map((column) => (
                                     <th key={column.key} className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>{column.label}</th>
                                 ))}
+                                {!readOnly && (
+                                    <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Actions</th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
                             {visible.length === 0 && (
-                                <tr><td colSpan={columns.length + 1} className='px-2 py-8 text-center text-[#667085]'>No records match the filters.</td></tr>
+                                <tr><td colSpan={columns.length + (readOnly ? 1 : 2)} className='px-2 py-8 text-center text-[#667085]'>No records match the filters.</td></tr>
                             )}
                             {visible.map((item, index) => (
                                 <tr key={item[idField] || index} className='border-b border-[#f2f4f7] text-[#667085]'>
@@ -189,6 +294,30 @@ export default function RegisterPage({
                                             {column.key === statusKey ? <StatusBadge status={item[column.key]} /> : (item[column.key] ?? '—')}
                                         </td>
                                     ))}
+                                    {!readOnly && (
+                                        <td className='px-2 py-4'>
+                                            <div className='flex flex-wrap gap-2'>
+                                                <button
+                                                    type='button'
+                                                    disabled={saving}
+                                                    onClick={() => openEdit(item)}
+                                                    className='inline-flex items-center gap-1 text-xs border border-[#515DEF] text-[#515DEF] rounded px-2 py-1 cursor-pointer disabled:opacity-50'
+                                                >
+                                                    <Pencil size={12} /> Edit
+                                                </button>
+                                                {canMarkExit && String(item[statusKey] || '') !== 'Exited' && (
+                                                    <button
+                                                        type='button'
+                                                        disabled={saving}
+                                                        onClick={() => markExited(item)}
+                                                        className='text-xs border border-[#4CAF50] text-[#4CAF50] rounded px-2 py-1 cursor-pointer disabled:opacity-50'
+                                                    >
+                                                        Mark Exited
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -198,9 +327,9 @@ export default function RegisterPage({
 
             {open && (
                 <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-                    <button type='button' className='absolute inset-0 bg-black/40' onClick={() => setOpen(false)} aria-label='Close' />
+                    <button type='button' className='absolute inset-0 bg-black/40' onClick={closeForm} aria-label='Close' />
                     <form onSubmit={submit} className='relative z-10 w-full max-w-2xl bg-white rounded-2xl shadow-lg p-5 max-h-[85vh] overflow-y-auto'>
-                        <h3 className='text-lg font-semibold text-black mb-4'>Add {title}</h3>
+                        <h3 className='text-lg font-semibold text-black mb-4'>{editingId ? `Edit ${title}` : `Add ${title}`}</h3>
                         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                             {fields.map((field) => (
                                 <label key={field.key} className={`flex flex-col gap-y-2 text-sm text-[#1E1E1E] ${field.type === 'textarea' ? 'sm:col-span-2' : ''}`}>
@@ -219,8 +348,10 @@ export default function RegisterPage({
                             ))}
                         </div>
                         <div className='flex justify-end gap-3 mt-6'>
-                            <button type='button' onClick={() => setOpen(false)} className='border border-[#515DEF] text-[#515DEF] px-4 py-2 rounded-md text-sm cursor-pointer'>Cancel</button>
-                            <button type='submit' className='bg-[#515DEF] text-white px-4 py-2 rounded-md text-sm cursor-pointer'>Save</button>
+                            <button type='button' onClick={closeForm} className='border border-[#515DEF] text-[#515DEF] px-4 py-2 rounded-md text-sm cursor-pointer'>Cancel</button>
+                            <button type='submit' disabled={saving} className='bg-[#515DEF] text-white px-4 py-2 rounded-md text-sm cursor-pointer disabled:opacity-50'>
+                                {saving ? 'Saving…' : 'Save'}
+                            </button>
                         </div>
                     </form>
                 </div>

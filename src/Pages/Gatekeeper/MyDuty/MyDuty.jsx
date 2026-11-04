@@ -3,20 +3,30 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar, ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
+import { useAuth } from '../../../context/AuthContext'
 import {
-    getGateDutyAssignments,
+    getMyGateDuties,
     hydrateGateDutyAssignmentsFromApi,
 } from '../../GateKeeperManager/AssignDuty/gateDutyData'
 
 const MyDuty = () => {
-    const [rows, setRows] = useState(() => getGateDutyAssignments())
+    const { name, email } = useAuth()
+    const scope = {
+        gateKeeperName: name || '',
+        // Prefer login email — server also filters gate-duty-assignments by assigneeEmail.
+        employeeId: email || '',
+        email: email || '',
+    }
+    const [rows, setRows] = useState(() => getMyGateDuties(scope))
     const [fromDate, setFromDate] = useState(null)
     const [toDate, setToDate] = useState(null)
     const [exportModal, setExportModal] = useState(false)
 
     useEffect(() => {
-        hydrateGateDutyAssignmentsFromApi().finally(() => setRows(getGateDutyAssignments()))
-    }, [])
+        hydrateGateDutyAssignmentsFromApi().finally(() => setRows(getMyGateDuties(scope)))
+        // Re-filter when signed-in identity is available.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [name, email])
 
     return (
         <section>

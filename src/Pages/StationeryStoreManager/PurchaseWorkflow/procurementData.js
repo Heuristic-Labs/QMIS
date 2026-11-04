@@ -5,6 +5,11 @@ import {
     usesCampusApiForKey,
 } from '../../../services/campusJsonStore'
 import { nextSerial } from '../../../Common/demoDomain/storage'
+import {
+    canUseOpsApi,
+    stationeryDecideProcurementApi,
+    stationeryReceiveGoodsApi,
+} from '../../../services/opsApi'
 
 export const PROCUREMENT_STORAGE_KEY = 'schoolerp-stationery-procurement-v1'
 
@@ -89,10 +94,38 @@ export async function createStationeryProcurementRequest(input) {
     return { ...result, record }
 }
 
-export async function advanceStationeryProcurement(id) {
+/** Map UI "Advance" to the server action allowed for the current status (store role). */
+const storeActionForStatus = (status) => {
+    const value = String(status || '').toUpperCase()
+    if (value === 'DRAFT' || value === 'QUOTATION_PENDING') return 'advance'
+    if (value === 'PO_REQUIRED') return 'advance'
+    if (value === 'PO_RAISED') return 'mark_po_approved'
+    if (value === 'PO_APPROVED') return 'complete'
+    return null
+}
+
+export async function advanceStationeryProcurement(id, { action, comment } = {}) {
     const rows = getStationeryProcurement()
     const current = rows.find((item) => item.id === id)
     if (!current) return { success: false, message: 'Request not found.' }
+
+    if (canUseOpsApi()) {
+        const resolved = action || storeActionForStatus(current.status)
+        if (!resolved) {
+            return {
+                success: false,
+                message: `No store advance from ${current.status}. Waiting for JD / Finance decision or goods receipt.`,
+            }
+        }
+        try {
+            const record = await stationeryDecideProcurementApi(id, { action: resolved, comment: comment || '' })
+            await hydrateStationeryProcurementFromApi()
+            return { success: true, api: true, record }
+        } catch (err) {
+            return { success: false, message: err?.message || 'Procurement decision failed.' }
+        }
+    }
+
     const order = current.minorPurchase ? MINOR_FLOW : MAJOR_FLOW
     const index = Math.max(order.indexOf(current.status), 0)
     const status = order[Math.min(index + 1, order.length - 1)] || current.status
@@ -105,6 +138,32 @@ export async function advanceStationeryProcurement(id) {
     const next = rows.map((item) => (item.id === id ? { ...item, status, poNumber, poDate } : item))
     const result = await saveStationeryProcurement(next)
     return { ...result, record: next.find((item) => item.id === id) }
+}
+
+export async function decideStationeryProcurement(id, action, comment = '') {
+    if (!canUseOpsApi()) {
+        return advanceStationeryProcurement(id, { action, comment })
+    }
+    try {
+        const record = await stationeryDecideProcurementApi(id, { action, comment })
+        await hydrateStationeryProcurementFromApi()
+        return { success: true, api: true, record }
+    } catch (err) {
+        return { success: false, message: err?.message || 'Procurement decision failed.' }
+    }
+}
+
+export async function receiveStationeryGoods(id, payload = {}) {
+    if (!canUseOpsApi()) {
+        return { success: false, message: 'Goods receipt requires live API mode.' }
+    }
+    try {
+        const result = await stationeryReceiveGoodsApi(id, payload)
+        await hydrateStationeryProcurementFromApi()
+        return { success: true, api: true, ...result }
+    } catch (err) {
+        return { success: false, message: err?.message || 'Goods receipt failed.' }
+    }
 }
 
 export function downloadQuotationTemplate() {

@@ -68,8 +68,8 @@ const HosteGatePass = () => {
         if (!id) return
         setSavingId(id)
         try {
+            // Verification-only patch — gate roles cannot rewrite the full FO record.
             const updated = await updateFrontOfficeRecordApi('hostel-gate-passes', id, {
-                ...pass,
                 gateKeeperStatus,
             })
             setPasses((prev) => prev.map((row) => {

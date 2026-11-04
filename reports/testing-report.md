@@ -1,36 +1,28 @@
 # Testing report
 
-**Date:** 2 November 2026  
-**Context:** Staff credential list role correction (File Room / CCTV / PRO / TM / Maintenance) + Non-Academics portals. Local only. **No production DB writes. No passwords logged or committed.**
+**Date:** 4 November 2026  
+**Context:** Store Management + Gatekeeper workflow implementation (issue/return, procurement, visitor upsert, duty isolation).
 
-## Latest — credential sheet verify + designation tests
-
-| Suite / check | Result |
-|---|---|
-| Local login for 8 target staff (CLIENT sheet passwords via TestClient → localhost) | **8/8 HTTP 200** (roles below) |
-| PRO Vaiyapuri / Jeyakumar | login OK · DB role `pro` matches sheet |
-| Maintenance Kausik (Kowsic) | login OK · DB role `housekeepingmanager` matches sheet |
-| Karthick (sheet `transportmanager`) | login OK · DB still `jointdirectorassistant` (mismatch; no DB write) |
-| Control Room Vengadeswari / Meena (sheet `cctv`) | login OK · DB still `gatekeeper` (mismatch; no DB write) |
-| File Room Shanmugavalli / Sivasankari (sheet `fileroom`) | login OK · DB still `stationerystoremanager` (mismatch; no DB write) |
-| `pytest` designation + File/CCTV/PRO map slice | **8 passed** |
-| CLIENT xlsx gitignored | **yes** |
-| Prep CSVs password column | placeholders only (0 real secrets) |
-
-## Prior same day — Non-Academics ops collections
+## Latest
 
 | Suite / check | Result |
 |---|---|
-| File/CCTV/PRO portal + static + designation maps | **49 passed** |
-| `npm run build` | **PASS** |
+| `pytest tests/test_stationery_gate_workflows.py -q` | **7 passed** |
+| `pytest tests/test_stationery_gate_workflows.py tests/test_front_office_api.py tests/test_ops_and_audit_collections.py -q` | **26 passed** |
+| Browser UAT | **NOT VERIFIED** |
+| `npm run build` | **PASS** (`vite build` ✓) |
 
 ## Coverage notes
 
-- Credentials list now aligns with `staff_designation_map` for File Room, CCTV, PRO, Transport Manager, Maintenance→HK.
-- Working passwords preserved on the CLIENT sheet; verification script clears password values from memory after each attempt and never prints them.
-- DB role remaps intentionally not applied (preserve working portal access until authorized remap).
+- Stationery issue/return: stock deduct, insufficient stock 409, idempotent `clientRequestId`.
+- Request decide: store approve; teacher forbidden.
+- Procurement: store advance → JD approve → Finance budget; store cannot JD-approve; `mark_paid` rejected.
+- GRN: inventory increase once; second receive idempotent.
+- Gate visitors: whole-list PUT rejected; item upsert + exit stamps.
+- Gatekeeper duty GET returns only assignments matching login email.
 
 ## Not run / blockers
 
-- AWS / production login re-check not run.
 - Full `pytest tests/` not re-run this slice.
+- Pre-existing `processauditor` hire failure in remaining workflows (unrelated) not treated as a regression from this work.
+- Browser UAT still open.

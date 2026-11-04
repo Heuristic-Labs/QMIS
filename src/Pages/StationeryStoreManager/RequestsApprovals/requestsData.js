@@ -1,4 +1,5 @@
 import { ensureCampusSeed, saveCampusJson, hydrateCampusKey, usesCampusApiForKey } from '../../../services/campusJsonStore'
+import { canUseOpsApi, stationeryDecideRequestApi } from '../../../services/opsApi'
 const DEFAULT_REQUESTS = [
     {
         requestId: 'REQ-SS-2026-008',
@@ -177,5 +178,36 @@ export function hydrateRequestsFromApi() {
     if (!usesCampusApiForKey('schoolerp-stationery-requests-v1')) return Promise.resolve(false)
     return hydrateCampusKey('schoolerp-stationery-requests-v1', DEFAULT_REQUESTS)
 }
+
+export async function decideStationeryRequest(requestId, decision, comment = '') {
+    if (!canUseOpsApi()) {
+        const rows = getRequests()
+        const current = rows.find((row) => row.requestId === requestId)
+        if (!current) return { success: false, message: 'Request not found.' }
+        const status = decision === 'approve' ? 'Approved' : 'Rejected'
+        const next = rows.map((row) => (
+            row.requestId === requestId
+                ? {
+                    ...row,
+                    status,
+                    currentStage: decision === 'approve' ? 'Ready to Issue' : 'Rejected',
+                    decisionComment: comment,
+                    decidedAt: new Date().toISOString(),
+                }
+                : row
+        ))
+        const saved = await saveRequests(next)
+        if (saved === false) return { success: false, message: 'Could not save decision.' }
+        return { success: true, record: next.find((row) => row.requestId === requestId) }
+    }
+    try {
+        const record = await stationeryDecideRequestApi(requestId, { decision, comment })
+        await hydrateRequestsFromApi()
+        return { success: true, api: true, record }
+    } catch (err) {
+        return { success: false, message: err?.message || 'Decision failed.' }
+    }
+}
+
 export const REQUESTS = DEFAULT_REQUESTS
 

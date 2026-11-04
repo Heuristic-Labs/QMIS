@@ -24,6 +24,20 @@ COLLECTIONS: dict[str, str] = {
 _WRITERS = {"prm", "pro", "admin", "superadmin", "managing_director"}
 _READERS = _WRITERS | {"principal", "director"}
 _GATE_PASS_READERS = {"gatekeeper", "gatekeepermanager"}
+# Store Officer may own material out/in passes (Non-Academics clarifications 12–13).
+_MATERIAL_GATE_WRITERS = _WRITERS | {"stationerystoremanager"}
+# Gate staff may verify an existing pass without creating/editing the whole FO record.
+_GATE_VERIFY_FIELDS = frozenset(
+    {
+        "gateKeeperStatus",
+        "gateKeeperRemark",
+        "gateKeeperVerifiedAt",
+        "verifiedBy",
+        "verifiedAt",
+        "outTime",
+        "gateVerified",
+    }
+)
 
 
 def _code(db: Session, actor: User) -> str:
@@ -39,11 +53,20 @@ def _can_read(db: Session, actor: User, collection: str | None = None) -> bool:
     code = _code(db, actor)
     if code in _READERS:
         return True
+    if collection == "material-gate-passes" and code == "stationerystoremanager":
+        return True
     return bool(collection and collection.endswith("gate-passes") and code in _GATE_PASS_READERS)
 
 
-def _can_write(db: Session, actor: User) -> bool:
-    return _code(db, actor) in _WRITERS
+def _can_write(db: Session, actor: User, collection: str | None = None) -> bool:
+    code = _code(db, actor)
+    if code in _WRITERS:
+        return True
+    return bool(collection == "material-gate-passes" and code in _MATERIAL_GATE_WRITERS)
+
+
+def _can_verify_gate_pass(db: Session, actor: User, collection: str) -> bool:
+    return bool(collection.endswith("gate-passes") and _code(db, actor) in _GATE_PASS_READERS)
 
 
 def _as_item(row: FrontOfficeRecord) -> dict:
@@ -105,7 +128,7 @@ def get_record(db: Session, actor: User, collection: str, public_id: str) -> dic
 
 def create_record(db: Session, actor: User, collection: str, body: dict) -> dict:
     _ensure_collection(collection)
-    if not _can_write(db, actor):
+    if not _can_write(db, actor, collection):
         fail(403, "forbidden", "You are not allowed to create front-office records.")
     if not isinstance(body, dict):
         fail(422, "invalid_body", "Body must be an object.")
@@ -140,8 +163,8 @@ def create_record(db: Session, actor: User, collection: str, body: dict) -> dict
 
 def update_record(db: Session, actor: User, collection: str, public_id: str, body: dict) -> dict:
     _ensure_collection(collection)
-    if not _can_write(db, actor):
-        fail(403, "forbidden", "You are not allowed to change front-office records.")
+    if not isinstance(body, dict):
+        fail(422, "invalid_body", "Body must be an object.")
     row = db.scalar(
         select(FrontOfficeRecord).where(
             FrontOfficeRecord.campus_id == actor.campus_id,
@@ -151,9 +174,17 @@ def update_record(db: Session, actor: User, collection: str, public_id: str, bod
     )
     if row is None:
         fail(404, "not_found", "That record was not found.")
-    if not isinstance(body, dict):
-        fail(422, "invalid_body", "Body must be an object.")
-    merged = {**(row.body or {}), **body, "id": public_id}
+
+    if _can_write(db, actor, collection):
+        patch = body
+    elif _can_verify_gate_pass(db, actor, collection):
+        patch = {key: value for key, value in body.items() if key in _GATE_VERIFY_FIELDS}
+        if not patch:
+            fail(403, "forbidden", "Gate staff may only update verification fields on a gate pass.")
+    else:
+        fail(403, "forbidden", "You are not allowed to change front-office records.")
+
+    merged = {**(row.body or {}), **patch, "id": public_id}
     if collection.endswith("gate-passes") or collection.endswith("passes"):
         merged.setdefault("gatePassId", public_id)
     row.body = merged
@@ -165,7 +196,7 @@ def update_record(db: Session, actor: User, collection: str, public_id: str, bod
 
 def delete_record(db: Session, actor: User, collection: str, public_id: str) -> None:
     _ensure_collection(collection)
-    if not _can_write(db, actor):
+    if not _can_write(db, actor, collection):
         fail(403, "forbidden", "You are not allowed to delete front-office records.")
     row = db.scalar(
         select(FrontOfficeRecord).where(

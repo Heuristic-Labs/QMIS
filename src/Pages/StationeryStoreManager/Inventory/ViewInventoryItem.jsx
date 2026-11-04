@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import { getInventoryItemById, statusBadgeColor } from './inventoryData'
+import { getInventoryItemById, hydrateInventoryItemsFromApi, statusBadgeColor } from './inventoryData'
 
 const Section = ({ title, children }) => (
     <div className='bg-white rounded-2xl shadow-md p-4'>
@@ -20,7 +20,15 @@ const Field = ({ label, value }) => (
 const ViewInventoryItem = () => {
     const navigate = useNavigate()
     const { id } = useParams()
-    const item = getInventoryItemById(id)
+    const [item, setItem] = useState(() => getInventoryItemById(id))
+
+    useEffect(() => {
+        let active = true
+        hydrateInventoryItemsFromApi().finally(() => {
+            if (active) setItem(getInventoryItemById(id))
+        })
+        return () => { active = false }
+    }, [id])
 
     return (
         <section className='space-y-6'>

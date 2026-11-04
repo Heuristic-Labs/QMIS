@@ -391,6 +391,11 @@ for _code, _perms in ROLE_PERMISSIONS.items():
         for _p in ("frontoffice.read", "frontoffice.write"):
             if _p not in _perms:
                 _perms.append(_p)
+    # Stationery Store Manager: material gate passes only (service ACL still blocks other FO collections).
+    if _code == "stationerystoremanager":
+        for _p in ("frontoffice.read", "frontoffice.write"):
+            if _p not in _perms:
+                _perms.append(_p)
     if _code in {"principal", "director"} and "frontoffice.read" not in _perms:
         _perms.append("frontoffice.read")
 

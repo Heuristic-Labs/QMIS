@@ -9,6 +9,7 @@ import {
     getStationeryPurchaseOrders,
     hydrateStationeryProcurementFromApi,
     PROCUREMENT_STATUSES,
+    receiveStationeryGoods,
 } from './procurementData'
 
 const PurchaseWorkflow = () => {
@@ -16,6 +17,7 @@ const PurchaseWorkflow = () => {
     const [title, setTitle] = useState('')
     const [amount, setAmount] = useState('')
     const [minor, setMinor] = useState(true)
+    const [busyId, setBusyId] = useState('')
 
     const refresh = () => setRows(getStationeryProcurement())
 
@@ -52,13 +54,37 @@ const PurchaseWorkflow = () => {
     }
 
     const advance = async (id) => {
-        const result = await advanceStationeryProcurement(id)
-        if (result?.success === false) {
-            toast.error(result.message || 'Could not advance workflow.')
-            return
+        setBusyId(id)
+        try {
+            const result = await advanceStationeryProcurement(id)
+            if (result?.success === false) {
+                toast.error(result.message || 'Could not advance workflow.')
+                return
+            }
+            refresh()
+            toast.success('Workflow advanced.')
+        } finally {
+            setBusyId('')
         }
-        refresh()
-        toast.success('Workflow advanced.')
+    }
+
+    const receiveGoods = async (row) => {
+        setBusyId(row.id)
+        try {
+            const result = await receiveStationeryGoods(row.id, {
+                grnId: `GRN-${row.id}`,
+                itemName: row.title,
+                quantity: 1,
+            })
+            if (result?.success === false) {
+                toast.error(result.message || 'Goods receipt failed. Link inventory item lines before GRN.')
+                return
+            }
+            refresh()
+            toast.success('Goods receipt recorded.')
+        } finally {
+            setBusyId('')
+        }
     }
 
     const orders = getStationeryPurchaseOrders(rows)
@@ -67,7 +93,9 @@ const PurchaseWorkflow = () => {
         <section className='space-y-6'>
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <h2 className='text-xl font-semibold text-black'>Purchase workflow</h2>
-                <p className='text-sm text-[#667085] mt-1'>Stationery store of record. Primary approver: Joint Director Operations.</p>
+                <p className='text-sm text-[#667085] mt-1'>
+                    Requirement → vendor compare → JD → Finance budget → PO → GRN → stock. Store prepares; JD/Finance decide on the API (not editable status labels).
+                </p>
                 <p className='text-xs text-[#808080] mt-2'>{PROCUREMENT_STATUSES.join(' → ')}</p>
                 <button type='button' onClick={downloadQuotationTemplate} className='mt-3 text-sm text-[#515DEF] underline cursor-pointer'>Download comparative quotation template</button>
                 <form onSubmit={create} className='grid grid-cols-1 md:grid-cols-4 gap-3 mt-4'>
@@ -101,7 +129,26 @@ const PurchaseWorkflow = () => {
                                 <td className='px-2 py-3'><StatusBadge status={row.status} /></td>
                                 <td className='px-2 py-3'>{row.poNumber || '—'}</td>
                                 <td className='px-2 py-3'>
-                                    <button type='button' onClick={() => advance(row.id)} className='text-[#515DEF] text-xs cursor-pointer'>Advance</button>
+                                    <div className='flex flex-wrap gap-2'>
+                                        <button
+                                            type='button'
+                                            disabled={busyId === row.id}
+                                            onClick={() => advance(row.id)}
+                                            className='text-[#515DEF] text-xs cursor-pointer disabled:opacity-50'
+                                        >
+                                            Advance
+                                        </button>
+                                        {['PO_APPROVED', 'PO_RAISED'].includes(String(row.status || '').toUpperCase()) && (
+                                            <button
+                                                type='button'
+                                                disabled={busyId === row.id}
+                                                onClick={() => receiveGoods(row)}
+                                                className='text-[#4CAF50] text-xs cursor-pointer disabled:opacity-50'
+                                            >
+                                                Receive GRN
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

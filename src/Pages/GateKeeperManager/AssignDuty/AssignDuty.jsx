@@ -23,6 +23,7 @@ const AssignDuty = () => {
         dutyId: '',
         gateKeeperName: '',
         employeeId: '',
+        assigneeEmail: '',
         gateLocation: 'Main Gate',
         shift: 'Morning',
         startTime: '07:00',
@@ -37,10 +38,18 @@ const AssignDuty = () => {
             toast.error('Gate Keeper name is required.')
             return
         }
+        if (!form.assigneeEmail.trim()) {
+            toast.error('Gate Keeper login email is required so My Duty can isolate assignments.')
+            return
+        }
         setSaving(true)
         try {
+            const email = form.assigneeEmail.trim().toLowerCase()
             const result = await upsertGateDutyAssignment({
                 ...form,
+                assigneeEmail: email,
+                // Keep employeeId usable as email match for older My Duty filters.
+                employeeId: form.employeeId.trim() || email,
                 dutyDate: formatDutyDate(dutyDate),
             })
             if (result?.success === false) {
@@ -87,6 +96,16 @@ const AssignDuty = () => {
                             type='text'
                             value={form.employeeId}
                             onChange={(e) => setField('employeeId', e.target.value)}
+                            className='text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full'
+                        />
+                    </div>
+                    <div className='flex flex-col gap-y-2'>
+                        <label className='text-base font-medium text-[#1E1E1E]'>Gate Keeper Email (login):</label>
+                        <input
+                            type='email'
+                            value={form.assigneeEmail}
+                            onChange={(e) => setField('assigneeEmail', e.target.value)}
+                            placeholder='gatekeeper@…'
                             className='text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full'
                         />
                     </div>

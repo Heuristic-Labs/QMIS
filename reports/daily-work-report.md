@@ -8,6 +8,25 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 4 November 2026 — Store/Gatekeeper workflow implementation
+
+**Status:** Confirmed Store + Gatekeeper defects implemented (server issue/return ledger, request decide, JD/Finance procurement + GRN, visitor item-upsert exit, duty isolation). FO Parent / Admission Enquiry WIP untouched. No commit/push.
+
+### Done
+- Backend `stationery_workflow`: atomic issue/return, request decide, procurement stage gates, idempotent GRN.
+- Gate collections moved to record-level upsert; visitor exit stamps; gatekeeper duty list filtered by assignee email.
+- FE: RegisterPage item persist; Issue/Return + StockIssue API path; Request Approve/Reject; Purchase Advance/GRN; Assign Duty requires login email.
+- Tests: `test_stationery_gate_workflows.py` **7 passed**; with FO/ops regression **26 passed**.
+- Audit updated: `docs/QMIS_Store_Gatekeeper_Workflow_API_Audit.md`.
+
+### Still open
+- Browser UAT of visitor exit / GRN / My Duty after refresh.
+- Visitor photo / PRM host notify (Proposed — deferred).
+- Finance payment settlement (must stay on Finance APIs; store mark-paid blocked).
+- Earlier: live PRM password-change then module E2E.
+
+---
+
 ## 2 November 2026 — Staff credential list role correction + Non-Academics portals
 
 **Status:** CLIENT credentials sheet + prep CSVs corrected for File Room / CCTV / PRO / TM Karthick / Maintenance Kausik (Kowsic). Passwords not written into repo. Local login OK for all targets; local DB roles still on older temporary mappings (no DB/prod writes). No commit/push/deploy.

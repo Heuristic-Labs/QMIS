@@ -238,7 +238,18 @@ def _as_item(row: OpsRecord) -> dict:
 
 
 def _public_id_for(collection: str, body: dict, fallback: str) -> str:
-    for key in ("id", "menuId", "employeeId", "ticketId", "assetId", "bookId", "memberId"):
+    for key in (
+        "id",
+        "itemId",
+        "requestId",
+        "dutyId",
+        "menuId",
+        "employeeId",
+        "ticketId",
+        "assetId",
+        "bookId",
+        "memberId",
+    ):
         value = body.get(key)
         if value:
             return str(value).strip()
@@ -287,6 +298,29 @@ def _in_driver_scope(item: dict, scope: dict | None, collection: str) -> bool:
     return False
 
 
+def _filter_gatekeeper_duties(db: Session, actor: User, items: list[dict]) -> list[dict]:
+    """Gate Keepers only see their own duty assignments (match email / assignee user id)."""
+    if _code(db, actor) != "gatekeeper":
+        return items
+    email = (actor.email or "").strip().lower()
+    uid = str(actor.id)
+    if not email:
+        return []
+    matched = []
+    for item in items:
+        row_email = str(
+            item.get("assigneeEmail")
+            or item.get("email")
+            or item.get("employeeId")
+            or ""
+        ).strip().lower()
+        row_uid = str(item.get("assigneeUserId") or item.get("userId") or "").strip()
+        # Prefer stable identity fields; display-name-only matches are not enough for isolation.
+        if (email and row_email == email) or (row_uid and row_uid == uid):
+            matched.append(item)
+    return matched
+
+
 def list_records(db: Session, actor: User, collection: str) -> list[dict]:
     _ensure_collection(collection)
     if not _can_read(db, actor, collection):
@@ -300,6 +334,8 @@ def list_records(db: Session, actor: User, collection: str) -> list[dict]:
         .order_by(OpsRecord.created_at.desc())
     ).all()
     items = [_as_item(row) for row in rows]
+    if collection == "gate-duty-assignments":
+        items = _filter_gatekeeper_duties(db, actor, items)
     scope = _driver_scope(db, actor) if collection.startswith("transport-") else None
     if scope is None:
         return items
@@ -527,8 +563,20 @@ def my_tickets(db: Session, actor: User) -> list[dict]:
     return [_as_item(row) for row in rows if str((row.body or {}).get("requesterUserId") or "") == mine]
 
 
-_ITEM_UPSERT_COLLECTIONS = {"som-matrix", "som-config", "security-cameras"}
+# Whole-list PUT races for concurrent gate edits; save these one record at a time.
+_ITEM_UPSERT_COLLECTIONS = {
+    "som-matrix",
+    "som-config",
+    "security-cameras",
+    "gate-visitors",
+    "gate-registers",
+    "gate-handover",
+    "gate-vendors",
+    "gate-incidents",
+    "gate-duty-assignments",
+}
 CAMERA_STATUSES = {"Active", "Offline", "Under Maintenance", "Removed"}
+VISITOR_EXITED = "Exited"
 
 
 def _validate_camera(body: dict) -> None:
@@ -593,6 +641,8 @@ def upsert_record(db: Session, actor: User, collection: str, item_id: str, body:
         )
     )
     now = datetime.now(timezone.utc)
+    if collection == "gate-visitors":
+        _validate_visitor_upsert(row.body if row else None, payload, actor, now)
     if row is None:
         row = OpsRecord(
             id=uuid.uuid4(),
@@ -610,6 +660,28 @@ def upsert_record(db: Session, actor: User, collection: str, item_id: str, body:
     db.commit()
     db.refresh(row)
     return _as_item(row)
+
+
+def _validate_visitor_upsert(previous: dict | None, payload: dict, actor: User, now: datetime) -> None:
+    """Prevent duplicate exits; stamp who exited and when on first Exited transition."""
+    status_key = "status" if "status" in payload else ("visitorStatus" if "visitorStatus" in payload else None)
+    if not status_key:
+        return
+    new_status = str(payload.get(status_key) or "").strip()
+    old_status = str((previous or {}).get(status_key) or "").strip()
+    if new_status == VISITOR_EXITED:
+        if old_status == VISITOR_EXITED:
+            # Idempotent re-save of an already-exited visitor: keep original exit stamps.
+            for key in ("outTime", "exitedAt", "exitedByUserId", "exitedByEmail", "exitedByName"):
+                if previous and previous.get(key) and not payload.get(key):
+                    payload[key] = previous[key]
+            return
+        payload.setdefault("exitedAt", now.isoformat())
+        payload.setdefault("exitedByUserId", str(actor.id))
+        payload.setdefault("exitedByEmail", actor.email or "")
+        payload.setdefault("exitedByName", actor.email or "")
+        if not str(payload.get("outTime") or "").strip():
+            payload["outTime"] = now.astimezone(timezone.utc).strftime("%H:%M")
 
 
 def _rows(db: Session, actor: User, collection: str) -> list[dict]:
