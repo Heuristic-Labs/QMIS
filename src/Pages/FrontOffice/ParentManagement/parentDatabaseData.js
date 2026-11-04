@@ -15,6 +15,80 @@ const resolveLinkedStudents = (studentIds = []) =>
         .map((studentId) => getEnrolledStudentById(studentId))
         .filter(Boolean)
 
+/**
+ * Map GET /api/v1/parents staff row → Front Office Parents List row.
+ * Intended presentation: one row per enrolled student (guardian contact from that
+ * student's admission). Sibling students with the same parent appear as separate rows.
+ * Do not invent parent aggregation APIs.
+ */
+export const mapStaffParentApiRowToListRow = (row, profileFallback = mo_user) => {
+    const studentId = String(row?.studentId || row?.id || '')
+    const parentUserId = row?.parentUserId ? String(row.parentUserId) : ''
+    return {
+        id: studentId,
+        parentId: parentUserId || displayValue(row?.parentEmail, '—'),
+        profileImage: profileFallback,
+        parentName: displayValue(row?.parentName, 'Parent'),
+        gender: '—',
+        email: displayValue(row?.parentEmail),
+        mobileNumber: displayValue(row?.mobileNumber),
+        studentName: displayValue(row?.studentName),
+        admissionNumber: displayValue(row?.admissionNumber),
+        relation: '—',
+        className: displayValue(row?.className, ''),
+        section: displayValue(row?.section, ''),
+        studentIds: studentId ? [studentId] : [],
+        studentCount: studentId ? 1 : 0,
+        studentId,
+        parentUserId: parentUserId || null,
+        status: 'Active',
+    }
+}
+
+/** Map GET /students/{id} detail → Front Office View Parent model. */
+export const mapStudentDetailToParentDetail = (row, profileFallback = mo_user) => {
+    if (!row) return null
+    const snap = row.admissionSnapshot || {}
+    const father = String(snap.fatherName || '').trim()
+    const mother = String(snap.motherName || '').trim()
+    const parentName = father || mother || 'Parent'
+    const studentId = String(row.id || '')
+    return {
+        id: studentId,
+        parentId: row.parentUserId ? String(row.parentUserId) : displayValue(snap.parentEmail),
+        profileImage: profileFallback,
+        parentName,
+        gender: displayValue(snap.gender),
+        relation: father ? 'Father' : mother ? 'Mother' : '—',
+        occupation: displayValue(snap.fatherOccupation || snap.motherOccupation),
+        yearlyIncome: displayValue(snap.fatherIncome || snap.motherIncome || snap.yearlyIncome),
+        address: {
+            address: displayValue(snap.parentAddress || snap.address),
+            country: displayValue(snap.parentCountry || snap.country),
+            state: displayValue(snap.parentState || snap.state),
+            city: displayValue(snap.parentCity || snap.city),
+            zipCode: displayValue(snap.parentZipCode || snap.zipCode),
+        },
+        contact: {
+            mobileNumber: displayValue(snap.parentMobileNumber || row.mobileNumber),
+            alternativeNumber: displayValue(snap.parentAltMobileNumber || snap.altMobileNumber),
+            email: displayValue(snap.parentEmail || row.email),
+        },
+        student: {
+            name: displayValue(row.name),
+            admissionNumber: displayValue(row.admissionNumber),
+            class: displayValue(row.className),
+            section: displayValue(row.section),
+        },
+        studentIds: studentId ? [studentId] : [],
+        linkedStudents: [],
+        status: displayValue(row.status, 'Active'),
+        email: displayValue(snap.parentEmail || row.email),
+        phone: displayValue(snap.parentMobileNumber || row.mobileNumber),
+        name: parentName,
+    }
+}
+
 export const mapParentAccountToListRow = (account) => {
     const linkedStudents = resolveLinkedStudents(account?.studentIds)
     const firstStudent = linkedStudents[0]
@@ -40,6 +114,7 @@ export const mapParentAccountToListRow = (account) => {
     }
 }
 
+/** Offline / API-off fallback only. */
 export const getParentsList = () => getAllParentAccounts().map(mapParentAccountToListRow)
 
 /** @deprecated Prefer getParentsList() — kept for callers expecting a static export shape. */

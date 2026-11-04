@@ -182,7 +182,7 @@ const ViewAdmission = () => {
 
                 <h3 className='text-lg font-semibold text-black mb-4'>Fees</h3>
                 <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4'>
-                    <Field label='Fees Group' value={record.feesGroup} />
+                    <Field label='Fees Group' value={record.feesGroup || '—'} />
                 </div>
             </div>
         </section>

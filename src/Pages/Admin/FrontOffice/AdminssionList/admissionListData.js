@@ -28,6 +28,26 @@ export const FEES_GROUP_OPTIONS = [
     'Activity Fees',
 ]
 
+/** Parse stored fees_group (single value or comma-separated) into a list. */
+export const parseFeesGroups = (value) => {
+    if (Array.isArray(value)) {
+        return value.map((item) => String(item || '').trim()).filter(Boolean)
+    }
+    return String(value || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+}
+
+/** Persist selected fee groups as a single string for the existing API/DB column. */
+export const formatFeesGroups = (list) => {
+    const unique = []
+    for (const item of parseFeesGroups(list)) {
+        if (!unique.includes(item)) unique.push(item)
+    }
+    return unique.join(', ')
+}
+
 export const ADMISSION_STATUS_OPTIONS = ['Active', 'Enrolled', 'In Active']
 
 export const DEFAULT_ADMISSION_FORM = {
@@ -275,7 +295,7 @@ const buildAdmissionRecord = (payload, existing = null) => {
             parentAccountPassword: String(payload.parentAccountPassword || '').trim()
                 || existing?.parentAccountPassword
                 || '',
-            feesGroup: payload.feesGroup || '',
+            feesGroup: formatFeesGroups(payload.feesGroup),
             status: existing?.status || 'Active',
             enrolledStudentId: existing?.enrolledStudentId || '',
             createdDate: existing?.createdDate || formatDate(new Date()),

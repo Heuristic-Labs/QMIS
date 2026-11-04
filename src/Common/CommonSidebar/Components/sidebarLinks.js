@@ -635,6 +635,7 @@ export const prmSidebarLinks = [
         icon: Users,
         subLinks: [
             { icon: UserRound, title: "Student Database", to: "/front-office/student-management" },
+            { icon: UsersRound, title: "Parent Database", to: "/front-office/parent-management" },
             { icon: UserRoundCog, title: "Staff Database", to: "/front-office/teacher-management" },
         ],
     },

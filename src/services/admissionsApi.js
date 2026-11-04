@@ -205,7 +205,7 @@ export const admissionFormToApi = (form) => ({
         ? form.referralStudentAdmissionNo || null
         : null,
     referral_notes: form.referralNotes || null,
-    fees_group: form.feesGroup || null,
+    fees_group: (form.feesGroup && String(form.feesGroup).trim()) || null,
     profile_image_file_id: form.profileImageFileId ?? null,
     status: form.status || 'Active',
 })

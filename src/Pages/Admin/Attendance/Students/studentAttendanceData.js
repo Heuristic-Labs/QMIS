@@ -1,4 +1,4 @@
-﻿import { getClasses, getSections } from '../../../../Common/RBAC/academicsCatalogData'
+import { getClasses, getSections } from '../../../../Common/RBAC/academicsCatalogData'
 import { getAccessToken, isApiAuthEnabled } from '../../../../services/apiClient'
 import { liveArray } from '../../../../Common/RBAC/liveArray'
 
