@@ -334,7 +334,6 @@ export const filterAdmissionEnquiries = (records, { search = '', status = '' } =
             item.email,
             item.className,
             item.source,
-            item.assignedTo,
             item.city,
             item.state,
             item.id,

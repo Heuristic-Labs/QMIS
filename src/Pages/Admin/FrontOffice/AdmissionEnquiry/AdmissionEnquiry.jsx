@@ -212,7 +212,6 @@ const AdmissionEnquiry = () => {
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Enquiry Date</th>
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Gender</th>
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Next Follow Up Date</th>
-                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Assigned To</th>
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Status</th>
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>City</th>
                                         <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>State</th>
@@ -232,7 +231,6 @@ const AdmissionEnquiry = () => {
                                             <td className='px-2 py-4'>{record.enquiryDate || '—'}</td>
                                             <td className='px-2 py-4'>{record.gender || '—'}</td>
                                             <td className='px-2 py-4'>{record.nextFollowUpDate || '—'}</td>
-                                            <td className='px-2 py-4'>{record.assignedTo || '—'}</td>
                                             <td className='px-2 py-4'>
                                                 <span className={`px-2 py-1 rounded-lg text-xs font-semibold whitespace-nowrap ${statusBadgeColor[record.status] || statusBadgeColor.Active}`}>
                                                     {record.status}

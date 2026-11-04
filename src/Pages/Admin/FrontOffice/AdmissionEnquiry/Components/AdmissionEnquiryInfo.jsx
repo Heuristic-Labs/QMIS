@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar } from 'lucide-react'
@@ -9,7 +9,6 @@ import {
     REFERENCE_OPTIONS,
     SOURCE_OPTIONS,
 } from '../admissionEnquiryData'
-import { getCreatedUsersByRole, syncCreatedUsersFromApi } from '../../../../../Common/RBAC/createdUsersData'
 import { CLASS_LEVEL_OPTIONS } from '../../../Class/ClassDetails/classDetailsOptions'
 
 const inputClass = 'text-sm font-normal text-[#1E1E1E] border border-[#D9D9D9] rounded-md px-2 py-3 w-full'
@@ -19,26 +18,6 @@ const RequiredMark = ({ show }) => (show ? <span className='text-[#F44336]'> *</
 const FieldError = ({ id, message }) => <p id={id} className='text-xs text-[#F44336]'>{message}</p>
 
 const AdmissionEnquiryInfo = ({ form, onChange, readOnly = false, missing = new Set() }) => {
-    const [prmRecords, setPrmRecords] = useState(() => getCreatedUsersByRole('prm'))
-    const assignees = useMemo(() => {
-        const created = prmRecords
-            .filter((user) => user.status === 'Active')
-            .map((user) => user.name)
-        const defaults = ['Admin Desk', 'Front Office']
-        return [...new Set([...created, ...defaults])]
-    }, [prmRecords])
-
-    // In API mode the server owns the user list; refresh the local mirror before listing PRMs.
-    useEffect(() => {
-        let cancelled = false
-        syncCreatedUsersFromApi()
-            .then((mapped) => {
-                if (mapped && !cancelled) setPrmRecords(getCreatedUsersByRole('prm'))
-            })
-            .catch(() => { /* keep whatever is already mirrored */ })
-        return () => { cancelled = true }
-    }, [])
-
     const update = (key, value) => {
         if (readOnly) return
         onChange?.(key, value)
@@ -115,17 +94,6 @@ const AdmissionEnquiryInfo = ({ form, onChange, readOnly = false, missing = new 
                 />
             </div>
             <div className='flex flex-col gap-y-2'>
-                <label htmlFor='description' className='text-base font-medium text-[#1E1E1E]'>Description:</label>
-                <input
-                    id='description'
-                    type='text'
-                    value={form.description}
-                    onChange={(e) => update('description', e.target.value)}
-                    disabled={readOnly}
-                    className={inputClass}
-                />
-            </div>
-            <div className='flex flex-col gap-y-2'>
                 <label htmlFor='note' className='text-base font-medium text-[#1E1E1E]'>Note:</label>
                 <input
                     id='note'
@@ -163,21 +131,6 @@ const AdmissionEnquiryInfo = ({ form, onChange, readOnly = false, missing = new 
                     />
                     <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
                 </div>
-            </div>
-            <div className='flex flex-col gap-y-2'>
-                <label htmlFor='assignedTo' className='text-base font-medium text-[#1E1E1E]'>Assigned:</label>
-                <select
-                    id='assignedTo'
-                    value={form.assignedTo}
-                    onChange={(e) => update('assignedTo', e.target.value)}
-                    disabled={readOnly}
-                    className={inputClass}
-                >
-                    <option value=''>--Select--</option>
-                    {assignees.map((item) => (
-                        <option key={item} value={item}>{item}</option>
-                    ))}
-                </select>
             </div>
             <div className='flex flex-col gap-y-2'>
                 <label htmlFor='reference' className='text-base font-medium text-[#1E1E1E]'>Reference:</label>
