@@ -1,4 +1,4 @@
-"""Ensure TC NOC table + widened status check exist on startup."""
+"""Ensure TC NOC table exists on startup (best-effort; Alembic 0024 is authoritative)."""
 
 from __future__ import annotations
 
@@ -6,36 +6,28 @@ from sqlalchemy import inspect, text
 
 from app.core.database import engine
 
-_STATUS_CHECK_SQL = (
-    "status IN ("
-    "'Pending PRM Review', "
-    "'Pending Manager NOCs', "
-    "'Pending Super Admin Approval', "
-    "'Approved', "
-    "'Rejected'"
-    ")"
-)
-
 
 def ensure_tc_schema() -> None:
+    """Best-effort create of ``tc_request_nocs`` when Alembic 0024 has not run yet.
+
+    Never raises. Intentionally does **not** ALTER ``tc_requests`` status CHECK on
+    startup: DROP/ADD CONSTRAINT needs an ACCESS EXCLUSIVE lock and can block the
+    new ECS task until health checks fail (circuit breaker rollback). Widen the
+    CHECK via ``alembic upgrade head`` (revision 0024) with a maintenance window.
+    """
     try:
         inspector = inspect(engine)
-        if not inspector.has_table("tc_request_nocs"):
-            from app.models import Base
+        if inspector.has_table("tc_request_nocs"):
+            return
+        from app.models import Base
 
-            table = Base.metadata.tables.get("tc_request_nocs")
-            if table is not None:
-                Base.metadata.create_all(bind=engine, tables=[table])
-
-        if engine.dialect.name == "postgresql" and inspector.has_table("tc_requests"):
+        table = Base.metadata.tables.get("tc_request_nocs")
+        if table is not None:
+            # Short lock wait so a busy catalog cannot hang uvicorn forever.
             with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE tc_requests DROP CONSTRAINT IF EXISTS ck_tc_requests_status"))
-                conn.execute(
-                    text(
-                        "ALTER TABLE tc_requests ADD CONSTRAINT ck_tc_requests_status "
-                        f"CHECK ({_STATUS_CHECK_SQL})"
-                    )
-                )
+                if engine.dialect.name == "postgresql":
+                    conn.execute(text("SET LOCAL lock_timeout = '5s'"))
+                table.create(bind=conn, checkfirst=True)
     except Exception:
         # Never block API startup; Alembic 0024 covers the same change formally.
         pass

@@ -47,7 +47,11 @@ from app.services.tc_migrate import ensure_tc_schema
 
 
 def init_db() -> None:
-    Base.metadata.create_all(bind=engine)
+    # Soft-managed tables: create_all must not hard-fail startup when the prod DB role
+    # cannot CREATE. ensure_tc_schema (try/except) + Alembic 0024 own this table.
+    _soft_schema_tables = frozenset({"tc_request_nocs"})
+    create_tables = [t for t in Base.metadata.sorted_tables if t.name not in _soft_schema_tables]
+    Base.metadata.create_all(bind=engine, tables=create_tables)
     ensure_hr_employee_columns()
     ensure_admissions_schema()
     ensure_masters_schema()
