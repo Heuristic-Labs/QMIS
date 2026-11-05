@@ -19,8 +19,18 @@ import { canUseExamsApi, getExamApi, listExamsApi, mapExamFromApi } from '../../
 const formatDisplayDate = (iso) => {
     if (!iso) return '—'
     const d = new Date(iso)
-    if (Number.isNaN(d.getTime())) return String(iso)
+    if (Number.isNaN(d.getTime())) return '—'
     return d.toLocaleDateString('en-GB').replace(/\//g, '-')
+}
+
+/** Submission timestamp for Director list — never fall back to examination startDate. */
+const formatSubmittedDateTime = (iso) => {
+    if (!iso) return '—'
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return '—'
+    const date = d.toLocaleDateString('en-GB').replace(/\//g, '-')
+    const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    return `${date} ${time}`
 }
 
 const formatClassLabel = (className, section) => {
@@ -47,7 +57,7 @@ const mapExamToApprovalRow = (exam) => {
         startDate: formatDisplayDate(exam.startDate),
         endDate: formatDisplayDate(exam.endDate),
         submittedBy: SUBMITTED_BY,
-        submittedDate: formatDisplayDate(exam.startDate),
+        submittedDate: formatSubmittedDateTime(exam.submittedAt),
         approvalStatus,
         approvalId: exam.approvalId || null,
         rejectionReason: '',

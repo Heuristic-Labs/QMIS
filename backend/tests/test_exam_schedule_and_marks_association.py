@@ -40,8 +40,27 @@ def _h(client, who):
     return login_headers(client, *USERS[who])
 
 
+def _ensure_class_section(client, class_name: str, section: str = "A") -> None:
+    """Exam create now requires active Class Details masters."""
+    admin = _h(client, "admin")
+    classes = _ok(client.get("/api/v1/masters/classes", headers=admin))
+    row = next((c for c in classes if str(c.get("name") or "").strip().lower() == class_name.strip().lower()), None)
+    if row is None:
+        row = _ok(client.post("/api/v1/masters/classes", json={"name": class_name}, headers=admin), 201)
+    sections = _ok(client.get(f"/api/v1/masters/sections?class_id={row['id']}", headers=admin))
+    if any(str(s.get("name") or "").strip().lower() == section.strip().lower() for s in sections):
+        return
+    options = _ok(client.get("/api/v1/masters/class-teacher-options", headers=admin))
+    tid = next((o["user_id"] for o in options if o.get("email") == USERS["teacher"][0]), None)
+    body = {"class_id": row["id"], "name": section}
+    if tid:
+        body["class_teacher_user_id"] = tid
+    _ok(client.post("/api/v1/masters/sections", json=body, headers=admin), 201)
+
+
 def test_exam_schedule_timelines_round_trip(client):
     principal = _h(client, "principal")
+    _ensure_class_section(client, "Grade 8", "B")
     timelines = [
         {
             "day": "Monday",
@@ -76,6 +95,57 @@ def test_exam_schedule_timelines_round_trip(client):
     assert got["timelines"][0]["startTime"] == "09:00"
     assert got["timelines"][0]["endTime"] == "11:00"
     assert got["section"] == "B"
+    assert created.get("submittedAt") is None
+    assert got.get("submittedAt") is None
+
+
+def test_exam_submitted_at_is_approval_time_not_start_date(client):
+    """Director Submitted Date must use approval_requests.created_at, not exam.start_date."""
+    principal, director = _h(client, "principal"), _h(client, "director")
+    _ensure_class_section(client, "Grade 8", "A")
+    created = _ok(
+        client.post(
+            "/api/v1/exams",
+            headers=principal,
+            json={
+                "name": "Submit Stamp Exam",
+                "examType": "MIDTERM",
+                "className": "Grade 8",
+                "section": "A",
+                "startDate": FUTURE,
+                "endDate": FUTURE_END,
+                "timelines": [
+                    {
+                        "day": "Tuesday",
+                        "subject": "Science",
+                        "examDate": FUTURE,
+                        "startTime": "10:00",
+                        "endTime": "12:00",
+                    }
+                ],
+            },
+        ),
+        201,
+    )
+    assert created.get("submittedAt") is None
+    submitted = _ok(client.post(f"/api/v1/exams/{created['id']}/submit", headers=principal))
+    assert submitted["status"] == "submitted"
+    assert submitted["submittedAt"]
+    assert submitted["submittedAt"] != submitted["startDate"]
+    stamp = submitted["submittedAt"]
+
+    approved = _ok(
+        client.post(
+            f"/api/v1/approvals/{submitted['approvalId']}/decide",
+            headers=director,
+            json={"decision": "approve"},
+        )
+    )
+    assert approved["status"] == "approved"
+    after = _ok(client.get(f"/api/v1/exams/{created['id']}", headers=director))
+    assert after["status"] == "approved"
+    assert after["submittedAt"] == stamp
+    assert after["startDate"] == FUTURE
 
 
 def test_marks_require_placement_and_reject_wrong_section_or_class(client):

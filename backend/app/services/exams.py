@@ -183,6 +183,8 @@ def _exam_out(db: Session, exam: Exam) -> dict:
         "endDate": exam.end_date.isoformat(),
         "status": _status(appr, final="approved"),
         "approvalId": str(appr.id) if appr else None,
+        # ApprovalRequest.created_at is set when Principal submits; decide must not rewrite it.
+        "submittedAt": appr.created_at.isoformat() if appr else None,
         "awaitingRole": appr_out["awaitingRole"] if appr_out else None,
         "awaitingRoles": appr_out.get("awaitingRoles") if appr_out else [],
     }

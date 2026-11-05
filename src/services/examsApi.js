@@ -105,6 +105,8 @@ export function mapExamFromApi(row) {
         endDate: row.endDate || row.end_date || '',
         status: row.status || '',
         approvalId: row.approvalId || row.approval_id || null,
+        // Real Principal→Director submission time from approval_requests.created_at (never startDate).
+        submittedAt: row.submittedAt || row.submitted_at || null,
         awaitingRole: row.awaitingRole || null,
         timelines: Array.isArray(row.timelines) ? row.timelines : [],
         source: 'api',
