@@ -133,6 +133,7 @@ def _can_download_orphan_file(db: Session, actor: User, row: FileAsset) -> bool:
         return True
     from app.deps import permission_codes_for
 
+    codes = set(permission_codes_for(db, actor))
     elevated = {
         "hr.write",
         "hr.employees.write",
@@ -143,7 +144,12 @@ def _can_download_orphan_file(db: Session, actor: User, row: FileAsset) -> bool:
         "audit.read",
         "users.write",
     }
-    return bool(elevated.intersection(permission_codes_for(db, actor)))
+    if elevated.intersection(codes):
+        return True
+    # Star of the Month attachments: any staff with ops/academics read may download.
+    if str(row.resource_type or "").startswith("som-"):
+        return bool(codes.intersection({"ops.read", "ops.write", "academics.read", "academics.write"}))
+    return False
 
 
 def get_file(db: Session, actor: User, file_id: uuid.UUID) -> tuple[FileAsset, Path]:

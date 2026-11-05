@@ -533,7 +533,9 @@ export const singleTitleMapping = {
     "/transport-manager/service-centers": "Service Centers",
     "/transport-manager/service-centers/add": "Add Service Center",
     "/transport-manager/request-approvals": "Request & Approvals",
+    "/transport-manager/tc-noc": "TC NOC Clearance",
     "/transport-manager/transport-expenses": "Transport Expenses",
+
     "/transport-manager/leave-request": "Leave Request",
     "/transport-manager/broadcast": "Announcement",
 
@@ -1057,6 +1059,7 @@ const dynamicTitleMatchers = [
     { test: (p) => /^\/transport-manager\/route-management\/edit\/[^/]+$/.test(p), title: 'Edit Route' },
     { test: (p) => /^\/transport-manager\/route-data\/track\/[^/]+$/.test(p), title: 'Track Bus Location' },
     { test: (p) => /^\/transport-manager\/student-transport\/view\/[^/]+$/.test(p), title: 'View Student Transport' },
+    { test: (p) => /^\/transport-manager\/tc-noc\/view\/[^/]+$/.test(p), title: 'View TC NOC' },
     { test: (p) => /^\/transport-manager\/student-transport\/edit\/[^/]+$/.test(p), title: 'Edit Student Transport' },
     { test: (p) => /^\/transport-manager\/assign-duty\/view\/[^/]+$/.test(p), title: 'View Assign Duty' },
     { test: (p) => /^\/transport-manager\/assign-duty\/edit\/[^/]+$/.test(p), title: 'Edit Assign Duty' },

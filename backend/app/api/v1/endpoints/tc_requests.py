@@ -44,8 +44,13 @@ def create_route(
     body: CreateIn, db: Session = Depends(get_db), user: User = Depends(require_permission("tc.write"))
 ) -> dict:
     return svc.create(
-        db, user, student_ref=body.studentRef, reason=body.reason, transfer_to=body.transferTo,
-        last_date=body.lastDateOfAttendance, requested_by=body.requestedBy,
+        db,
+        user,
+        student_ref=body.studentRef,
+        reason=body.reason,
+        transfer_to=body.transferTo,
+        last_date=body.lastDateOfAttendance,
+        requested_by=body.requestedBy,
     )
 
 
@@ -61,6 +66,13 @@ def reject_prm_route(
     ref: str, body: RemarksIn, db: Session = Depends(get_db), user: User = Depends(require_permission("tc.write"))
 ) -> dict:
     return svc.reject_at_prm(db, user, ref, body.remarks)
+
+
+@router.post("/{ref}/noc")
+def noc_route(
+    ref: str, body: DecideIn, db: Session = Depends(get_db), user: User = Depends(require_permission("tc.noc"))
+) -> dict:
+    return svc.decide_noc(db, user, ref, decision=body.decision, remarks=body.remarks)
 
 
 @router.post("/{ref}/decide")

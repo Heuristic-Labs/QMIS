@@ -98,7 +98,8 @@ PERMISSIONS: list[tuple[str, str]] = [
     ("calendar.write", "Add, change and remove academic calendar events"),
     ("tc.read", "View transfer-certificate requests"),
     ("tc.write", "File or forward a transfer-certificate request"),
-    ("tc.decide", "Approve or reject a transfer-certificate request"),
+    ("tc.noc", "Record a manager NOC on a transfer-certificate request"),
+    ("tc.decide", "Final approve or reject a transfer-certificate request (MD / Super Admin)"),
     ("frontoffice.read", "View Front Office gate passes, transfers and re-enrollment"),
     ("frontoffice.write", "Create and change Front Office campus records"),
     ("academics.read", "View class timetables, teacher allocations and timetable change requests"),
@@ -343,16 +344,22 @@ for _code, _perms in ROLE_PERMISSIONS.items():
     if _code in _CALENDAR_EDITORS and "calendar.write" not in _perms:
         _perms.append("calendar.write")
 
-# TC requests: parents and front office file them; PRM forwards; administrators decide.
-# Super Admin / Managing Director already hold every permission.
+# TC requests: parents/FO file; applicable managers give NOCs; PRM forwards; MD/SA/Admin final decide.
+# Super Admin / Managing Director already hold every permission via _ADMIN.
 _TC_FILERS = {"parent", "student", "prm", "pro", "admin"}
 _TC_FORWARDERS = {"prm", "pro", "admin"}
-_TC_DECIDERS = {"admin"}
+_TC_NOC_ROLES = {"transportmanager"}  # matches TC_NOC_AUTHORITIES in tc_requests service
+_TC_DECIDERS = {"admin", "superadmin", "managing_director"}
 for _code, _perms in ROLE_PERMISSIONS.items():
-    if _code in {"admin", "superadmin", "managing_director", "prm", "pro", "parent", "student"} and "tc.read" not in _perms:
+    if (
+        _code in {"admin", "superadmin", "managing_director", "prm", "pro", "parent", "student"}
+        or _code in _TC_NOC_ROLES
+    ) and "tc.read" not in _perms:
         _perms.append("tc.read")
     if _code in _TC_FILERS and "tc.write" not in _perms:
         _perms.append("tc.write")
+    if _code in _TC_NOC_ROLES and "tc.noc" not in _perms:
+        _perms.append("tc.noc")
     if _code in _TC_DECIDERS and "tc.decide" not in _perms:
         _perms.append("tc.decide")
 

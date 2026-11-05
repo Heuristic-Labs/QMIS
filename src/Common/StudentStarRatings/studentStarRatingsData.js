@@ -137,21 +137,31 @@ const buildSomRating = ({
     rating,
     description,
     ratedByRole = 'Teacher',
-}) => ({
-    id: ratingId,
-    ratingId,
-    month,
-    academicYear,
-    studentId: String(studentId),
-    studentName,
-    rollNumber,
-    className,
-    section,
-    classSection: `${className}-${section}`,
-    rating: Number(rating) || 0,
-    description: description || '',
-    ratedByRole,
-})
+    attachmentFileId = null,
+    attachmentName = '',
+}) => {
+    const stars = Number(rating)
+    if (![1, 2, 3].includes(stars)) {
+        throw new Error('Rating must be exactly 1, 2, or 3.')
+    }
+    return {
+        id: ratingId,
+        ratingId,
+        month,
+        academicYear,
+        studentId: String(studentId),
+        studentName,
+        rollNumber,
+        className,
+        section,
+        classSection: `${className}-${section}`,
+        rating: stars,
+        description: description || '',
+        ratedByRole,
+        attachmentFileId: attachmentFileId || null,
+        attachmentName: attachmentName || '',
+    }
+}
 
 const normalizeRating = (row) => {
     if (!row || typeof row !== 'object') return null
@@ -159,6 +169,8 @@ const normalizeRating = (row) => {
     if (!ratingId) return null
     const className = row.className || ''
     const section = row.section || ''
+    const stars = Number(row.rating)
+    if (![1, 2, 3].includes(stars)) return null
     return buildSomRating({
         ratingId,
         month: row.month || '',
@@ -168,9 +180,11 @@ const normalizeRating = (row) => {
         rollNumber: row.rollNumber || '',
         className,
         section,
-        rating: row.rating,
+        rating: stars,
         description: row.description || '',
         ratedByRole: row.ratedByRole || 'Teacher',
+        attachmentFileId: row.attachmentFileId || null,
+        attachmentName: row.attachmentName || '',
     })
 }
 
@@ -294,6 +308,11 @@ export const addSomRating = async (payload) => {
 
     let record
     if (existingIndex >= 0) {
+        if (!payload.allowOverwrite) {
+            const err = new Error(`A Star of the Month rating already exists for this student in ${month}.`)
+            err.code = 'duplicate'
+            throw err
+        }
         record = buildSomRating({
             ratingId: list[existingIndex].ratingId,
             month,
@@ -306,6 +325,8 @@ export const addSomRating = async (payload) => {
             rating: payload.rating,
             description: payload.description,
             ratedByRole: payload.ratedByRole ?? 'Teacher',
+            attachmentFileId: payload.attachmentFileId ?? list[existingIndex].attachmentFileId,
+            attachmentName: payload.attachmentName ?? list[existingIndex].attachmentName,
         })
         const next = [...list]
         next[existingIndex] = record
@@ -330,9 +351,126 @@ export const addSomRating = async (payload) => {
         rating: payload.rating,
         description: payload.description,
         ratedByRole: payload.ratedByRole ?? 'Teacher',
+        attachmentFileId: payload.attachmentFileId || null,
+        attachmentName: payload.attachmentName || '',
     })
     await persistRatings([...list, record])
     return record
+}
+
+const splitCsvLine = (line) => {
+    const cells = []
+    let current = ''
+    let quoted = false
+    for (let index = 0; index < line.length; index += 1) {
+        const char = line[index]
+        if (char === '"') {
+            if (quoted && line[index + 1] === '"') {
+                current += '"'
+                index += 1
+            } else quoted = !quoted
+        } else if (char === ',' && !quoted) {
+            cells.push(current)
+            current = ''
+        } else current += char
+    }
+    cells.push(current)
+    return cells.map((cell) => cell.trim())
+}
+
+export const INDIVIDUAL_SOM_TEMPLATE_HEADERS = [
+    'Month', 'Student Id', 'Student Name', 'Roll Number', 'Class', 'Section', 'Rating', 'Description',
+]
+
+export const individualSomTemplateRows = (students, month) => (Array.isArray(students) ? students : []).map((student) => ({
+    Month: month || getDefaultSomMonth(),
+    'Student Id': student.id,
+    'Student Name': student.name,
+    'Roll Number': student.rollNumber || '',
+    Class: student.className,
+    Section: student.section,
+    Rating: '',
+    Description: '',
+}))
+
+export const previewIndividualSomImportRows = (tableRows, students, existing = getSomRatings()) => {
+    if (!Array.isArray(tableRows) || !tableRows.length) {
+        return { rows: [], errors: ['The file is empty.'], duplicates: [] }
+    }
+    const headers = tableRows[0].map((item) => String(item ?? '').trim().toLowerCase())
+    const required = ['month', 'student id', 'rating']
+    const missing = required.filter((name) => headers.indexOf(name) < 0)
+    if (missing.length) return { rows: [], errors: [`Missing columns: ${missing.join(', ')}`], duplicates: [] }
+    const cell = (cells, name) => {
+        const index = headers.indexOf(name)
+        return index >= 0 ? String(cells[index] ?? '').trim() : ''
+    }
+    const errors = []
+    const rows = []
+    const duplicates = []
+    const seen = new Set()
+    tableRows.slice(1).forEach((cells, lineIndex) => {
+        if (!cells || !cells.some((value) => String(value ?? '').trim())) return
+        const rowNumber = lineIndex + 2
+        const month = cell(cells, 'month')
+        const studentId = cell(cells, 'student id')
+        const studentName = cell(cells, 'student name')
+        const ratingRaw = cell(cells, 'rating')
+        if (!ratingRaw) return
+        const rating = Number(ratingRaw)
+        if (![1, 2, 3].includes(rating)) {
+            errors.push(`Row ${rowNumber}: rating must be 1, 2, or 3 (got "${ratingRaw}").`)
+            return
+        }
+        const student = students.find((item) => item.id === studentId)
+            || students.find((item) => item.name.toLowerCase() === studentName.toLowerCase())
+        if (!student) {
+            errors.push(`Row ${rowNumber}: student ${studentId || studentName || '(blank)'} is not in your scope.`)
+            return
+        }
+        const dupKey = `${student.id}|${month}`
+        if (seen.has(dupKey)) {
+            errors.push(`Row ${rowNumber}: duplicate in file for ${student.name} / ${month}.`)
+            return
+        }
+        seen.add(dupKey)
+        const already = existing.some((item) => String(item.studentId) === String(student.id) && item.month === month)
+        const row = {
+            rowNumber,
+            month,
+            studentId: student.id,
+            studentName: student.name,
+            rollNumber: student.rollNumber,
+            className: student.className,
+            section: student.section,
+            rating,
+            description: cell(cells, 'description'),
+            status: already ? 'Duplicate' : 'New',
+        }
+        if (already) duplicates.push(row)
+        else rows.push(row)
+    })
+    return { rows, errors, duplicates }
+}
+
+export const previewIndividualSomImportCsv = (text, students, existing) => {
+    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim())
+    return previewIndividualSomImportRows(lines.map((line) => splitCsvLine(line)), students, existing)
+}
+
+export const importIndividualSomRows = async (rows, { ratedByRole = 'Teacher' } = {}) => {
+    const accepted = (Array.isArray(rows) ? rows : []).filter((row) => row.status !== 'Duplicate')
+    const saved = []
+    for (const row of accepted) {
+        // eslint-disable-next-line no-await-in-loop -- sequential persist keeps rating ids stable
+        saved.push(await addSomRating({
+            ...row,
+            academicYear: normalizeAcademicYearLabel(academicYearFromMonthLabel(row.month)),
+            ratedByRole,
+            allowOverwrite: false,
+        }))
+    }
+    return saved
 }
 
 export const getSomRatingsByMonth = (month) =>

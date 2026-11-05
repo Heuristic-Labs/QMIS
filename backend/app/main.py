@@ -43,6 +43,7 @@ from app.services.hr_migrate import ensure_hr_employee_columns
 from app.services.masters_migrate import ensure_masters_schema
 from app.services.schema_check import warn_if_schema_behind
 from app.services.seed import seed_reference_data
+from app.services.tc_migrate import ensure_tc_schema
 
 
 def init_db() -> None:
@@ -51,6 +52,7 @@ def init_db() -> None:
     ensure_admissions_schema()
     ensure_masters_schema()
     ensure_exams_schema()
+    ensure_tc_schema()
     warn_if_schema_behind()
     db = SessionLocal()
     try:

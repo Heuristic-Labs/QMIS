@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
+import TcNocHistory from '../../../Common/TcRequest/TcNocHistory'
 import {
     approveTcRequest,
     decideTcRequestViaApi,
@@ -134,11 +135,13 @@ const ViewTcRequestApproval = () => {
                         </div>
                     </Section>
 
+                    <TcNocHistory nocs={request.nocs} title='Manager NOC approval history' />
+
                     {request.status === 'Pending Super Admin Approval' ? (
-                        <Section title='Super Admin Decision'>
+                        <Section title='MD / Super Admin final decision'>
                             <div className='space-y-4'>
                                 <div className='flex flex-col gap-y-2'>
-                                    <label htmlFor='admin-remarks' className='text-base font-medium text-[#808080]'>Super Admin Remarks</label>
+                                    <label htmlFor='admin-remarks' className='text-base font-medium text-[#808080]'>Final remarks</label>
                                     <textarea
                                         id='admin-remarks'
                                         rows={3}
@@ -149,7 +152,7 @@ const ViewTcRequestApproval = () => {
                                     />
                                 </div>
                                 <p className='text-sm text-[#667085]'>
-                                    On approval, the Transfer Certificate will be issued and sent to the student/parent portal.
+                                    TC number is generated only after this final approval. Review the manager NOC history above before deciding.
                                 </p>
                                 <div className='flex sm:justify-end justify-center gap-x-4'>
                                     <button type='button' disabled={busy} onClick={handleReject} className='bg-white text-[#FF0000] text-sm px-8 py-2 rounded-md border border-[#FF0000] hover:bg-[#FF0000] hover:text-white transition-all duration-200 cursor-pointer md:w-auto w-full disabled:opacity-60'>

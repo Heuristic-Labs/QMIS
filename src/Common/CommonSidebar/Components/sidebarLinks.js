@@ -1491,6 +1491,12 @@ export const transportManagerSidebarLinks = [
         icon: ClipboardCheck,
     },
     {
+        id: 15,
+        title: "TC NOC Clearance",
+        to: "/transport-manager/tc-noc",
+        icon: FileText,
+    },
+    {
         id: 10,
         title: "Transport Expenses",
         to: "/transport-manager/transport-expenses",

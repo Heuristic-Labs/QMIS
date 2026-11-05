@@ -1065,15 +1065,18 @@ export const getViewFields = (record) => {
             return [
                 ...common,
                 { label: 'Changed by', value: record.user },
+                { label: 'User ID', value: record.userId },
                 { label: 'Email', value: record.userEmail },
                 { label: 'Role', value: record.role },
+                { label: 'Action performed', value: record.action || record.changeType },
                 { label: 'Module', value: record.module },
+                { label: 'Description', value: record.description || record.remarks },
                 { label: 'Record ID', value: record.recordId },
                 { label: 'Record name', value: record.recordName },
                 { label: 'Change type', value: record.changeType },
                 { label: 'Field changed', value: record.fieldChanged },
-                { label: 'Old value', value: record.oldValue },
-                { label: 'New value', value: record.newValue },
+                { label: 'Previous value', value: record.oldValue },
+                { label: 'Updated value', value: record.newValue },
                 { label: 'IP address', value: record.ipAddress },
             ]
         case 'deleted-records':
@@ -1103,14 +1106,17 @@ export const getViewFields = (record) => {
         case 'audit-logs':
             return [
                 ...common,
-                { label: 'Auditor', value: record.user },
+                { label: 'User name', value: record.user },
+                { label: 'User ID', value: record.userId },
                 { label: 'Email', value: record.userEmail },
                 { label: 'Role', value: record.role },
+                { label: 'Action performed', value: record.action || record.auditType },
+                { label: 'Module', value: record.module || record.scope },
+                { label: 'Description', value: record.description || record.findings },
                 { label: 'Audit ID', value: record.auditId },
-                { label: 'Audit type', value: record.auditType },
-                { label: 'Scope', value: record.scope },
                 { label: 'Result', value: record.result, badge: true },
-                { label: 'Findings', value: record.findings },
+                { label: 'Previous value', value: record.oldValue },
+                { label: 'Updated value', value: record.newValue },
                 { label: 'IP address', value: record.ipAddress },
             ]
         case 'failed-logins':

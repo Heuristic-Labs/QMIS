@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { EllipsisIcon, ChevronLeft, ChevronRight, Plus, Download, Trophy, Star } from 'lucide-react'
+import { toast } from 'react-toastify'
+import { EllipsisIcon, ChevronLeft, ChevronRight, Plus, Download, Trophy, Star, Upload } from 'lucide-react'
 import Dropdown from '../CommonComponents/Dropdown'
 import ExportModal from '../CommonComponents/ExportModal'
 import EditRequestModal from '../CommonComponents/EditRequestModal'
@@ -9,6 +10,7 @@ import { hydrateEnrolledStudentsFromApi } from '../StudentDatabase/enrolledStude
 import { getStudentsList } from '../StudentDatabase/studentDatabaseData'
 import { useTeacherAssignments } from '../Teacher/useTeacherAssignments'
 import { isApiStudentsEnabled } from '../../services/apiClient'
+import { fileDownloadUrl } from '../../services/filesApi'
 import StarRatingDisplay from './Components/StarRatingDisplay'
 import { useStarRatingsRouteBase } from './useStarRatingsRouteBase'
 import { canUseClassDetailsApi, listAcademicYears } from '../../services/classDetailsApi'
@@ -23,8 +25,15 @@ import {
     getDefaultSomMonth,
     getSomMonthOptions,
     getSomRatings,
+    getStudents,
     hydrateSomRatingsFromApi,
+    importIndividualSomRows,
 } from './studentStarRatingsData'
+import {
+    downloadIndividualSomTemplateCsv,
+    downloadIndividualSomTemplateExcel,
+    previewIndividualSomImportFile,
+} from './individualSomImportFile'
 
 const StarRatings = ({ view = 'som' }) => {
     const location = useLocation()
@@ -49,7 +58,12 @@ const StarRatings = ({ view = 'som' }) => {
     const [exportModal, setExportModal] = useState(false)
     const [editRequestModal, setEditRequestModal] = useState(false)
     const [deleteRequestModal, setDeleteRequestModal] = useState(false)
+    const [bulkOpen, setBulkOpen] = useState(false)
+    const [bulkPreview, setBulkPreview] = useState(null)
+    const [bulkReading, setBulkReading] = useState(false)
+    const [bulkSaving, setBulkSaving] = useState(false)
     const [revision, setRevision] = useState(0)
+    const ratedByRole = /\/coordinator\b/.test(routeBase || '') ? 'Coordinator' : 'Teacher'
 
     useEffect(() => {
         let cancelled = false
@@ -359,15 +373,25 @@ const StarRatings = ({ view = 'som' }) => {
                     <h2 className='text-xl font-medium text-black'>
                         {isSom ? 'Star of the Month' : 'Star of the Year'}
                     </h2>
-                    <div className='flex gap-x-2'>
+                    <div className='flex flex-wrap gap-2'>
                         {isSom && (
-                            <NavLink
-                                to={`${routeBase}/add-ratings`}
-                                className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
-                            >
-                                <Plus size={16} />
-                                Add Ratings
-                            </NavLink>
+                            <>
+                                <NavLink
+                                    to={`${routeBase}/add-ratings`}
+                                    className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
+                                >
+                                    <Plus size={16} />
+                                    Add Ratings
+                                </NavLink>
+                                <button
+                                    type='button'
+                                    onClick={() => setBulkOpen((value) => !value)}
+                                    className='bg-white text-[#515DEF] border border-[#515DEF] text-sm px-4 py-2 rounded-md hover:bg-[#515DEF] hover:text-white transition-all duration-200 cursor-pointer flex items-center gap-x-2'
+                                >
+                                    <Upload size={16} />
+                                    Bulk upload
+                                </button>
+                            </>
                         )}
                         <button
                             type='button'
@@ -379,6 +403,79 @@ const StarRatings = ({ view = 'som' }) => {
                         </button>
                     </div>
                 </div>
+
+                {isSom && bulkOpen && (
+                    <div className='mb-4 border border-[#E4E7EC] rounded-xl p-4 space-y-3 text-sm'>
+                        <p className='text-[#667085]'>
+                            Download a CSV/Excel template for your assigned students, fill ratings (exactly 1, 2 or 3), then preview before saving. Duplicate student+month rows are blocked.
+                        </p>
+                        <div className='flex flex-wrap gap-2'>
+                            <button
+                                type='button'
+                                className='border px-3 py-2 rounded-md cursor-pointer'
+                                onClick={() => downloadIndividualSomTemplateCsv('som-individual-template', getStudents(scopedRows), selectedMonth)}
+                            >
+                                Download CSV template
+                            </button>
+                            <button
+                                type='button'
+                                className='border px-3 py-2 rounded-md cursor-pointer'
+                                onClick={() => downloadIndividualSomTemplateExcel('som-individual-template', getStudents(scopedRows), selectedMonth)}
+                            >
+                                Download Excel template
+                            </button>
+                            <input
+                                type='file'
+                                accept='.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                                disabled={bulkReading}
+                                onChange={async (event) => {
+                                    const file = event.target.files?.[0]
+                                    event.target.value = ''
+                                    if (!file) return
+                                    setBulkReading(true)
+                                    try {
+                                        setBulkPreview(await previewIndividualSomImportFile(file, getStudents(scopedRows), getSomRatings()))
+                                    } catch (error) {
+                                        setBulkPreview({ rows: [], duplicates: [], errors: [error?.message || 'Could not read the file.'] })
+                                    } finally {
+                                        setBulkReading(false)
+                                    }
+                                }}
+                            />
+                        </div>
+                        {bulkReading ? <p className='text-[#667085]'>Reading file…</p> : null}
+                        {bulkPreview && (
+                            <div className='space-y-2'>
+                                <p>
+                                    {bulkPreview.rows.length} new row(s). {(bulkPreview.duplicates || []).length} duplicate(s) blocked.
+                                    {' '}{bulkPreview.errors.length} error(s).
+                                </p>
+                                {bulkPreview.errors.map((error) => <p key={error} className='text-[#B42318]'>{error}</p>)}
+                                <button
+                                    type='button'
+                                    disabled={bulkSaving || bulkPreview.errors.length > 0 || bulkPreview.rows.length === 0}
+                                    className='bg-[#515DEF] text-white px-3 py-2 rounded-md disabled:opacity-40 cursor-pointer'
+                                    onClick={async () => {
+                                        setBulkSaving(true)
+                                        try {
+                                            const saved = await importIndividualSomRows(bulkPreview.rows, { ratedByRole })
+                                            toast.success(`Imported ${saved.length} Star of the Month rating(s).`)
+                                            setBulkPreview(null)
+                                            setBulkOpen(false)
+                                            setRevision((value) => value + 1)
+                                        } catch (error) {
+                                            toast.error(error?.message || 'Bulk import failed.')
+                                        } finally {
+                                            setBulkSaving(false)
+                                        }
+                                    }}
+                                >
+                                    {bulkSaving ? 'Saving…' : `Confirm import (${bulkPreview.rows.length})`}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {isSom ? (
                     <div className='relative overflow-x-auto'>
@@ -392,6 +489,7 @@ const StarRatings = ({ view = 'som' }) => {
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Class</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>{RATING_CATEGORY}</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Description</th>
+                                    <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Document</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Rated By</th>
                                     <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-e-lg'>Actions</th>
                                 </tr>
@@ -399,7 +497,7 @@ const StarRatings = ({ view = 'som' }) => {
                             <tbody>
                                 {somRatings.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className='px-2 py-8 text-center text-[#667085]'>
+                                        <td colSpan={10} className='px-2 py-8 text-center text-[#667085]'>
                                             No star ratings found for the selected filters.
                                         </td>
                                     </tr>
@@ -421,6 +519,18 @@ const StarRatings = ({ view = 'som' }) => {
                                             </td>
                                             <td className='px-2 py-4 max-w-xs truncate' title={entry.description}>
                                                 {entry.description}
+                                            </td>
+                                            <td className='px-2 py-4'>
+                                                {entry.attachmentFileId ? (
+                                                    <a
+                                                        className='text-[#515DEF] underline'
+                                                        href={fileDownloadUrl(`/api/v1/files/${entry.attachmentFileId}/download`)}
+                                                        target='_blank'
+                                                        rel='noreferrer'
+                                                    >
+                                                        {entry.attachmentName || 'Download'}
+                                                    </a>
+                                                ) : '—'}
                                             </td>
                                             <td className='px-2 py-4'>{entry.ratedByRole}</td>
                                             <td className='px-2 py-4 text-center rounded-e-lg'>

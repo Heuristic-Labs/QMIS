@@ -176,13 +176,30 @@ def test_unknown_and_password_like_fields_never_reach_the_profile(client):
 # --- privilege rules ------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("role", ["admin", "superadmin", "hr", "accounthead", "student", "parent", "director", "nonsense"])
+@pytest.mark.parametrize(
+    "role",
+    ["admin", "superadmin", "managing_director", "fileroom", "cctv", "student", "parent", "nonsense"],
+)
 def test_admin_cannot_create_privileged_or_unlisted_roles(client, role):
     response = _create(client, _admin(client), email=f"{role}.try@qmis.edu", role=role)
     assert response.status_code == 403
     assert response.json()["detail"]["code"] == "role_not_allowed"
     with SessionLocal() as db:
         assert db.scalar(select(User).where(User.email == f"{role}.try@qmis.edu")) is None
+
+
+def test_admin_can_create_hr_director_and_pro(client):
+    headers = _admin(client)
+    for role, email in (
+        ("hr", "new.hr@qmis.edu"),
+        ("director", "new.director@qmis.edu"),
+        ("pro", "new.pro@qmis.edu"),
+        ("accounthead", "new.accounthead@qmis.edu"),
+    ):
+        response = _create(client, headers, email=email, role=role)
+        assert response.status_code == 201, response.text
+        assert response.json()["role"] == role
+
 
 
 def test_superadmin_can_create_an_admin_but_not_a_superadmin(client):
@@ -214,21 +231,29 @@ def test_unauthenticated_requests_are_401(client):
 
 
 def test_admin_cannot_manage_accounts_outside_the_creatable_roles(client):
+    """Campus Admin cannot manage Super-Admin-only roles (e.g. Administrator)."""
+    _ensure_superadmin()
+    sa = _login(client, SUPER_EMAIL, SUPER_PASSWORD)
+    created = _create(client, sa, email="campus.admin.managed@qmis.edu", role="admin")
+    assert created.status_code == 201, created.text
+    admin_id = created.json()["id"]
     headers = _admin(client)
+    assert client.patch(f"{USERS}/{admin_id}", json={"status": "Inactive"}, headers=headers).status_code == 403
+    assert client.post(f"{USERS}/{admin_id}/reset-password", headers=headers).status_code == 403
+    assert client.get(f"{USERS}/{admin_id}", headers=headers).status_code == 403
+    # Seeded HR is now creatable by Campus Admin, so management is allowed.
     with SessionLocal() as db:
         hr_user = db.scalar(select(User).where(User.email == settings.hr_seed_email))
-        db.add(
-            UserProfile(
-                user_id=hr_user.id, campus_id=hr_user.campus_id, staff_code="HRX-0001",
-                first_name="H", last_name="R", extra={},
+        if db.scalar(select(UserProfile).where(UserProfile.user_id == hr_user.id)) is None:
+            db.add(
+                UserProfile(
+                    user_id=hr_user.id, campus_id=hr_user.campus_id, staff_code="HRX-0001",
+                    first_name="H", last_name="R", extra={},
+                )
             )
-        )
-        db.commit()
+            db.commit()
         hr_id = str(hr_user.id)
-    assert client.patch(f"{USERS}/{hr_id}", json={"status": "Inactive"}, headers=headers).status_code == 403
-    assert client.post(f"{USERS}/{hr_id}/reset-password", headers=headers).status_code == 403
-    assert client.get(f"{USERS}/{hr_id}", headers=headers).status_code == 403
-    # and the HR login still works
+    assert client.get(f"{USERS}/{hr_id}", headers=headers).status_code == 200
     _login(client, *HR)
 
 
@@ -377,12 +402,25 @@ def test_roles_list_and_permissions_are_read_only(client):
 
 def test_creatable_roles_for_admin(client):
     options = client.get(f"{USERS}/creatable-roles", headers=_admin(client)).json()
-    assert {o["role"] for o in options} == {
+    codes = {o["role"] for o in options}
+    assert {
         "principal",
+        "director",
         "prm",
+        "pro",
         "teacher",
         "coordinator",
         "librarian",
+        "hr",
+        "accounthead",
+        "financemanager",
+        "accountassistant",
+        "finance_assistant",
+        "jointdirector",
+        "jointdirectorassistant",
+        "jointdirectoraudit",
+        "processauditor",
+        "qualityauditor",
         "gatekeepermanager",
         "gatekeeper",
         "transportmanager",
@@ -391,7 +429,30 @@ def test_creatable_roles_for_admin(client):
         "itsupportmanager",
         "stationerystoremanager",
         "housekeepingmanager",
-    }
+    } <= codes
+    assert "admin" not in codes
+    assert "superadmin" not in codes
+    assert "fileroom" not in codes
+    assert "cctv" not in codes
+    assert "student" not in codes
+    assert "parent" not in codes
+
+
+def test_creatable_roles_for_superadmin_include_elevated(client):
+    _ensure_superadmin()
+    options = client.get(
+        f"{USERS}/creatable-roles",
+        headers=_login(client, SUPER_EMAIL, SUPER_PASSWORD),
+    ).json()
+    codes = {o["role"] for o in options}
+    assert "admin" in codes
+    assert "fileroom" in codes
+    assert "cctv" in codes
+    assert "managing_director" in codes
+    assert "hr" in codes
+    assert "superadmin" not in codes
+    assert "student" not in codes
+
 
 
 # --- ASA-02: Super Admin edit / deactivate Administrator accounts -----------------------

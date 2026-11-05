@@ -7,7 +7,8 @@ const RATINGS_KEY = 'schoolerp-som-matrix-ratings-v1'
 const TITLES_KEY = 'schoolerp-som-star-titles-v1'
 const META_KEY = 'schoolerp-som-matrix-meta-v1'
 
-export const SOM_RATINGS = ['1', '2', '2.5', '3', 'NA']
+/** Whole-star scale only — 2.5 and other half-stars are rejected by API validation. */
+export const SOM_RATINGS = ['1', '2', '3', 'NA']
 export const SOM_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const sub = (id, name) => ({ id, name, enabled: true })
@@ -275,6 +276,10 @@ export const ratingFor = (ratings, context, studentId, subId) => ratings.find((i
 ))?.rating || ''
 
 export const upsertRating = (context, studentId, subId, rating) => {
+    const value = String(rating || '').trim()
+    if (value && !SOM_RATINGS.includes(value)) {
+        throw new Error(`Rating must be one of ${SOM_RATINGS.join(', ')}.`)
+    }
     const rows = getRatings().filter((item) => !(
         item.month === context.month
         && String(item.year) === String(context.year)
@@ -283,7 +288,7 @@ export const upsertRating = (context, studentId, subId, rating) => {
         && item.studentId === studentId
         && item.subId === subId
     ))
-    if (rating) rows.push({ ...context, year: String(context.year), studentId, subId, rating })
+    if (value) rows.push({ ...context, year: String(context.year), studentId, subId, rating: value })
     saveRatings(rows)
     pushContext(context)
     return rows
@@ -335,41 +340,74 @@ const splitCsvLine = (line) => {
     return cells.map((cell) => cell.trim())
 }
 
+export const checklistTemplateHeaders = [
+    'Month', 'Year', 'Grade', 'Section', 'Student Id', 'Student Name', 'Category', 'Subparameter', 'Rating',
+]
+
+export const checklistTemplateRows = (context, students, subs) => students.flatMap((student) => (
+    subs.map((item) => ({
+        Month: context.month,
+        Year: context.year,
+        Grade: context.grade,
+        Section: context.section,
+        'Student Id': student.id,
+        'Student Name': student.name,
+        Category: item.categoryName,
+        Subparameter: item.name,
+        Rating: '',
+    }))
+))
+
 export const checklistTemplateCsv = (context, students, subs) => {
-    const header = 'Month,Year,Grade,Section,Student Id,Student Name,Category,Subparameter,Rating'
-    const lines = students.flatMap((student) => subs.map((item) => [
-        context.month, context.year, context.grade, context.section, student.id, `"${student.name.replace(/"/g, '""')}"`, `"${item.categoryName.replace(/"/g, '""')}"`, `"${item.name.replace(/"/g, '""')}"`, '',
-    ].join(',')))
+    const header = checklistTemplateHeaders.join(',')
+    const lines = checklistTemplateRows(context, students, subs).map((row) => checklistTemplateHeaders.map((key) => {
+        const value = String(row[key] ?? '')
+        return `"${value.replace(/"/g, '""')}"`
+    }).join(','))
     return [header, ...lines].join('\n')
 }
 
-export const previewSomImport = (text, context, students, subs) => {
-    const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim())
-    if (!lines.length) return { rows: [], errors: ['The file is empty.'] }
-    const headers = splitCsvLine(lines[0]).map((item) => item.toLowerCase())
-    const index = (name) => headers.indexOf(name)
+const cellAt = (cells, headers, name) => {
+    const index = headers.indexOf(name)
+    return index >= 0 ? String(cells[index] ?? '').trim() : ''
+}
+
+/** Parse CSV text or a sheet.js worksheet AOA into the same preview shape. */
+export const previewSomImportRows = (tableRows, context, students, subs, existingRatings = getRatings()) => {
+    if (!Array.isArray(tableRows) || !tableRows.length) {
+        return { rows: [], errors: ['The file is empty.'], duplicates: [] }
+    }
+    const headers = tableRows[0].map((item) => String(item ?? '').trim().toLowerCase())
     const required = ['month', 'year', 'grade', 'section', 'student id', 'category', 'subparameter', 'rating']
-    const missing = required.filter((name) => index(name) < 0)
-    if (missing.length) return { rows: [], errors: [`Missing columns: ${missing.join(', ')}`] }
+    const missing = required.filter((name) => headers.indexOf(name) < 0)
+    if (missing.length) return { rows: [], errors: [`Missing columns: ${missing.join(', ')}`], duplicates: [] }
+
     const errors = []
     const rows = []
-    lines.slice(1).forEach((line, lineIndex) => {
-        const cells = splitCsvLine(line)
+    const duplicates = []
+    const seenInFile = new Set()
+
+    tableRows.slice(1).forEach((cells, lineIndex) => {
+        if (!cells || !cells.some((cell) => String(cell ?? '').trim())) return
         const rowNumber = lineIndex + 2
-        const month = cells[index('month')]
-        const year = cells[index('year')]
-        const grade = cells[index('grade')]
-        const section = cells[index('section')]
-        const studentId = cells[index('student id')]
-        const studentName = index('student name') >= 0 ? cells[index('student name')] : ''
-        const category = cells[index('category')]
-        const subparameter = cells[index('subparameter')]
-        const rating = cells[index('rating')]
+        const month = cellAt(cells, headers, 'month')
+        const year = cellAt(cells, headers, 'year')
+        const grade = cellAt(cells, headers, 'grade')
+        const section = cellAt(cells, headers, 'section')
+        const studentId = cellAt(cells, headers, 'student id')
+        const studentName = cellAt(cells, headers, 'student name')
+        const category = cellAt(cells, headers, 'category')
+        const subparameter = cellAt(cells, headers, 'subparameter')
+        const rating = cellAt(cells, headers, 'rating')
+
+        if (!rating) return
+
         if (month !== context.month || String(year) !== String(context.year) || grade !== context.grade || section !== context.section) {
             errors.push(`Row ${rowNumber}: month, year, grade, or section does not match the open matrix.`)
             return
         }
-        const student = students.find((item) => item.id === studentId) || students.find((item) => item.name.toLowerCase() === studentName.toLowerCase())
+        const student = students.find((item) => item.id === studentId)
+            || students.find((item) => item.name.toLowerCase() === studentName.toLowerCase())
         if (!student) {
             errors.push(`Row ${rowNumber}: student ${studentId || studentName || '(blank)'} is not in this class.`)
             return
@@ -384,14 +422,48 @@ export const previewSomImport = (text, context, students, subs) => {
             errors.push(`Row ${rowNumber}: rating "${rating}" is not one of ${SOM_RATINGS.join(', ')}.`)
             return
         }
-        rows.push({ studentId: student.id, subId: match.id, rating, studentName: student.name, subparameter: match.name })
+        const dupKey = `${student.id}|${match.id}`
+        if (seenInFile.has(dupKey)) {
+            errors.push(`Row ${rowNumber}: duplicate in file for ${student.name} / ${match.name}.`)
+            return
+        }
+        seenInFile.add(dupKey)
+
+        const already = existingRatings.some((item) => (
+            item.month === context.month
+            && String(item.year) === String(context.year)
+            && item.grade === context.grade
+            && item.section === context.section
+            && item.studentId === student.id
+            && item.subId === match.id
+        ))
+        const row = {
+            studentId: student.id,
+            subId: match.id,
+            rating,
+            studentName: student.name,
+            subparameter: match.name,
+            status: already ? 'Duplicate' : 'New',
+            rowNumber,
+        }
+        if (already) duplicates.push(row)
+        else rows.push(row)
     })
-    return { rows, errors }
+
+    return { rows, errors, duplicates }
 }
 
-export const importSomRows = (context, rows) => {
+export const previewSomImport = (text, context, students, subs, existingRatings) => {
+    const lines = String(text || '').replace(/^\uFEFF/, '').split(/\r?\n/).filter((line) => line.trim())
+    const tableRows = lines.map((line) => splitCsvLine(line))
+    return previewSomImportRows(tableRows, context, students, subs, existingRatings)
+}
+
+/** Import only New rows; duplicates are blocked unless explicitly allowed. */
+export const importSomRows = (context, rows, { allowOverwrite = false } = {}) => {
+    const accepted = allowOverwrite ? rows : rows.filter((row) => row.status !== 'Duplicate')
     let ratings = getRatings()
-    rows.forEach((row) => {
+    accepted.forEach((row) => {
         ratings = ratings.filter((item) => !(
             item.month === context.month
             && String(item.year) === String(context.year)

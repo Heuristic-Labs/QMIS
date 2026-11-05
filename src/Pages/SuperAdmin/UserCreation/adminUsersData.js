@@ -136,7 +136,8 @@ const fromAdminUsersApi = (apiUser) => ({
 /** Refresh Administrator portal accounts from the shared admin-users API. */
 export const hydrateAdminUsersFromApi = async () => {
     if (!canUseAdminUsersApi()) return getAllAdminUsers()
-    const rows = await listAdminUsersApi({ role: ROLES.ADMIN })
+    // Include every campus login Super Admin may manage (not Administrators only).
+    const rows = await listAdminUsersApi()
     const mapped = (Array.isArray(rows) ? rows : []).map(fromAdminUsersApi)
     if (mapped.length) saveAdminUsers(mapped)
     return getAllAdminUsers()
@@ -260,7 +261,7 @@ export const createAdminUserViaApi = async (payload) => {
     if (!validation.success) return validation
     try {
         const created = await createAdminUserApi({
-            role: ROLES.ADMIN,
+            role: payload.role || ROLES.ADMIN,
             firstName: payload.firstName?.trim() || '',
             middleName: payload.middleName?.trim() || '',
             lastName: payload.lastName?.trim() || '',

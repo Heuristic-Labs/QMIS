@@ -6,6 +6,7 @@ import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import {
     TC_STATUSES,
     getAllTcRequests,
+    getPendingManagerNocCount,
     getPendingPrmCount,
     hydrateTcRequestsFromApi,
     statusBadgeColor,
@@ -40,7 +41,14 @@ const TcRequestList = () => {
         }
     }, [location.key])
 
-    const pendingCount = useMemo(() => getPendingPrmCount(), [requests])
+    const pendingCount = useMemo(
+        () => requests.filter((row) => row.status === 'Pending PRM Review').length || getPendingPrmCount(),
+        [requests],
+    )
+    const pendingNocCount = useMemo(
+        () => requests.filter((row) => row.status === 'Pending Manager NOCs').length || getPendingManagerNocCount(),
+        [requests],
+    )
 
     const filteredRequests = useMemo(() => {
         if (!statusFilter) return requests
@@ -52,11 +60,26 @@ const TcRequestList = () => {
             <div>
                 <h1 className='text-2xl font-semibold text-black'>TC Requests</h1>
                 <p className='text-sm text-[#667085] mt-1'>
-                    Review Transfer Certificate requests from students and parents. Forward verified requests to Super Admin for approval.
+                    Review Transfer Certificate requests. Manager NOCs run first when required; then PRM forwards to MD / Super Admin for final approval.
                 </p>
                 {loadError ? <p className='text-sm text-[#B42318] mt-2'>{loadError}</p> : null}
             </div>
 
+            <div className='flex flex-wrap gap-3'>
+            {pendingNocCount > 0 ? (
+                <button
+                    type='button'
+                    onClick={() => setStatusFilter(statusFilter === 'Pending Manager NOCs' ? '' : 'Pending Manager NOCs')}
+                    className={`text-left w-full sm:w-auto rounded-xl border px-4 py-3 transition-all cursor-pointer ${
+                        statusFilter === 'Pending Manager NOCs'
+                            ? 'border-[#9C27B0] bg-[#9C27B008] ring-2 ring-[#9C27B0]'
+                            : 'border-[#E4E7EC] hover:border-[#9C27B0] bg-white'
+                    }`}
+                >
+                    <p className='text-sm font-medium text-[#808080]'>Pending manager NOCs</p>
+                    <p className='text-2xl font-bold text-[#0C1E5B] mt-1'>{pendingNocCount}</p>
+                </button>
+            ) : null}
             {pendingCount > 0 ? (
                 <button
                     type='button'
@@ -71,6 +94,7 @@ const TcRequestList = () => {
                     <p className='text-2xl font-bold text-[#0C1E5B] mt-1'>{pendingCount}</p>
                 </button>
             ) : null}
+            </div>
 
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>

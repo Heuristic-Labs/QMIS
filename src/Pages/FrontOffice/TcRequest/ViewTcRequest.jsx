@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
+import TcNocHistory from '../../../Common/TcRequest/TcNocHistory'
 import {
     forwardTcRequestToSuperAdmin,
     forwardTcRequestViaApi,
@@ -57,7 +58,7 @@ const ViewTcRequest = () => {
             setBusy(true)
             try {
                 setRequest(await forwardTcRequestViaApi(id, prmRemarks))
-                toast.success('Forwarded to Super Admin.')
+                                                toast.success('Forwarded to MD / Super Admin for final approval.')
             } catch (error) {
                 toast.error(error?.message || 'Could not forward the request.')
             } finally {
@@ -68,7 +69,7 @@ const ViewTcRequest = () => {
         const updated = forwardTcRequestToSuperAdmin(id, prmRemarks)
         if (updated) {
             setRequest(updated)
-            toast.success('Forwarded to Super Admin.')
+            toast.success('Forwarded to MD / Super Admin for final approval.')
         } else {
             toast.error('Could not forward the request.')
         }
@@ -132,6 +133,16 @@ const ViewTcRequest = () => {
                         </div>
                     </Section>
 
+                    <TcNocHistory nocs={request.nocs} />
+
+                    {request.status === 'Pending Manager NOCs' ? (
+                        <Section title='Awaiting manager NOCs'>
+                            <p className='text-sm text-[#667085]'>
+                                Mandatory manager clearances are still pending ({request.pendingNocCount || 0}). Forwarding to MD / Super Admin unlocks after all NOCs are approved.
+                            </p>
+                        </Section>
+                    ) : null}
+
                     {request.status === 'Pending PRM Review' ? (
                         <Section title='PRM Action'>
                             <div className='space-y-4'>
@@ -142,7 +153,7 @@ const ViewTcRequest = () => {
                                         rows={3}
                                         value={prmRemarks}
                                         onChange={(e) => setPrmRemarks(e.target.value)}
-                                        placeholder='Verification notes before forwarding to Super Admin'
+                                        placeholder='Verification notes before forwarding to MD / Super Admin'
                                         className='text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-2 py-2 w-full'
                                     />
                                 </div>
@@ -151,7 +162,7 @@ const ViewTcRequest = () => {
                                         Reject
                                     </button>
                                     <button type='button' onClick={handleForward} disabled={busy} className='bg-[#515DEF] text-white text-sm px-8 py-2 rounded-md border border-[#515DEF] hover:opacity-90 transition-all duration-200 cursor-pointer md:w-auto w-full'>
-                                        Forward to Super Admin
+                                        Forward to MD / Super Admin
                                     </button>
                                 </div>
                             </div>

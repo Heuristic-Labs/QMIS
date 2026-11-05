@@ -570,6 +570,47 @@ def _sync_section_class_teachers(
             section.class_teacher_user_id = None
 
 
+def _validate_student_star_ratings(items: list) -> None:
+    """SOM individual ratings: whole stars 1–3 only; one row per student+month."""
+    seen: set[tuple[str, str]] = set()
+    for index, raw in enumerate(items):
+        if not isinstance(raw, dict):
+            fail(422, "invalid_body", "Each star rating must be an object.")
+        raw_rating = raw.get("rating")
+        value: int | None = None
+        if isinstance(raw_rating, bool):
+            value = None
+        elif isinstance(raw_rating, (int, float)):
+            # Reject half-stars (2.5) — do not coerce with int().
+            if float(raw_rating) in (1.0, 2.0, 3.0):
+                value = int(raw_rating)
+        elif isinstance(raw_rating, str):
+            text = raw_rating.strip()
+            if text in {"1", "2", "3"}:
+                value = int(text)
+        if value is None:
+            fail(422, "invalid_rating", f"Item {index}: rating must be 1, 2, or 3.")
+        raw["rating"] = value
+        student_id = str(raw.get("studentId") or "").strip()
+        month = str(raw.get("month") or "").strip()
+        if student_id and month:
+            key = (student_id, month)
+            if key in seen:
+                fail(422, "duplicate", f"Duplicate star rating for student {student_id} in {month}.")
+            seen.add(key)
+        file_id = raw.get("attachmentFileId")
+        if file_id is not None and str(file_id).strip():
+            try:
+                UUID(str(file_id).strip())
+            except ValueError:
+                fail(422, "invalid_body", f"Item {index}: attachmentFileId must be a UUID.")
+            raw["attachmentFileId"] = str(file_id).strip()
+            raw["attachmentName"] = str(raw.get("attachmentName") or "").strip()[:240]
+        else:
+            raw["attachmentFileId"] = None
+            raw["attachmentName"] = ""
+
+
 def replace_records(db: Session, actor: User, collection: str, items: list) -> list[dict]:
     """Replace the entire campus collection with the given list (SoT put)."""
     _ensure_collection(collection)
@@ -595,6 +636,9 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
         # Validate before delete so a failed PUT cannot wipe the campus collection.
         _normalize_timetable_approvals(_code(db, actor), items)
         _validate_class_timetables(db, actor.campus_id, items)
+
+    if collection == "student-star-ratings":
+        _validate_student_star_ratings(items)
 
     db.execute(
         delete(AcademicsRecord).where(

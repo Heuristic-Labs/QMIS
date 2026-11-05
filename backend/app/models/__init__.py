@@ -14,7 +14,7 @@ from app.models.activities import Activity, ActivityPlayer
 from app.models.announcements import Announcement, AnnouncementReply, AnnouncementResponse
 from app.models.calendar import CalendarEvent
 from app.models.communication import Conversation, ConversationParticipant, Message
-from app.models.tc_requests import TcRequest
+from app.models.tc_requests import TcRequest, TcRequestNoc
 from app.models.approval import ApprovalEvent, ApprovalRequest, Notification, NotificationRead
 from app.models.escalation import Escalation, Task, TaskEvent
 from app.models.exams import Exam, ExamType, ExamWeightage, MarkEntry, MarksBatch
@@ -91,6 +91,7 @@ __all__ = [
     "Task",
     "TaskEvent",
     "TcRequest",
+    "TcRequestNoc",
     "User",
     "UserProfile",
 ]

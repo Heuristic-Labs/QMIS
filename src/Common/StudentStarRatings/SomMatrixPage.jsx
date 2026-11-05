@@ -11,6 +11,8 @@ import { downloadHtml, openPrintDocument } from '../printDocument'
 import { isApiStudentsEnabled } from '../../services/apiClient'
 import { canUseClassDetailsApi, listAcademicYears } from '../../services/classDetailsApi'
 import { useStarRatingsRouteBase } from './useStarRatingsRouteBase'
+import { toast } from 'react-toastify'
+import { fileDownloadUrl, uploadProfileImage } from '../../services/filesApi'
 import {
     getDisabledSubs,
     hydrateSomFromApi,
@@ -18,7 +20,6 @@ import {
     SOM_SYNC_EVENT,
     SOM_RATINGS,
     averageRatings,
-    checklistTemplateCsv,
     flattenSubs,
     getChecklist,
     getMatrixMeta,
@@ -26,7 +27,6 @@ import {
     getSomRoster,
     getStarTitles,
     importSomRows,
-    previewSomImport,
     ratingFor,
     resetChecklist,
     saveChecklist,
@@ -38,6 +38,7 @@ import {
     upsertRating,
     visibleSubs,
 } from './somChecklist'
+import { downloadSomTemplateCsv, downloadSomTemplateExcel, previewSomImportFile } from './somImportFile'
 
 const inputClass = 'border border-[#D9D9D9] rounded-md px-2 py-2 text-sm bg-white'
 
@@ -395,6 +396,12 @@ const SomMatrixPage = () => {
                             </label>
                         ))}
                     </div>
+                    <MatrixDocuments
+                        context={context}
+                        meta={meta}
+                        onChange={persistMeta}
+                        resourceId={`${year}|${month}|${activeGrade}|${activeSection}`}
+                    />
                 </div>
             )}
         </section>
@@ -453,34 +460,176 @@ const moveItem = (list, index, direction) => {
     return next
 }
 
-const ImportPanel = ({ context, students, subs, preview, setPreview, onImported }) => (
-    <div className='bg-white rounded-2xl shadow-md p-4 space-y-3'>
-        <button type='button' className='text-sm border px-3 py-2 rounded-md cursor-pointer' onClick={() => downloadCsv(`som-template-${context.grade}${context.section}.csv`, checklistTemplateCsv(context, students, subs))}>Download template</button>
-        <input type='file' accept='.csv,text/csv' onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (!file) return
-            const reader = new FileReader()
-            reader.onload = () => setPreview(previewSomImport(String(reader.result || ''), context, students, subs))
-            reader.readAsText(file)
-        }} />
-        {preview && (
-            <div className='text-sm space-y-2'>
-                <p>{preview.rows.length} valid row(s). {preview.errors.length} error(s).</p>
-                {preview.errors.map((error) => <p key={error} className='text-[#B42318]'>{error}</p>)}
-                <button type='button' disabled={preview.errors.length > 0 || preview.rows.length === 0} className='bg-[#515DEF] text-white px-3 py-2 rounded-md disabled:opacity-40 cursor-pointer' onClick={() => onImported(importSomRows(context, preview.rows))}>Import</button>
-            </div>
-        )}
-    </div>
-)
+const ImportPanel = ({ context, students, subs, preview, setPreview, onImported }) => {
+    const [reading, setReading] = useState(false)
+    const allPreviewRows = [...(preview?.rows || []), ...(preview?.duplicates || [])]
 
-const downloadCsv = (filename, text) => {
-    const blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    link.click()
-    URL.revokeObjectURL(url)
+    const onFile = async (event) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+        setReading(true)
+        try {
+            const next = await previewSomImportFile(file, context, students, subs, getRatings())
+            setPreview(next)
+        } catch (error) {
+            setPreview({ rows: [], duplicates: [], errors: [error?.message || 'Could not read the file.'] })
+        } finally {
+            setReading(false)
+        }
+    }
+
+    return (
+        <div className='bg-white rounded-2xl shadow-md p-4 space-y-3'>
+            <p className='text-sm text-[#667085]'>
+                Download the sample template, fill ratings (1, 2, 3, or NA only), then upload CSV or Excel for a preview before saving.
+            </p>
+            <div className='flex flex-wrap gap-2'>
+                <button
+                    type='button'
+                    className='text-sm border px-3 py-2 rounded-md cursor-pointer'
+                    onClick={() => downloadSomTemplateCsv(`som-template-${context.grade}${context.section}`, context, students, subs)}
+                >
+                    Download CSV template
+                </button>
+                <button
+                    type='button'
+                    className='text-sm border px-3 py-2 rounded-md cursor-pointer'
+                    onClick={() => downloadSomTemplateExcel(`som-template-${context.grade}${context.section}`, context, students, subs)}
+                >
+                    Download Excel template
+                </button>
+            </div>
+            <input
+                type='file'
+                accept='.csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel'
+                disabled={reading}
+                onChange={onFile}
+            />
+            {reading ? <p className='text-sm text-[#667085]'>Reading file…</p> : null}
+            {preview && (
+                <div className='text-sm space-y-2'>
+                    <p>
+                        {preview.rows.length} new row(s). {(preview.duplicates || []).length} duplicate(s) blocked.
+                        {' '}{preview.errors.length} error(s).
+                    </p>
+                    {preview.errors.map((error) => <p key={error} className='text-[#B42318]'>{error}</p>)}
+                    {(preview.duplicates || []).length > 0 && (
+                        <p className='text-[#B54708]'>
+                            Existing matrix cells are treated as duplicates and will not be overwritten. Clear those cells in the matrix first, or remove them from the file.
+                        </p>
+                    )}
+                    {allPreviewRows.length > 0 && (
+                        <div className='overflow-x-auto max-h-64 border rounded-md'>
+                            <table className='min-w-full text-xs'>
+                                <thead>
+                                    <tr className='bg-[#F8F9FC]'>
+                                        {['Row', 'Student', 'Subparameter', 'Rating', 'Status'].map((label) => (
+                                            <th key={label} className='text-left px-2 py-1 border'>{label}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {allPreviewRows.slice(0, 100).map((row) => (
+                                        <tr key={`${row.rowNumber}-${row.studentId}-${row.subId}`}>
+                                            <td className='border px-2 py-1'>{row.rowNumber}</td>
+                                            <td className='border px-2 py-1'>{row.studentName}</td>
+                                            <td className='border px-2 py-1'>{row.subparameter}</td>
+                                            <td className='border px-2 py-1'>{row.rating}</td>
+                                            <td className={`border px-2 py-1 ${row.status === 'Duplicate' ? 'text-[#B54708]' : 'text-[#027A48]'}`}>{row.status}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                    <button
+                        type='button'
+                        disabled={preview.errors.length > 0 || preview.rows.length === 0}
+                        className='bg-[#515DEF] text-white px-3 py-2 rounded-md disabled:opacity-40 cursor-pointer'
+                        onClick={() => onImported(importSomRows(context, preview.rows))}
+                    >
+                        Confirm import ({preview.rows.length})
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
+const MatrixDocuments = ({ context, meta, onChange, resourceId }) => {
+    const documents = Array.isArray(meta?.documents) ? meta.documents : []
+    const [uploading, setUploading] = useState(false)
+
+    const onUpload = async (event) => {
+        const file = event.target.files?.[0]
+        event.target.value = ''
+        if (!file) return
+        setUploading(true)
+        try {
+            const asset = await uploadProfileImage(file, 'som-matrix-doc', resourceId)
+            onChange({
+                ...meta,
+                documents: [
+                    ...documents,
+                    {
+                        fileId: asset.id,
+                        name: asset.originalName || file.name,
+                        uploadedAt: new Date().toISOString(),
+                    },
+                ],
+            })
+            toast.success('Document attached.')
+        } catch (error) {
+            toast.error(error?.message || 'Document upload failed.')
+        } finally {
+            setUploading(false)
+        }
+    }
+
+    const removeDoc = (fileId) => {
+        onChange({
+            ...meta,
+            documents: documents.filter((item) => item.fileId !== fileId),
+        })
+    }
+
+    return (
+        <div className='mt-4 border-t pt-4 space-y-2'>
+            <h3 className='text-sm font-medium text-[#1E1E1E]'>Supporting documents</h3>
+            <p className='text-xs text-[#667085]'>
+                Attach evidence for {context.month} {context.year} · {context.grade}-{context.section}. Files are stored securely and only staff with Star of the Month access can download them.
+            </p>
+            <input
+                type='file'
+                accept='.pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,image/*,application/pdf'
+                disabled={uploading}
+                onChange={onUpload}
+            />
+            {uploading ? <p className='text-xs text-[#667085]'>Uploading…</p> : null}
+            {!documents.length ? (
+                <p className='text-xs text-[#667085]'>No documents attached yet.</p>
+            ) : (
+                <ul className='space-y-1 text-sm'>
+                    {documents.map((doc) => (
+                        <li key={doc.fileId} className='flex flex-wrap items-center gap-3'>
+                            <a
+                                className='text-[#515DEF] underline'
+                                href={fileDownloadUrl(`/api/v1/files/${doc.fileId}/download`)}
+                                target='_blank'
+                                rel='noreferrer'
+                            >
+                                {doc.name || doc.fileId}
+                            </a>
+                            <button type='button' className='text-xs text-[#B42318] cursor-pointer' onClick={() => removeDoc(doc.fileId)}>
+                                Remove
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    )
 }
 
 export default SomMatrixPage

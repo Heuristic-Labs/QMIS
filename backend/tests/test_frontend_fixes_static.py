@@ -328,6 +328,13 @@ def test_star_of_month_matrix_saves_each_class_to_the_server():
     assert "pushContext(context)" in upsert
     assert "upsertOpsItemApi(collection, id, body)" in code
     assert "hydrateSomFromApi()" in _code("Common/StudentStarRatings/SomMatrixPage.jsx")
+    assert "SOM_RATINGS = ['1', '2', '3', 'NA']" in code
+    assert "'2.5'" not in code
+    matrix = _code("Common/StudentStarRatings/SomMatrixPage.jsx")
+    assert "downloadSomTemplateExcel" in matrix
+    assert "previewSomImportFile" in matrix
+    assert "som-matrix-doc" in matrix
+    assert "Bulk upload" in _code("Common/StudentStarRatings/StarRatings.jsx")
 
 
 def test_admission_form_round_trips_the_referral():

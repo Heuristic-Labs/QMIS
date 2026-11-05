@@ -1,8 +1,6 @@
 import React from 'react'
 import CreateUserPage from '../../../Common/RBAC/CreateUserPage'
-import { ROLES } from '../../../constants/roles'
 import {
-    ADMIN_ROLE_LABEL,
     createAdminUserViaApi,
     DEFAULT_ADMIN_USER_FORM,
     ROUTE_BASE,
@@ -12,12 +10,10 @@ const CreateAdminUser = () => (
     <CreateUserPage
         routeBase={ROUTE_BASE}
         defaultForm={DEFAULT_ADMIN_USER_FORM}
-        fixedRole={ROLES.ADMIN}
-        fixedRoleLabel={ADMIN_ROLE_LABEL}
-        pageTitle='Create Admin User'
-        pageDescription='Create an Administrator account with the full user profile. Role is fixed to Administrator for Super Admin user creation.'
-        submitLabel='Create Admin User'
-        successMessage='Admin user created successfully.'
+        pageTitle='Create User'
+        pageDescription='Create a campus login. Available roles come from the server for your Super Admin account (Administrator, staff portals, File Room, CCTV, Managing Director).'
+        submitLabel='Create User'
+        successMessage='User created successfully.'
         onSubmit={createAdminUserViaApi}
         onSuccess={(result, navigate) => navigate(`${ROUTE_BASE}/view/${result.user.id}`)}
     />

@@ -8,6 +8,7 @@ import { useTeacherAssignments } from '../Teacher/useTeacherAssignments'
 import { isApiStudentsEnabled } from '../../services/apiClient'
 import StarRatingInput from './Components/StarRatingInput'
 import { useStarRatingsRouteBase } from './useStarRatingsRouteBase'
+import { uploadProfileImage } from '../../services/filesApi'
 import {
     RATING_CATEGORY,
     academicYearFromMonthLabel,
@@ -39,6 +40,7 @@ const AddRatings = () => {
     const [month, setMonth] = useState(() => getDefaultSomMonth())
     const [rating, setRating] = useState(0)
     const [description, setDescription] = useState('')
+    const [attachment, setAttachment] = useState(null)
     const [loadingStudents, setLoadingStudents] = useState(isApiStudentsEnabled())
     const [saving, setSaving] = useState(false)
 
@@ -116,9 +118,16 @@ const AddRatings = () => {
     }
 
     const handleSave = async () => {
-        if (!selectedStudent || rating < 1 || saving) return
+        if (!selectedStudent || rating < 1 || rating > 3 || saving) return
         setSaving(true)
         try {
+            let attachmentFileId = null
+            let attachmentName = ''
+            if (attachment) {
+                const asset = await uploadProfileImage(attachment, 'som-rating-doc', selectedStudent.id)
+                attachmentFileId = asset.id
+                attachmentName = asset.originalName || attachment.name
+            }
             await addSomRating({
                 month,
                 academicYear: normalizeAcademicYearLabel(academicYearFromMonthLabel(month)),
@@ -130,6 +139,9 @@ const AddRatings = () => {
                 rating,
                 description,
                 ratedByRole,
+                attachmentFileId,
+                attachmentName,
+                allowOverwrite: true,
             })
             toast.success(`Saved Star of the Month rating for ${month}.`)
             navigate(`${routeBase}/star-of-month`, { state: { month, refresh: Date.now() } })
@@ -249,6 +261,20 @@ const AddRatings = () => {
                             placeholder='Brief remarks for this monthly rating'
                             className={inputClass}
                         />
+                    </div>
+                    <div className='flex flex-col gap-y-2 sm:col-span-2 lg:col-span-3'>
+                        <label htmlFor='som-attachment' className='text-base font-medium text-[#1E1E1E]'>Supporting document:</label>
+                        <input
+                            id='som-attachment'
+                            type='file'
+                            accept='.pdf,.png,.jpg,.jpeg,.doc,.docx,image/*,application/pdf'
+                            onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                            className={inputClass}
+                        />
+                        <p className='text-xs text-[#667085]'>
+                            Optional. Stored securely; only staff with Star of the Month access can download.
+                            {attachment ? ` Selected: ${attachment.name}` : ''}
+                        </p>
                     </div>
                 </div>
             </div>

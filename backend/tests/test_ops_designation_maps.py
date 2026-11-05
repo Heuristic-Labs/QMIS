@@ -31,11 +31,15 @@ def test_admin_can_create_housekeeping_and_transport_manager():
     assert "housekeepingmanager" in admin
     assert "transportmanager" in admin
     assert "driver" in admin
-    # Privileged / non-staff portal roles stay out of Campus Admin create list.
-    assert "pro" not in admin
+    assert "pro" in admin
+    assert "hr" in admin
+    assert "director" in admin
+    # Elevated portals stay Super-Admin-only.
     assert "superadmin" not in admin
+    assert "admin" not in admin
     assert "fileroom" not in admin
     assert "cctv" not in admin
+    assert "managing_director" not in admin
 
 
 def test_superadmin_can_create_fileroom_cctv_admin():
@@ -43,4 +47,6 @@ def test_superadmin_can_create_fileroom_cctv_admin():
     assert "fileroom" in sa
     assert "cctv" in sa
     assert "admin" in sa
+    assert "managing_director" in sa
     assert "housekeepingmanager" in sa
+    assert "pro" in sa

@@ -633,6 +633,8 @@ def upsert_record(db: Session, actor: User, collection: str, item_id: str, body:
     payload["id"] = public_id
     if collection == "security-cameras":
         _validate_camera(payload)
+    if collection == "som-matrix":
+        _validate_som_matrix(payload)
     row = db.scalar(
         select(OpsRecord).where(
             OpsRecord.campus_id == actor.campus_id,
@@ -660,6 +662,74 @@ def upsert_record(db: Session, actor: User, collection: str, item_id: str, body:
     db.commit()
     db.refresh(row)
     return _as_item(row)
+
+
+# Star of the Month matrix cells: whole numbers 1–3 or NA only (no half-stars like 2.5).
+SOM_ALLOWED_RATINGS = frozenset({"1", "2", "3", "NA"})
+
+
+def _validate_som_matrix(payload: dict) -> None:
+    """Enforce rating scale + in-payload uniqueness for som-matrix item upserts."""
+    ratings = payload.get("ratings")
+    if ratings is None:
+        payload["ratings"] = []
+        ratings = payload["ratings"]
+    if not isinstance(ratings, list):
+        fail(422, "invalid_body", "ratings must be an array.")
+    seen: set[tuple[str, str]] = set()
+    cleaned: list[dict] = []
+    for index, row in enumerate(ratings):
+        if not isinstance(row, dict):
+            fail(422, "invalid_body", f"ratings[{index}] must be an object.")
+        student_id = str(row.get("studentId") or "").strip()
+        sub_id = str(row.get("subId") or "").strip()
+        rating = str(row.get("rating") or "").strip()
+        if not student_id or not sub_id:
+            fail(422, "invalid_body", f"ratings[{index}] needs studentId and subId.")
+        if rating not in SOM_ALLOWED_RATINGS:
+            fail(
+                422,
+                "invalid_rating",
+                f"Rating must be one of 1, 2, 3, or NA (got {rating!r}).",
+            )
+        key = (student_id, sub_id)
+        if key in seen:
+            fail(422, "duplicate", f"Duplicate rating for student {student_id} / {sub_id}.")
+        seen.add(key)
+        cleaned.append({"studentId": student_id, "subId": sub_id, "rating": rating})
+    payload["ratings"] = cleaned
+
+    meta = payload.get("meta")
+    if meta is None:
+        return
+    if not isinstance(meta, dict):
+        fail(422, "invalid_body", "meta must be an object.")
+    documents = meta.get("documents")
+    if documents is None:
+        return
+    if not isinstance(documents, list):
+        fail(422, "invalid_body", "meta.documents must be an array.")
+    cleaned_docs: list[dict] = []
+    seen_files: set[str] = set()
+    for index, doc in enumerate(documents):
+        if not isinstance(doc, dict):
+            fail(422, "invalid_body", f"meta.documents[{index}] must be an object.")
+        file_id = str(doc.get("fileId") or "").strip()
+        if not file_id:
+            fail(422, "invalid_body", f"meta.documents[{index}] needs fileId.")
+        if file_id in seen_files:
+            fail(422, "duplicate", f"Duplicate document fileId {file_id}.")
+        seen_files.add(file_id)
+        cleaned_docs.append(
+            {
+                "fileId": file_id,
+                "name": str(doc.get("name") or "").strip()[:240],
+                "uploadedAt": str(doc.get("uploadedAt") or "").strip()[:64] or None,
+                "uploadedBy": str(doc.get("uploadedBy") or "").strip()[:120] or None,
+            }
+        )
+    meta["documents"] = cleaned_docs
+    payload["meta"] = meta
 
 
 def _validate_visitor_upsert(previous: dict | None, payload: dict, actor: User, now: datetime) -> None:

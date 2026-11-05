@@ -1,6 +1,7 @@
 import {
     canUseTcApi,
     createTcRequestApi,
+    decideTcNocApi,
     decideTcRequestApi,
     forwardTcRequestApi,
     getTcRequestApi,
@@ -13,6 +14,7 @@ const STORAGE_KEY = 'schoolerp-tc-requests'
 
 export const TC_STATUSES = [
     'Pending PRM Review',
+    'Pending Manager NOCs',
     'Pending Super Admin Approval',
     'Approved',
     'Rejected',
@@ -20,9 +22,11 @@ export const TC_STATUSES = [
 
 export const statusBadgeColor = {
     'Pending PRM Review': 'bg-[#FF980033] text-[#FF9800]',
+    'Pending Manager NOCs': 'bg-[#9C27B033] text-[#9C27B0]',
     'Pending Super Admin Approval': 'bg-[#2196F333] text-[#2196F3]',
     Approved: 'bg-[#4CAF5033] text-[#4CAF50]',
     Rejected: 'bg-[#FF000033] text-[#FF0000]',
+    Pending: 'bg-[#FF980033] text-[#FF9800]',
 }
 
 const SEED_REQUESTS = [
@@ -76,6 +80,9 @@ let apiRequests = []
 
 const mapApiRequest = (row) => ({
     ...row,
+    nocs: Array.isArray(row.nocs) ? row.nocs : [],
+    pendingNocCount: row.pendingNocCount ?? 0,
+    allNocsComplete: Boolean(row.allNocsComplete),
     requestedOn: isoToDmy(row.requestedOn) || row.requestedOn,
     lastDateOfAttendance: isoToDmy(row.lastDateOfAttendance) || row.lastDateOfAttendance || '—',
     forwardedOn: isoToDmy(row.forwardedOn) || row.forwardedOn,
@@ -157,6 +164,15 @@ export const getPendingPrmCount = () =>
 
 export const getPendingSuperAdminCount = () =>
     loadRequests().filter((request) => request.status === 'Pending Super Admin Approval').length
+
+export const getPendingManagerNocCount = () =>
+    loadRequests().filter((request) => request.status === 'Pending Manager NOCs').length
+
+export const decideTcNocViaApi = async (ref, decision, remarks) => {
+    const mapped = mapApiRequest(await decideTcNocApi(ref, decision, remarks))
+    apiRequests = apiRequests.map((item) => (item.id === mapped.id ? mapped : item))
+    return mapped
+}
 
 const formatToday = () => {
     const now = new Date()

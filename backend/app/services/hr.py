@@ -606,12 +606,12 @@ def _assert_actor_may_assign_portal_role(db: Session, actor: User, role_title: s
     Privileged codes (admin, superadmin, hr, finance, parent, …) must not be minted or
     escalated onto through HR staffing. Unrecognised titles return ``None`` (no login link).
     """
-    from app.services.admin_users import creatable_roles_for
+    from app.services.admin_users import hr_assignable_portal_roles
 
     code = _role_code(role_title)
     if code is None:
         return None
-    allowed = set(creatable_roles_for(role_code_for(db, actor)))
+    allowed = set(hr_assignable_portal_roles(role_code_for(db, actor)))
     if code not in allowed:
         fail(
             403,
@@ -622,9 +622,9 @@ def _assert_actor_may_assign_portal_role(db: Session, actor: User, role_title: s
 
 
 def _portal_role_allowed_for_actor(db: Session, actor: User, code: str) -> bool:
-    from app.services.admin_users import creatable_roles_for
+    from app.services.admin_users import hr_assignable_portal_roles
 
-    return code in set(creatable_roles_for(role_code_for(db, actor)))
+    return code in set(hr_assignable_portal_roles(role_code_for(db, actor)))
 
 
 def _is_locked(collection: str, body: dict) -> bool:

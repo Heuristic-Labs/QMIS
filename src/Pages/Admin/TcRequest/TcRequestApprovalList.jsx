@@ -50,7 +50,7 @@ const TcRequestApprovalList = () => {
             <div>
                 <h1 className='text-2xl font-semibold text-black'>TC Request Approval</h1>
                 <p className='text-sm text-[#667085] mt-1'>
-                    Super Admin approval for Transfer Certificate requests forwarded by PRM. Approved TCs are sent to the student portal.
+                    Final MD / Super Admin approval after manager NOCs and PRM forward. TC numbers are issued only on final approval.
                 </p>
                 {loadError ? <p className='text-sm text-[#B42318] mt-2'>{loadError}</p> : null}
             </div>

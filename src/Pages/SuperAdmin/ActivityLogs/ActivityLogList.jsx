@@ -5,7 +5,6 @@ import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar, ChevronLeft, ChevronRight, Download, EllipsisIcon } from 'lucide-react'
 import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
-import { apiRequest, getAccessToken, isApiAuthEnabled } from '../../../services/apiClient'
 import {
     LOG_TYPES,
     ROUTE_BASE,
@@ -16,50 +15,48 @@ import {
     getLogSummary,
     statusBadgeColor,
 } from './activityLogsData'
+import {
+    cacheLiveAuditRows,
+    canUseLiveAuditLogs,
+    filterRowsForLogType,
+    listLiveAuditLogsApi,
+    mapAuditApiRow,
+} from './liveAuditLogs'
 
-const mapAuditApiRows = (rows = [], logType) =>
-    (Array.isArray(rows) ? rows : []).map((row) => ({
-        id: row.id,
-        logType,
-        timestamp: row.created_at || row.createdAt || row.timestamp || '—',
-        user: row.actor_name || row.actor || row.user || 'System',
-        userEmail: row.actor_email || row.email || '—',
-        role: row.actor_role || row.role || '—',
-        auditId: row.id,
-        auditType: row.action || row.entity_type || 'Audit',
-        scope: row.entity_type || '—',
-        result: row.action || 'Completed',
-        findings: typeof row.details === 'string' ? row.details : JSON.stringify(row.details || {}),
-        module: row.entity_type || '—',
-        recordId: row.entity_id || '—',
-        recordName: row.entity_id || '—',
-        changeType: row.action || 'Update',
-        fieldChanged: '—',
-        oldValue: '—',
-        newValue: typeof row.details === 'string' ? row.details : JSON.stringify(row.details || {}),
-        action: row.action || 'Updated',
-        referenceId: row.entity_id || '—',
-        referenceTitle: row.entity_type || '—',
-        remarks: typeof row.details === 'string' ? row.details : '—',
-        ipAddress: row.ip || row.ipAddress || '—',
-        status: row.action || 'Completed',
-    }))
+const PAGE_SIZE = 25
+
+const inDateRange = (iso, fromDate, toDate) => {
+    if (!fromDate && !toDate) return true
+    if (!iso) return false
+    const ts = new Date(iso).getTime()
+    if (Number.isNaN(ts)) return false
+    if (fromDate) {
+        const start = new Date(fromDate)
+        start.setHours(0, 0, 0, 0)
+        if (ts < start.getTime()) return false
+    }
+    if (toDate) {
+        const end = new Date(toDate)
+        end.setHours(23, 59, 59, 999)
+        if (ts > end.getTime()) return false
+    }
+    return true
+}
 
 const ActivityLogList = ({ logType }) => {
     const config = LOG_TYPES[logType]
-    const useLiveAudit = logType === 'audit-logs' || logType === 'data-changes' || logType === 'approval-actions'
     const [records, setRecords] = useState([])
-    const [loading, setLoading] = useState(useLiveAudit)
+    const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
-    const [fromDate, setFromDate] = useState(new Date())
-    const [toDate, setToDate] = useState(new Date())
+    const [fromDate, setFromDate] = useState(null)
+    const [toDate, setToDate] = useState(null)
     const [search, setSearch] = useState('')
     const [status, setStatus] = useState('')
     const [exportModal, setExportModal] = useState(false)
+    const [page, setPage] = useState(1)
 
     useEffect(() => {
-        if (!useLiveAudit) return undefined
-        if (!(isApiAuthEnabled() && getAccessToken())) {
+        if (!canUseLiveAuditLogs()) {
             setRecords([])
             setLoadError('Sign in with API auth to load live audit logs.')
             setLoading(false)
@@ -67,10 +64,14 @@ const ActivityLogList = ({ logType }) => {
         }
         let active = true
         setLoading(true)
-        apiRequest('/audit-logs')
+        listLiveAuditLogsApi()
             .then((rows) => {
                 if (!active) return
-                setRecords(mapAuditApiRows(rows, logType))
+                // Cache every campus row (all log-type views) so View can resolve any id.
+                const allMapped = (Array.isArray(rows) ? rows : []).map((row) => mapAuditApiRow(row, 'audit-logs'))
+                cacheLiveAuditRows(allMapped)
+                const typed = filterRowsForLogType(rows, logType).map((row) => mapAuditApiRow(row, logType))
+                setRecords(typed)
                 setLoadError('')
             })
             .catch((err) => {
@@ -82,24 +83,52 @@ const ActivityLogList = ({ logType }) => {
                 if (active) setLoading(false)
             })
         return () => { active = false }
-    }, [logType, useLiveAudit])
+    }, [logType])
 
     const columns = useMemo(() => getListColumns(logType), [logType])
     const statusOptions = useMemo(() => getLogStatusOptions(records), [records])
 
     const filteredRecords = useMemo(
-        () => filterActivityLogs(records, { search, status }),
-        [records, search, status],
+        () => filterActivityLogs(
+            records.filter((row) => inDateRange(row.createdAtRaw, fromDate, toDate)),
+            { search, status },
+        ),
+        [records, search, status, fromDate, toDate],
     )
 
-    const summaryCards = useMemo(() => getLogSummary(logType, records), [logType, records])
+    const pageCount = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE) || 1)
+    const currentPage = Math.min(page, pageCount)
+    const pageRows = useMemo(() => {
+        const start = (currentPage - 1) * PAGE_SIZE
+        return filteredRecords.slice(start, start + PAGE_SIZE)
+    }, [filteredRecords, currentPage])
+
+    useEffect(() => {
+        setPage(1)
+    }, [search, status, fromDate, toDate, logType])
+
+    const summaryCards = useMemo(() => getLogSummary(logType, filteredRecords), [logType, filteredRecords])
 
     const clearFilters = () => {
         setSearch('')
         setStatus('')
-        setFromDate(new Date())
-        setToDate(new Date())
+        setFromDate(null)
+        setToDate(null)
+        setPage(1)
     }
+
+    const exportColumns = useMemo(
+        () => [
+            ...columns.map((col) => ({ key: col.key, label: col.label })),
+            { key: 'userId', label: 'User ID' },
+            { key: 'userEmail', label: 'Email' },
+            { key: 'description', label: 'Description' },
+            { key: 'ipAddress', label: 'IP Address' },
+            { key: 'oldValue', label: 'Previous Value' },
+            { key: 'newValue', label: 'Updated Value' },
+        ],
+        [columns],
+    )
 
     if (!config) {
         return (
@@ -109,15 +138,13 @@ const ActivityLogList = ({ logType }) => {
         )
     }
 
+    const showingFrom = filteredRecords.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1
+    const showingTo = Math.min(currentPage * PAGE_SIZE, filteredRecords.length)
+
     return (
         <section>
             {loading ? <p className='text-sm text-[#667085] mb-4'>Loading live logs…</p> : null}
             {loadError ? <p className='text-sm text-[#B42318] mb-4'>{loadError}</p> : null}
-            {!useLiveAudit ? (
-                <p className='text-sm text-[#667085] mb-4'>
-                    This log type has no dedicated backend feed yet. Use Audit Logs / Data Changes for live `GET /audit-logs` records.
-                </p>
-            ) : null}
             <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
                 {summaryCards.map((card) => (
                     <div key={card.label} className='bg-white rounded-2xl shadow-md p-4'>
@@ -136,8 +163,18 @@ const ActivityLogList = ({ logType }) => {
                     >
                         Clear Filters
                     </button>
-                    <select className='text-sm font-normal text-[#808080] border border-[#D9D9D9] rounded-md px-2 py-2 w-full md:max-w-xs sm:max-w-full'>
+                    <select
+                        className='text-sm font-normal text-[#808080] border border-[#D9D9D9] rounded-md px-2 py-2 w-full md:max-w-xs sm:max-w-full'
+                        value={fromDate || toDate ? 'range' : ''}
+                        onChange={(e) => {
+                            if (e.target.value === '') {
+                                setFromDate(null)
+                                setToDate(null)
+                            }
+                        }}
+                    >
                         <option value=''>From Beginning</option>
+                        <option value='range'>Custom date range</option>
                     </select>
                 </div>
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:mt-8 mt-2'>
@@ -177,6 +214,7 @@ const ActivityLogList = ({ logType }) => {
                                 isClearable
                                 showMonthYearDropdown
                                 scrollableMonthYearDropdown
+                                placeholderText='Any date'
                                 className='w-full text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-3 py-2 pr-10 focus:outline-none'
                             />
                             <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
@@ -191,6 +229,7 @@ const ActivityLogList = ({ logType }) => {
                                 isClearable
                                 showMonthYearDropdown
                                 scrollableMonthYearDropdown
+                                placeholderText='Any date'
                                 className='w-full text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-3 py-2 pr-10 focus:outline-none'
                             />
                             <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
@@ -208,7 +247,7 @@ const ActivityLogList = ({ logType }) => {
                         className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
                     >
                         <Download size={16} />
-                        Export
+                        Download Records
                     </button>
                 </div>
                 <div className='relative overflow-x-auto'>
@@ -229,14 +268,14 @@ const ActivityLogList = ({ logType }) => {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredRecords.length === 0 ? (
+                            {pageRows.length === 0 ? (
                                 <tr>
                                     <td colSpan={columns.length + 1} className='px-2 py-8 text-center text-[#667085]'>
-                                        No activity logs found.
+                                        {loading ? 'Loading…' : 'No activity logs found.'}
                                     </td>
                                 </tr>
                             ) : (
-                                filteredRecords.map((record) => (
+                                pageRows.map((record) => (
                                     <tr key={record.id} className='border-b text-[#667085] border-[#f2f4f7] hover:bg-[#f2f4f7]'>
                                         {columns.map((column, index) => {
                                             const value = getCellValue(record, column)
@@ -258,7 +297,7 @@ const ActivityLogList = ({ logType }) => {
                                         <td className='px-2 py-4 text-center rounded-e-lg'>
                                             <Dropdown buttonContent={<EllipsisIcon size={16} className='text-black' />}>
                                                 <NavLink
-                                                    to={`${ROUTE_BASE}/view/${record.id}`}
+                                                    to={`${ROUTE_BASE}/view/${record.id}?type=${encodeURIComponent(logType)}`}
                                                     className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'
                                                 >
                                                     View
@@ -275,16 +314,26 @@ const ActivityLogList = ({ logType }) => {
 
             <div className='flex justify-between items-center px-4 mt-4'>
                 <p className='text-sm font-medium text-[#515DEF]'>
-                    Showing 1 to {filteredRecords.length} of {filteredRecords.length} entries
+                    Showing {showingFrom} to {showingTo} of {filteredRecords.length} entries
                 </p>
                 <div className='flex gap-x-2'>
-                    <button type='button' className='size-8 flex justify-center items-center p-2 bg-white text-[#515DEF] border border-[#E2E8F0] hover:bg-[#515DEF] hover:text-white rounded-full cursor-pointer'>
+                    <button
+                        type='button'
+                        disabled={currentPage <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        className='size-8 flex justify-center items-center p-2 bg-white text-[#515DEF] border border-[#E2E8F0] hover:bg-[#515DEF] hover:text-white rounded-full cursor-pointer disabled:opacity-40'
+                    >
                         <ChevronLeft size={16} />
                     </button>
                     <button type='button' className='size-8 flex justify-center items-center p-2 bg-[#515DEF] text-white border border-[#515DEF] rounded-full cursor-pointer'>
-                        1
+                        {currentPage}
                     </button>
-                    <button type='button' className='size-8 flex justify-center items-center p-2 bg-white text-[#515DEF] border border-[#E2E8F0] hover:bg-[#515DEF] hover:text-white rounded-full cursor-pointer'>
+                    <button
+                        type='button'
+                        disabled={currentPage >= pageCount}
+                        onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                        className='size-8 flex justify-center items-center p-2 bg-white text-[#515DEF] border border-[#E2E8F0] hover:bg-[#515DEF] hover:text-white rounded-full cursor-pointer disabled:opacity-40'
+                    >
                         <ChevronRight size={16} />
                     </button>
                 </div>
@@ -295,14 +344,16 @@ const ActivityLogList = ({ logType }) => {
                 setExportModal={setExportModal}
                 filename={`super-admin-activity-logs-${logType}`}
                 title={config.listTitle || config.label}
+                columns={exportColumns}
                 rows={filteredRecords.map((row) => {
                     const out = {}
-                    columns.forEach((col) => {
-                        out[col.key] = getCellValue(row, col)
+                    exportColumns.forEach((col) => {
+                        const match = columns.find((c) => c.key === col.key)
+                        out[col.key] = match ? getCellValue(row, match) : (row[col.key] ?? '—')
                     })
                     return out
                 })}
-                exportDescription={<>You are exporting {filteredRecords.length} record(s).</>}
+                exportDescription={<>You are exporting {filteredRecords.length} filtered record(s).</>}
             />
         </section>
     )

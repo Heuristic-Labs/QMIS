@@ -33,6 +33,8 @@ import ViewLeaveRequest from '../Pages/TransportManager/LeaveRequest/ViewLeaveRe
 import BuildingMaintenance from '../Pages/TransportManager/BuildingMaintenance/BuildingMaintenance'
 import AnnouncementList from '../Pages/TransportManager/Announcement/AnnouncementList'
 import ViewAnnouncement from '../Pages/TransportManager/Announcement/ViewAnnouncement'
+import TcNocList from '../Pages/TransportManager/TcNoc/TcNocList'
+import ViewTcNoc from '../Pages/TransportManager/TcNoc/ViewTcNoc'
 
 const TransportManagerRoutes = () => {
     return (
@@ -65,6 +67,8 @@ const TransportManagerRoutes = () => {
             <Route path="/transport-manager/service-centers" element={<ServiceCenters />} />
             <Route path="/transport-manager/service-centers/add" element={<AddServiceCenter />} />
             <Route path="/transport-manager/service-centers/edit/:id" element={<AddServiceCenter />} />
+            <Route path="/transport-manager/tc-noc" element={<TcNocList />} />
+            <Route path="/transport-manager/tc-noc/view/:id" element={<ViewTcNoc />} />
             <Route path="/transport-manager/request-approvals" element={<RequestApprovals />} />
             <Route path="/transport-manager/transport-expenses" element={<TransportExpenses />} />
             <Route path="/transport-manager/transport-expenses/add/:type" element={<AddTransportExpense />} />

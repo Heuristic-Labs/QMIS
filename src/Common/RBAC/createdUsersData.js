@@ -14,16 +14,28 @@ const STORAGE_KEY = 'schoolerp-created-users'
 const ACTIVE_USER_KEY = 'schoolerp_active_created_user'
 
 /**
- * Roles Campus Admin may create / edit under RBAC → User Creation.
- * Keep in sync with backend ``admin_users.STAFF_ROLES``.
- * Privileged roles (Admin, Super Admin, HR, Account Head, Student, Parent, auditors, JD) are excluded.
+ * Offline fallback for RBAC → User Creation when the admin-users API is unavailable.
+ * Live mode uses GET /admin/users/creatable-roles (server allow-list is authoritative).
+ * Keep in sync with backend ``admin_users.STAFF_ROLES`` (not Super-Admin-only roles).
  */
 export const CREATABLE_ROLE_OPTIONS = [
     { role: ROLES.PRINCIPAL, label: 'Principal', idPrefix: 'PRC' },
+    { role: ROLES.DIRECTOR, label: 'Director', idPrefix: 'DIR' },
     { role: ROLES.PRM, label: 'PRM', idPrefix: 'PRM' },
+    { role: ROLES.PRO, label: 'PRO', idPrefix: 'PRO' },
     { role: ROLES.TEACHER, label: 'Teacher', idPrefix: 'TEA' },
     { role: ROLES.COORDINATOR, label: 'Coordinator', idPrefix: 'CRD' },
     { role: ROLES.LIBRARIAN, label: 'Librarian', idPrefix: 'LIB' },
+    { role: ROLES.HR, label: 'HR', idPrefix: 'HRM' },
+    { role: ROLES.ACCOUNT_HEAD, label: 'Account Head', idPrefix: 'ACH' },
+    { role: ROLES.FINANCE_MANAGER, label: 'Finance Manager', idPrefix: 'FNM' },
+    { role: ROLES.ACCOUNT_ASSISTANT, label: 'Account Assistant', idPrefix: 'ACA' },
+    { role: ROLES.FINANCE_ASSISTANT, label: 'Finance Assistant', idPrefix: 'FAS' },
+    { role: ROLES.JOINT_DIRECTOR, label: 'Joint Director', idPrefix: 'JD' },
+    { role: ROLES.JOINT_DIRECTOR_ASSISTANT, label: 'Joint Director Assistant', idPrefix: 'JDA' },
+    { role: ROLES.JOINT_DIRECTOR_AUDIT, label: 'Joint Director Audit', idPrefix: 'JDU' },
+    { role: ROLES.PROCESS_AUDITOR, label: 'Process Auditor', idPrefix: 'PRA' },
+    { role: ROLES.QUALITY_AUDITOR, label: 'Quality Auditor', idPrefix: 'QLA' },
     { role: ROLES.GATEKEEPER_MANAGER, label: 'Gate Keeper Manager', idPrefix: 'GKM' },
     { role: ROLES.GATEKEEPER, label: 'Gate Keeper', idPrefix: 'GKP' },
     { role: ROLES.TRANSPORT_MANAGER, label: 'Transport Manager', idPrefix: 'TRM' },
@@ -462,9 +474,7 @@ const apiErrorResult = (error) => ({
 export const createUserViaApi = async (payload) => {
     const validation = validateUserCreationForm(payload)
     if (!validation.success) return validation
-    if (!CREATABLE_ROLES.includes(payload.role)) {
-        return { success: false, message: 'Selected role cannot be created here.' }
-    }
+    // Role allow-list is enforced by POST /admin/users (actor creatable_roles_for).
 
     const details = Object.fromEntries(
         API_DETAIL_FIELDS.map((key) => {
@@ -532,9 +542,7 @@ export const fetchCreatedUserViaApi = async (userIdOrStaffCode) => {
 export const updateUserViaApi = async (user, payload) => {
     const validation = validateUserCreationForm(payload)
     if (!validation.success) return validation
-    if (!CREATABLE_ROLES.includes(payload.role)) {
-        return { success: false, message: 'Selected role cannot be assigned here.' }
-    }
+    // Role allow-list is enforced by PATCH /admin/users/{id}.
     if (!user?.userId) {
         return { success: false, message: 'User is missing a server id. Refresh the list and try again.' }
     }
