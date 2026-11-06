@@ -130,6 +130,18 @@ _CANTEEN = {"canteenmanager"} | _ADMINS
 _IT = {"itsupportmanager"} | _ADMINS
 _STATIONERY = {"stationerystoremanager"} | _ADMINS
 _HK = {"housekeepingmanager"} | _ADMINS
+# Multi-department ticket inbox roles (shared it-support-tickets collection).
+_TICKET_DEPT_ROLES = {
+    "itsupportmanager",
+    "housekeepingmanager",
+    "stationerystoremanager",
+    "transportmanager",
+    "canteenmanager",
+    "prm",
+    "hr",
+    "accounthead",
+    "financemanager",
+}
 _STORES = _CANTEEN | _IT | _STATIONERY | _HK
 _JD = {"jointdirector", "jointdirectorassistant"} | _ADMINS
 _BIOMETRIC = {"teacher", "coordinator", "principal", "director", "hr"} | _ADMINS
@@ -150,6 +162,9 @@ def _writers_for(collection: str) -> set[str]:
         return writers
     if collection.startswith("canteen-"):
         return _CANTEEN
+    if collection == "it-support-tickets":
+        # Multi-department ticket inbox: each department head can manage tickets routed to them.
+        return _IT | _TICKET_DEPT_ROLES
     if collection.startswith("it-"):
         return _IT
     if collection.startswith("stationery-"):
@@ -407,8 +422,32 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
 
 
 IT_TICKETS = "it-support-tickets"
-TICKET_CATEGORIES = {"Hardware", "Software", "Network", "Printer", "Other"}
+TICKET_CATEGORIES = {
+    "Hardware",
+    "Software",
+    "Network",
+    "Printer",
+    "Housekeeping",
+    "Facilities / Maintenance",
+    "Stationery / Stores",
+    "Transport",
+    "Canteen",
+    "Other",
+}
 TICKET_PRIORITIES = {"Low", "Medium", "High", "Critical"}
+_DEPARTMENT_QUEUES = {
+    "IT Support": "IT Queue",
+    "Housekeeping": "Housekeeping Queue",
+    "Facilities": "Facilities Queue",
+    "Stationery Store": "Stationery Queue",
+    "Transport": "Transport Queue",
+    "Canteen": "Canteen Queue",
+    "Academics": "Academics Queue",
+    "Front Office": "Front Office Queue",
+    "HR": "HR Queue",
+    "Finance": "Finance Queue",
+    "General": "General Queue",
+}
 _REQUESTER_FIELDS = ("requesterUserId", "requesterEmail", "requesterName", "requesterRole", "raisedVia")
 
 
@@ -486,7 +525,7 @@ def raise_ticket(db: Session, actor: User, body: dict) -> dict:
         "location": department,
         "issueType": category,
         "priority": priority,
-        "assignedTo": "IT Queue",
+        "assignedTo": _DEPARTMENT_QUEUES.get(department, f"{department} Queue"),
         "status": "Open",
         "createdDate": now.date().isoformat(),
         "createdAt": now.isoformat(),

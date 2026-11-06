@@ -48,6 +48,7 @@ const ClassTimetableList = () => {
     const navigate = useNavigate()
     const { createPath, editPath, canApprove, canEdit, reviewer } = getTimetableRoutes(location.pathname)
     const isCoordinator = location.pathname.startsWith('/coordinator')
+    const isTeacher = location.pathname.startsWith('/teacher')
     const [records, setRecords] = useState(() => getClassTimetables())
     const [changes, setChanges] = useState(() => getTimetableChangeRequests())
     const [rejectReason, setRejectReason] = useState('')
@@ -61,6 +62,8 @@ const ClassTimetableList = () => {
     const [academicYearOptions, setAcademicYearOptions] = useState([])
     const [statusFilter, setStatusFilter] = useState('')
     const [teacherFilter, setTeacherFilter] = useState('')
+    // Individual = one row per teacher timetable; Class-wise = one row per class/section covered.
+    const [viewMode, setViewMode] = useState('class')
     const [page, setPage] = useState(1)
     const [hydrateStatus, setHydrateStatus] = useState(() => getTimetableHydrateStatus())
     const [hydrateError, setHydrateError] = useState(() => getTimetableHydrateError())
@@ -163,9 +166,40 @@ const ClassTimetableList = () => {
         })
     }, [records, search, academicYearFilter, statusFilter, teacherFilter, classFilter, sectionFilter])
 
-    const pageCount = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE))
+    const classWiseRows = useMemo(() => {
+        const rows = []
+        filteredRecords.forEach((record) => {
+            const periods = periodsOf(record)
+            const keys = new Map()
+            periods.forEach((period) => {
+                const className = period.className || record.className || ''
+                const section = normalizeSectionKey(period.section || record.section || '')
+                const key = `${normalizeClassKey(className)}::${section}`
+                if (!keys.has(key)) {
+                    keys.set(key, {
+                        key,
+                        record,
+                        className,
+                        section,
+                        periodCount: 0,
+                    })
+                }
+                keys.get(key).periodCount += 1
+            })
+            keys.forEach((row) => rows.push(row))
+        })
+        return rows.sort((a, b) => {
+            const classCmp = String(a.className).localeCompare(String(b.className), undefined, { numeric: true })
+            if (classCmp !== 0) return classCmp
+            return String(a.section).localeCompare(String(b.section))
+        })
+    }, [filteredRecords])
+
+    const listLength = viewMode === 'class' ? classWiseRows.length : filteredRecords.length
+    const pageCount = Math.max(1, Math.ceil(listLength / PAGE_SIZE))
     const currentPage = Math.min(page, pageCount)
     const pageRecords = filteredRecords.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    const pageClassRows = classWiseRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
     const withPageReset = (setter) => (value) => {
         setter(value)
         setPage(1)
@@ -321,19 +355,41 @@ const ClassTimetableList = () => {
             <div className='bg-white rounded-2xl shadow-md p-4 mt-8'>
                 <div className='flex justify-between items-center sm:flex-row flex-col gap-y-2 mb-4'>
                     <div>
-                        <h2 className='text-xl font-medium text-black'>Class Timetable List</h2>
+                        <h2 className='text-xl font-medium text-black'>
+                            {viewMode === 'class' ? 'Class-Wise Timetable' : 'Individual Faculty Timetable'}
+                        </h2>
                         <p className='text-sm text-[#667085] mt-1'>
-                            Principal and Coordinator can create. Pending submissions are approved by Principal or Director. Principal and Director can edit (edits return to Pending).
+                            {isTeacher
+                                ? 'View approved and pending class timetables for your campus. Use filters to open a class or a faculty schedule.'
+                                : 'Create and manage class-wise and individual faculty timetables. Pending submissions are approved by Principal only.'}
                         </p>
+                        <div className='flex flex-wrap gap-2 mt-3'>
+                            <button
+                                type='button'
+                                onClick={() => { setViewMode('class'); setPage(1) }}
+                                className={`text-sm px-3 py-1.5 rounded-md border cursor-pointer ${viewMode === 'class' ? 'bg-[#515DEF] text-white border-[#515DEF]' : 'border-[#D9D9D9] text-[#667085]'}`}
+                            >
+                                Class-wise
+                            </button>
+                            <button
+                                type='button'
+                                onClick={() => { setViewMode('teacher'); setPage(1) }}
+                                className={`text-sm px-3 py-1.5 rounded-md border cursor-pointer ${viewMode === 'teacher' ? 'bg-[#515DEF] text-white border-[#515DEF]' : 'border-[#D9D9D9] text-[#667085]'}`}
+                            >
+                                Individual faculty
+                            </button>
+                        </div>
                     </div>
                     <div className='flex gap-x-2'>
-                        <NavLink
-                            to={createPath}
-                            className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
-                        >
-                            <Plus size={16} />
-                            Create Timetable
-                        </NavLink>
+                        {canEdit ? (
+                            <NavLink
+                                to={createPath}
+                                className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
+                            >
+                                <Plus size={16} />
+                                Create Timetable
+                            </NavLink>
+                        ) : null}
                         <button
                             type='button'
                             onClick={() => setExportModal(true)}
@@ -349,19 +405,35 @@ const ClassTimetableList = () => {
                     <table className='w-full text-sm text-left rtl:text-right'>
                         <thead className='text-xs bg-[#EDEEF5] whitespace-nowrap rounded-lg'>
                             <tr>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-s-lg'>Timetable ID</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Teacher</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Class & Section</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Academic Year</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Timelines</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Submitted Date</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Approval Status</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>View Timetable</th>
-                                <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-e-lg'>Actions</th>
+                                {viewMode === 'class' ? (
+                                    <>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-s-lg'>Class</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Section</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Faculty</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Timetable ID</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Periods</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Academic Year</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Approval Status</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>View</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-e-lg'>Actions</th>
+                                    </>
+                                ) : (
+                                    <>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-s-lg'>Timetable ID</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Teacher</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Class & Section</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Academic Year</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Timelines</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Submitted Date</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>Approval Status</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase'>View Timetable</th>
+                                        <th className='px-2 py-3.5 text-[#0C1E5B] font-medium uppercase rounded-e-lg'>Actions</th>
+                                    </>
+                                )}
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredRecords.length === 0 ? (
+                            {listLength === 0 ? (
                                 <tr>
                                     <td colSpan={9} className='px-2 py-8 text-center text-[#667085]'>
                                         {records.length && hasFilters
@@ -369,6 +441,75 @@ const ClassTimetableList = () => {
                                             : 'No class timetables found. Use Create Timetable to add one.'}
                                     </td>
                                 </tr>
+                            ) : viewMode === 'class' ? (
+                                pageClassRows.map((row) => {
+                                    const record = row.record
+                                    return (
+                                        <tr key={row.key} className='border-b text-[#667085] border-[#f2f4f7] hover:bg-[#f2f4f7]'>
+                                            <td className='px-2 py-4 rounded-s-lg'>{row.className || '—'}</td>
+                                            <td className='px-2 py-4'>{row.section || '—'}</td>
+                                            <td className='px-2 py-4'>{record.ownerTeacherName || '—'}</td>
+                                            <td className='px-2 py-4'>{record.id}</td>
+                                            <td className='px-2 py-4'>{row.periodCount}</td>
+                                            <td className='px-2 py-4'>{record.academicYear}</td>
+                                            <td className='px-2 py-4'>
+                                                <span className={`text-sm font-medium border rounded-md px-2 py-1 ${approvalStatusColor[record.approvalStatus]}`}>
+                                                    {record.approvalStatus}
+                                                </span>
+                                            </td>
+                                            <td className='px-2 py-4'>
+                                                <button
+                                                    type='button'
+                                                    onClick={() => setSelectedRecord(record)}
+                                                    className='bg-[#515DEF] text-white text-sm px-2 py-1.5 rounded-md hover:opacity-90 transition-all duration-200 cursor-pointer flex items-center gap-x-2'
+                                                >
+                                                    <Eye size={16} />
+                                                    View
+                                                </button>
+                                            </td>
+                                            <td className='px-2 py-4 rounded-e-lg'>
+                                                <div className='flex items-center gap-2'>
+                                                    {canApprove && record.approvalStatus === 'Pending' && hydrateStatus !== 'error' ? (
+                                                        <>
+                                                            <button
+                                                                type='button'
+                                                                onClick={() => reviewTimetable(record.id, true)}
+                                                                className='text-sm text-[#4CAF50] font-medium cursor-pointer hover:underline'
+                                                            >
+                                                                Approve
+                                                            </button>
+                                                            <button
+                                                                type='button'
+                                                                onClick={() => reviewTimetable(record.id, false)}
+                                                                className='text-sm text-[#FF5722] font-medium cursor-pointer hover:underline'
+                                                            >
+                                                                Deny
+                                                            </button>
+                                                        </>
+                                                    ) : null}
+                                                    <Dropdown buttonContent={<EllipsisIcon size={16} className='text-black' />}>
+                                                        <button
+                                                            type='button'
+                                                            onClick={() => setSelectedRecord(record)}
+                                                            className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'
+                                                        >
+                                                            View
+                                                        </button>
+                                                        {canEdit ? (
+                                                            <button
+                                                                type='button'
+                                                                onClick={() => navigate(editPath(record.id))}
+                                                                className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                        ) : null}
+                                                    </Dropdown>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )
+                                })
                             ) : (
                                 pageRecords.map((record) => (
                                     <tr key={record.id} className='border-b text-[#667085] border-[#f2f4f7] hover:bg-[#f2f4f7]'>
@@ -430,7 +571,7 @@ const ClassTimetableList = () => {
                                                             Edit
                                                         </button>
                                                     ) : null}
-                                                    {!isCoordinator ? (
+                                                    {!isCoordinator && !isTeacher ? (
                                                         <button
                                                             type='button'
                                                             onClick={() => setDeleteRequestModal(true)}
@@ -452,9 +593,9 @@ const ClassTimetableList = () => {
 
             <div className='flex justify-between items-center px-4 mt-4'>
                 <p className='text-sm font-medium text-[#515DEF]'>
-                    {filteredRecords.length === 0
+                    {listLength === 0
                         ? 'Showing 0 entries'
-                        : `Showing ${(currentPage - 1) * PAGE_SIZE + 1} to ${Math.min(currentPage * PAGE_SIZE, filteredRecords.length)} of ${filteredRecords.length} entries`}
+                        : `Showing ${(currentPage - 1) * PAGE_SIZE + 1} to ${Math.min(currentPage * PAGE_SIZE, listLength)} of ${listLength} entries`}
                 </p>
                 <div className='flex justify-center items-center gap-x-2'>
                     <button

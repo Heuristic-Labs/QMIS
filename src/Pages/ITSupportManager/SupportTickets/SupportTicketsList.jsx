@@ -9,11 +9,16 @@ import { ISSUE_TYPES, priorityBadgeColor, statusBadgeColor } from './supportTick
 
 const STATUSES = ['Open', 'Pending', 'In Progress', 'Resolved', 'Closed']
 
-const SupportTicketsList = () => {
+const SupportTicketsList = ({
+    defaultDepartment = '',
+    listBasePath = '/it-support-manager/support-tickets',
+    pageTitle = 'Tickets',
+} = {}) => {
     const [tickets, setTickets] = useState(() => getTickets())
     const [search, setSearch] = useState('')
     const [issueType, setIssueType] = useState('')
     const [status, setStatus] = useState('')
+    const [department, setDepartment] = useState(defaultDepartment || '')
     const [fromDate, setFromDate] = useState('')
     const [toDate, setToDate] = useState('')
     const [pageSize, setPageSize] = useState(10)
@@ -30,16 +35,22 @@ const SupportTicketsList = () => {
         }
     }, [])
 
+    const departmentOptions = useMemo(
+        () => [...new Set(tickets.map((ticket) => ticket.department).filter(Boolean))].sort(),
+        [tickets],
+    )
+
     const filtered = useMemo(() => tickets.filter((ticket) => {
         const query = search.trim().toLowerCase()
-        const matchesSearch = !query || [ticket.ticketId, ticket.requesterName, ticket.subject, ticket.remarks].join(' ').toLowerCase().includes(query)
+        const matchesSearch = !query || [ticket.ticketId, ticket.requesterName, ticket.subject, ticket.remarks, ticket.department].join(' ').toLowerCase().includes(query)
         const matchesType = !issueType || ticket.issueType === issueType
         const matchesStatus = !status || ticket.status === status
+        const matchesDepartment = !department || ticket.department === department
         const created = ticket.createdDate || ''
         const matchesFrom = !fromDate || created >= fromDate
         const matchesTo = !toDate || created <= toDate
-        return matchesSearch && matchesType && matchesStatus && matchesFrom && matchesTo
-    }), [tickets, search, issueType, status, fromDate, toDate])
+        return matchesSearch && matchesType && matchesStatus && matchesDepartment && matchesFrom && matchesTo
+    }), [tickets, search, issueType, status, department, fromDate, toDate])
 
     const visible = filtered.slice(0, Number(pageSize))
 
@@ -47,12 +58,18 @@ const SupportTicketsList = () => {
         <section>
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <div className='flex justify-between items-center gap-3'>
-                    <button type='button' onClick={() => { setSearch(''); setIssueType(''); setStatus(''); setFromDate(''); setToDate('') }} className='bg-[#515DEF] text-white uppercase text-sm px-6 py-2 rounded-lg cursor-pointer'>Clear Filters</button>
+                    <button type='button' onClick={() => { setSearch(''); setIssueType(''); setStatus(''); setDepartment(defaultDepartment || ''); setFromDate(''); setToDate('') }} className='bg-[#515DEF] text-white uppercase text-sm px-6 py-2 rounded-lg cursor-pointer'>Clear Filters</button>
                     <span className='text-sm text-[#515DEF]'>Total Records: {filtered.length}</span>
                 </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 lg:mt-8 mt-2'>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 lg:mt-8 mt-2'>
                     <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>Search
                         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder='Ticket ID, requester...' className='text-sm border border-[#D9D9D9] rounded-md px-2 py-2' />
+                    </label>
+                    <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>Department
+                        <select value={department} onChange={(event) => setDepartment(event.target.value)} className='text-sm border border-[#D9D9D9] rounded-md px-2 py-2'>
+                            <option value=''>All</option>
+                            {departmentOptions.map((item) => <option key={item}>{item}</option>)}
+                        </select>
                     </label>
                     <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>Issue Type
                         <select value={issueType} onChange={(event) => setIssueType(event.target.value)} className='text-sm border border-[#D9D9D9] rounded-md px-2 py-2'>
@@ -77,7 +94,7 @@ const SupportTicketsList = () => {
 
             <div className='bg-white rounded-2xl shadow-md p-4 mt-8'>
                 <div className='flex justify-between items-center gap-2 mb-4'>
-                    <h2 className='text-xl font-medium text-black'>Tickets</h2>
+                    <h2 className='text-xl font-medium text-black'>{pageTitle}</h2>
                     <button type='button' onClick={() => { setExportModal(true); logActivity({ action: 'EXPORT_REQUESTED', module: 'IT Tickets', details: 'Export format dialog' }) }} className='bg-[#515DEF] text-white text-sm px-4 py-2 rounded-md cursor-pointer flex items-center gap-x-2'>
                         <Download size={16} /> Export
                     </button>
@@ -112,7 +129,7 @@ const SupportTicketsList = () => {
                                     <td className='px-2 py-4 whitespace-nowrap'>{ticket.createdDate}</td>
                                     <td className='px-2 py-4'>
                                         <Dropdown buttonContent={<EllipsisIcon size={16} className='text-black' />}>
-                                            <NavLink to={`/it-support-manager/support-tickets/view-ticket/${ticket.ticketId}`} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer block'>View</NavLink>
+                                            <NavLink to={`${listBasePath}/view-ticket/${ticket.ticketId}`} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer block'>View</NavLink>
                                         </Dropdown>
                                     </td>
                                 </tr>

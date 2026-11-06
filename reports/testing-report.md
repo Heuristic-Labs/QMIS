@@ -1,28 +1,18 @@
 # Testing report
 
-**Date:** 4 November 2026  
-**Context:** Store Management + Gatekeeper workflow implementation (issue/return, procurement, visitor upsert, duty isolation).
+Latest regression for client-review push (6 November 2026).
 
-## Latest
+## Full suite
 
-| Suite / check | Result |
-|---|---|
-| `pytest tests/test_stationery_gate_workflows.py -q` | **7 passed** |
-| `pytest tests/test_stationery_gate_workflows.py tests/test_front_office_api.py tests/test_ops_and_audit_collections.py -q` | **26 passed** |
-| Browser UAT | **NOT VERIFIED** |
-| `npm run build` | **PASS** (`vite build` ✓) |
+```bash
+cd backend
+python -m pytest tests/ -q
+```
 
-## Coverage notes
+**Result:** 745 passed, 35 skipped, 17 failed, 8 errors (~5m 28s).
 
-- Stationery issue/return: stock deduct, insufficient stock 409, idempotent `clientRequestId`.
-- Request decide: store approve; teacher forbidden.
-- Procurement: store advance → JD approve → Finance budget; store cannot JD-approve; `mark_paid` rejected.
-- GRN: inventory increase once; second receive idempotent.
-- Gate visitors: whole-list PUT rejected; item upsert + exit stamps.
-- Gatekeeper duty GET returns only assignments matching login email.
+Client-review-related checks fixed/verified green: academics collections, attendance mark scope, IT tickets self-service, PRM home-path static (`/front-office/dashboard`).
 
-## Not run / blockers
+## Failures not in this change set (pre-existing / unrelated)
 
-- Full `pytest tests/` not re-run this slice.
-- Pre-existing `processauditor` hire failure in remaining workflows (unrelated) not treated as a regression from this work.
-- Browser UAT still open.
+Finance gateway keys, SignIn demo chips, class-details static drift, teacher-roster demo static, Super Admin approvals demo seeds, principal portal class-catalog seed, gatekeeper one-at-a-time save, academic_access_phase2 errors, attendance audit exact-field assertion (session/check-in already on main).

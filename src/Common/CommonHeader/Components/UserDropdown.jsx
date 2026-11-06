@@ -70,7 +70,7 @@ const UserDropdown = () => {
                                     }}
                                 >
                                     <Ticket size={14} />
-                                    Raise Request
+                                    Raise Ticket
                                 </button>
                             </li>
                             <li>
@@ -82,7 +82,7 @@ const UserDropdown = () => {
                                     }}
                                 >
                                     <ListChecks size={14} />
-                                    My Requests
+                                    My Tickets
                                 </button>
                             </li>
                             <li>

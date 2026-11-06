@@ -75,7 +75,8 @@ def test_a_teacher_raises_a_ticket_and_the_server_sets_who_and_what(client):
     assert made.status_code == 201, made.text
     ticket = made.json()
     assert re.fullmatch(r"TKT-\d{4}-\d{4}", ticket["ticketId"]) and ticket["id"] == ticket["ticketId"]
-    assert ticket["status"] == "Open" and ticket["assignedTo"] == "IT Queue"
+    assert ticket["status"] == "Open" and ticket["assignedTo"] == "Academics Queue"
+    assert ticket["department"] == "Academics"
     assert ticket["requesterEmail"] == TEACHER[0] and ticket["requesterRole"] == "Teacher"
     assert ticket["requesterUserId"] != "someone-else" and ticket["requesterName"] != "Director"
     assert ticket["history"][0]["event"] == "Created"

@@ -17,11 +17,24 @@ import { getMovements } from '../Common/demoDomain/inventory'
 import InventoryRequirement from '../Pages/HousekeepingManager/InventoryRequirement/InventoryRequirement'
 import PurchaseWorkflow from '../Pages/HousekeepingManager/PurchaseWorkflow/PurchaseWorkflow'
 import { LOST_SEED, RO_SEED, SCHEDULE_SEED, SOM_SEED } from '../Common/demoDomain/housekeeping'
+import DepartmentTicketsPage from '../Common/Tickets/DepartmentTicketsPage'
+import ViewSupportTicket from '../Pages/ITSupportManager/SupportTickets/ViewSupportTicket'
 
 const HousekeepingManagerRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/housekeeping-manager/dashboard" element={<Dashboard />} />
+            <Route
+                path="/housekeeping-manager/tickets"
+                element={(
+                    <DepartmentTicketsPage
+                        defaultDepartment="Housekeeping"
+                        listBasePath="/housekeeping-manager/tickets"
+                        title="Housekeeping Tickets"
+                    />
+                )}
+            />
+            <Route path="/housekeeping-manager/tickets/view-ticket/:id" element={<ViewSupportTicket />} />
             {TaskManagementRoutes({ basePath: '/housekeeping-manager' })}
             <Route path="/housekeeping-manager/inventory" element={<Inventory />} />
             <Route path="/housekeeping-manager/inventory/add-item" element={<AddInventory />} />

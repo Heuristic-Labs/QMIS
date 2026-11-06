@@ -15,7 +15,7 @@ def test_pro_role_home_path_and_demo_email():
     assert "PRO: 'pro'" in roles
     assert "[ROLES.PRO]: '/pro/dashboard'" in auth
     assert "[ROLES.PRO]: { email: 'pro@qmis.edu' }" in auth
-    assert "[ROLES.PRM]: '/front-office/admission-enquiry'" in auth
+    assert "[ROLES.PRM]: '/front-office/dashboard'" in auth
 
 
 def test_pro_app_layout_split_from_prm():

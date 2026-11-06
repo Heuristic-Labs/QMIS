@@ -8,6 +8,174 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 6 November 2026 — Client review (attendance, exams, timetables, PRM, tickets)
+
+**Status:** Implemented locally. No commit/push/prod migration.
+
+### Done
+- Attendance soft-ensure for dual-session columns (`ensure_attendance_schema` on startup + every attendance API call); clearer Manual Attendance empty-state when Teacher Allocation is missing.
+- Exam create hardens missing `exams.schedule` (ensure before write + clearer 503 if still missing).
+- PRM Dashboard added to sidebar; home path set to `/front-office/dashboard`.
+- Class Timetable: class-wise + individual faculty views; Teacher gains class-wise list (read-only); Coordinator labels clarified.
+- Timetable publish/change approval restricted to Principal (Director view-only for approval); Teacher Allocation writes Principal/MD/Super Admin only (Admin blocked).
+- Principal: Exam List, Mark Entry, Result Summary, Report Cards under Exams & Marks.
+- Tickets: renamed Support Tickets → Tickets; multi-department raise + department inboxes for Canteen / Housekeeping / Stationery / Transport; queue assignment by department.
+
+### Still open / known gaps from Excel (not fully built this pass)
+- Full biometric-first attendance (MD point), Unit Test rename already partly done as CA/RCT, Question Bank image multi-entry, SOM bulk upload, full nav parity audit for every role, Extended Class Principal-only create.
+
+### Tests
+- Focused suites: academics collections, exams, ops collections, IT tickets self-service — green after ticket queue assertion update.
+
+---
+
+## 5 November 2026 — Exam schedule column + Director Submitted Date
+
+**Status:** Fixed locally. No commit/push/prod migration.
+
+### Done
+- Soft-ensure `exams.schedule` JSON on startup (aligned with Alembic `0022`); manual `ADD COLUMN … JSON` matches migration.
+- Director Exam Approvals Submitted Date now uses `approval_requests.created_at` via exam API `submittedAt` (not exam start date). Missing stamps show `—`.
+- Tests: exam schedule + exams suites **10 passed**; frontend build **PASS**.
+
+### Still open
+- Formal Alembic on any DB still behind `0022` needs backup + explicit approval.
+- Browser UAT of Director page pending when API+UI are up.
+
+---
+
+## 5 November 2026 — Curated production deployment change set (staged, not committed)
+
+**Status:** Deploy change set staged on `main`. **No commit / push / deploy / prod migration.**
+
+### Done
+- Staged **51 files** (+3052/−276) for Activity Logs, TC NOC, SOM, User Management, HR staffing fix, Alembic `0024`, focused tests, `xlsx` dependency.
+- Left unstaged/untracked: reports, `.gitignore`, client xlsx/PDF/docs, `local/`, smoke/provision/reissue/verify/seed scripts.
+- Focused pytest **81 passed**; `npm run build` **PASS**. Secret scan on staged diff clean.
+
+### Still open
+- Commit when explicitly requested; Alembic on prod only with approval.
+
+---
+
+## 5 November 2026 — Production deployment readiness audit (four modules)
+
+**Status:** Deployment-readiness audit complete. **No commit / push / production migration / production data changes.**
+
+### Done
+- Phase 1 git review: 43 modified tracked + untracked adds; flagged exclude list (xlsx/PDF/credential scripts/`local/`).
+- Phase 2 DB: Alembic `0024_tc_request_nocs` + `ensure_tc_schema` reviewed; upgrade OK; downgrade does not restore old Postgres status CHECK.
+- Phase 3 testing: focused four-module + HR ASA-01 suites **PASS**; `npm run build` **PASS**; full-suite failures largely pre-existing/unrelated.
+- Phase 4 security: RBAC, campus isolation, SOM file ACL, TC NOC/decide gates, audit.read scoping reviewed.
+- Readiness fix during audit: expanded Admin creatable roles had opened HR staffing privilege path → split `hr_assignable_portal_roles` (teacher/driver OK; HR/finance/director blocked via `/hr/staff`).
+
+### Still open
+- Explicit approval required before Alembic on production.
+- Commit only curated four-module files when requested (exclude secrets/client xlsx/smoke scripts).
+- Full pytest still has unrelated pre-existing failures outside these modules.
+
+---
+
+## 5 November 2026 — Final regression audit (four modules)
+
+**Status:** All four resolved modules re-verified end-to-end. No commit/push.
+
+### Done
+- Diff review of Activity Logs, TC NOC, Star of the Month, User Creation roles.
+- Backend focused suites **86 passed**; live four-module smoke **OVERALL PASS**; frontend build **PASS**.
+- Browser: SA Activity Logs (3291 live), TM TC NOC list, teacher SOM matrix (1/2/3/NA + bulk/docs), SA User Creation (**29** roles).
+
+### Still open
+- Unrelated full-suite failures remain outside these modules.
+- Commit/push when requested.
+
+---
+
+## 5 November 2026 — User Creation missing roles fix
+
+**Status:** Role dropdown now loads the full actor-scoped ERP catalogue from the API; privilege escalation still blocked. Verified API + browser + build. No commit/push.
+
+### Done
+- Root cause: hardcoded 13-role `STAFF_ROLES` / `CREATABLE_ROLE_OPTIONS` omitted Director, PRO, HR, finance, JD, auditors, etc.
+- Backend `admin_users.STAFF_ROLES` expanded to configured staff portals; Super Admin still uniquely gets `admin` / `fileroom` / `cctv` / `managing_director`. Never creatable: `superadmin`, `student`, `parent`.
+- `GET /admin/users/creatable-roles` labels from DB; FE create/update no longer rejects roles the server allows.
+- Super Admin create form uses dynamic roles (not fixed Administrator-only).
+- Tests: `test_admin_users` + designation/file/cctv suites **63 passed**. Live: Admin **25** roles; SA **29**; create HR + login OK; Admin cannot create Admin.
+
+### Still open
+- Commit/push when requested.
+
+---
+
+## 5 November 2026 — Star of the Month module complete
+
+**Status:** Bulk Excel/CSV + documents + ratings 1/2/3 verified (API + browser + build). No commit/push this pass.
+
+### Done
+- Ratings restricted to **1, 2, 3** (and matrix **NA**); **2.5 removed** from FE options and rejected by ops `som-matrix` + academics `student-star-ratings` validation.
+- Matrix + individual list: CSV/Excel template download, file validation, import preview, in-file + existing duplicate blocking before save.
+- Document attach: matrix supporting docs (`som-matrix-doc`) and individual rating attachment (`som-rating-doc`); `/files` upload allowed for ops/academics writers on `som-*`; download gated to uploader or ops/academics readers.
+- Individual Add Ratings preserved (1–3 stars + optional document overwrite).
+- Dependency: `xlsx` for Excel template/parse. Frontend production build **passed**.
+
+### Still open
+- Seed teacher has no class allocation in local UAT (UI verified; roster empty until Principal allocates).
+- Commit/push when requested.
+
+---
+
+## 5 November 2026 — TC Request multi-level NOC workflow
+
+**Status:** Manager NOC + MD/Super Admin final approval implemented and verified (API + browser). No commit/push this pass.
+
+### Done
+- Requirement basis: Non-Academics ERP §4.8 — Transport Manager NOC when student uses school transport; MD/SA final approval before TC issue.
+- New `tc_request_nocs` table + Alembic `0024_tc_request_nocs`; status `Pending Manager NOCs`; startup `ensure_tc_schema` widens Postgres CHECK.
+- On create: route applicable manager NOCs (role catalogue, no hardcoded names); after all NOCs → PRM; PRM forward → MD/SA; `decide` issues TC number only on final approve.
+- Permissions: `tc.noc` for `transportmanager`; final decide gated to admin/superadmin/managing_director.
+- FE: Transport Manager **TC NOC Clearance** list/view; FO/Admin show NOC history + pending indicators.
+- Tests: `test_tc_noc_workflow.py` + legacy TC suites **7 passed**. Live smoke `TC-REQ-006/007`; browser UAT `TC-REQ-008` (TM approved NOC → PRM → final TC/2026/0045).
+
+### Still open
+- Optional: additional manager NOC authorities if product expands beyond Transport (registry already extensible).
+- Commit/push when requested.
+
+---
+
+## 5 November 2026 — Super Admin Activity Logs fix
+
+**Status:** View details, actor names, and Download Records fixed end-to-end (API + Super Admin UI). No dummy logs. No commit/push this pass.
+
+### Done
+- Enriched `GET /api/v1/audit-logs` with `actor_id`, `actor_name`, `actor_email`, `actor_role`, `created_at`; added `GET /api/v1/audit-logs/{id}`.
+- Actor name resolved from UserProfile / HrEmployee / email; `"System"` only when `actor_id` is null.
+- Campus-less auth events (failed login / locks) included for `audit.read` readers.
+- FE: live list for all Activity Log tabs; date/search/status filters; pagination; Download Records (CSV/Excel/PDF) of filtered rows; View loads cache + detail API.
+- Tests: `tests/test_audit_logs_identity.py` **4 passed**; attendance details-redaction still **passed**.
+
+### Still open
+- IP address not stored on `audit_logs` yet (UI shows —). Optional migration later.
+- Browser UAT of Super Admin Activity Logs against live API.
+
+---
+
+## 4 November 2026 — Irulappan live role access (audit only)
+
+**Status:** Read-only audit complete. Live Admin/Super Admin seed logins still **401**. No production account create, no commit/push for this pass. Existing modules untouched.
+
+### Done
+- Role inventory vs Admin User Creation creatable set (13 campus + 3 Super-Admin-only).
+- Local provisioner dry-run: 13 staff **PLANNED**, 0 existing; SA subset plans admin/fileroom/cctv; PRO/HR/director/superadmin **UNSUPPORTED**.
+- Live ALB probe: admin/superadmin seed → 401.
+- Updated `docs/QMIS_Irulappan_Role_Access_Release_Report.md`.
+- Regression: focused pytest **59 passed**; `npm run build` **PASS**.
+
+### Still open
+- Authorized production Admin/Super Admin session required before any live `--apply`.
+- Unsupported roles (PRO, JD, HR, finance, …) need separate product procedure.
+
+---
+
 ## 4 November 2026 — Store/Gatekeeper workflow implementation
 
 **Status:** Confirmed Store + Gatekeeper defects implemented (server issue/return ledger, request decide, JD/Finance procurement + GRN, visitor item-upsert exit, duty isolation). FO Parent / Admission Enquiry WIP untouched. No commit/push.

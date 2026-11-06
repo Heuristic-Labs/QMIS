@@ -84,7 +84,7 @@ export const ROLE_HOME_PATHS = {
     [ROLES.STUDENT]: '/student/class/online-class',
     [ROLES.PARENT]: '/parent/select-child',
     [ROLES.LIBRARIAN]: '/librarian/book-management/book-list',
-    [ROLES.PRM]: '/front-office/admission-enquiry',
+    [ROLES.PRM]: '/front-office/dashboard',
     [ROLES.PRO]: '/pro/dashboard',
     [ROLES.GATEKEEPER]: '/gate-keeper/dashboard',
     [ROLES.GATEKEEPER_MANAGER]: '/gatekeeper-manager/assign-duty-list',

@@ -4,6 +4,7 @@ import Dashboard from '../Pages/Teacher/Dashboard/Dashboard'
 import MyAttendance from '../Pages/Teacher/Attendance/MyAttendance'
 import ClassAttendance from '../Pages/Teacher/Attendance/ClassAttendance'
 import ClassRoutine from '../Pages/Teacher/ClassRoutine/ClassRoutine'
+import ClassTimetableList from '../Pages/Principal/ClassTimetable/ClassTimetableList'
 import ExtraClass from '../Pages/Teacher/ExtraClass/ExtraClass'
 import AddExtraClass from '../Pages/Teacher/ExtraClass/AddExtraClass'
 import ViewExtraClass from '../Pages/Teacher/ExtraClass/ViewExtraClass'
@@ -65,6 +66,7 @@ const TeacherRoutes = () => {
             <Route path="/teacher/attendance/my-attendance" element={<MyAttendance />} />
             <Route path="/teacher/attendance/class-attendance" element={<ClassAttendance canOverrideBiometric />} />
             <Route path="/teacher/class/class-routine" element={<ClassRoutine />} />
+            <Route path="/teacher/class/class-timetable" element={<ClassTimetableList />} />
             <Route path="/teacher/class/extra-class" element={<ExtraClass />} />
             <Route path="/teacher/class/extra-class/add" element={<AddExtraClass />} />
             <Route path="/teacher/class/extra-class/edit/:id" element={<AddExtraClass />} />

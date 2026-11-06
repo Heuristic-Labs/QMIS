@@ -9,8 +9,14 @@ from app.deps import require_permission
 from app.models import User
 from app.schemas.attendance import AttendanceUpsertIn
 from app.services import attendance as svc
+from app.services.attendance_migrate import ensure_attendance_schema
 
 router = APIRouter(prefix="/api/v1/attendance", tags=["attendance"])
+
+
+def _ready_attendance_schema() -> None:
+    """Soft-add dual-session columns before any list/save (Alembic 0023)."""
+    ensure_attendance_schema()
 
 
 @router.get("")
@@ -23,6 +29,7 @@ def list_attendance_route(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("attendance.read")),
 ) -> list[dict]:
+    _ready_attendance_schema()
     if roster:
         if not class_name:
             from app.services.errors import fail
@@ -53,6 +60,7 @@ def my_attendance_classes_route(
     user: User = Depends(require_permission("attendance.read")),
 ) -> dict:
     """Classes and sections the signed-in user may load and mark (same rule as roster and save)."""
+    _ready_attendance_schema()
     return svc.my_attendance_classes(db, user, date_)
 
 
@@ -62,6 +70,7 @@ def upsert_attendance_route(
     db: Session = Depends(get_db),
     user: User = Depends(require_permission("attendance.write")),
 ) -> list[dict]:
+    _ready_attendance_schema()
     return svc.upsert_attendance(db, user, body)
 
 
@@ -74,4 +83,5 @@ def student_calendar_route(
     user: User = Depends(require_permission("attendance.read")),
 ) -> dict[str, str]:
     """Month map for AttendanceCalendar (P/A/H codes)."""
+    _ready_attendance_schema()
     return svc.student_month_map(db, user, student_id, year=year, month=month)

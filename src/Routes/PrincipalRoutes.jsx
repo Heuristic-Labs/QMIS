@@ -55,6 +55,10 @@ import TransportApprovals from '../Pages/Principal/TransportApprovals/TransportA
 import MarkEntryApprovalList from '../Common/MarkEntryApproval/MarkEntryApprovalList'
 import MarkEntryReviewPage from '../Common/MarkEntryApproval/MarkEntryReviewPage'
 import { StudentStarRatingsRoutes } from '../Common/StudentStarRatings/StudentStarRatingsRoutes'
+import ExamSchedule from '../Pages/Teacher/StudentEvaluation/ExamSchedule/ExamSchedule'
+import MarkEntry from '../Pages/Teacher/StudentEvaluation/MarkEntry/MarkEntry'
+import ResultSummary from '../Pages/Teacher/MarksResults/ResultSummary/ResultSummary'
+import ReportCardsPage from '../Common/ReportCards/ReportCardsPage'
 
 const PrincipalRoutes = () => {
     return (
@@ -72,6 +76,10 @@ const PrincipalRoutes = () => {
             <Route path="/principal/examination-timetable" element={<ExaminationTimetableList />} />
             <Route path="/principal/create-examination-timetable" element={<CreateExaminationTimetable />} />
             <Route path="/principal/edit-examination-timetable/:id" element={<CreateExaminationTimetable />} />
+            <Route path="/principal/student-evaluation/exam" element={<ExamSchedule />} />
+            <Route path="/principal/student-evaluation/mark-entry" element={<MarkEntry />} />
+            <Route path="/principal/student-evaluation/result-summary" element={<ResultSummary />} />
+            <Route path="/principal/student-evaluation/report-cards" element={<ReportCardsPage />} />
             <Route path="/principal/mark-entry-approval" element={<PrincipalMarkEntryApproval />} />
             <Route path="/principal/mark-entry-approval/review/:contextKey" element={<PrincipalMarkEntryReview />} />
             <Route path="/principal/lesson-plan-approval" element={<PrincipalLessonPlanApproval />} />

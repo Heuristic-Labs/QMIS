@@ -15,11 +15,24 @@ import Reports from '../Pages/CanteenManager/Reports/Reports'
 import AnnouncementList from '../Pages/CanteenManager/Announcement/AnnouncementList'
 import AddAnnouncement from '../Pages/CanteenManager/Announcement/AddAnnouncement'
 import ViewAnnouncement from '../Pages/CanteenManager/Announcement/ViewAnnouncement'
+import DepartmentTicketsPage from '../Common/Tickets/DepartmentTicketsPage'
+import ViewSupportTicket from '../Pages/ITSupportManager/SupportTickets/ViewSupportTicket'
 
 const CanteenManagerRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/canteen-manager/dashboard" element={<Dashboard />} />
+            <Route
+                path="/canteen-manager/tickets"
+                element={(
+                    <DepartmentTicketsPage
+                        defaultDepartment="Canteen"
+                        listBasePath="/canteen-manager/tickets"
+                        title="Canteen Tickets"
+                    />
+                )}
+            />
+            <Route path="/canteen-manager/tickets/view-ticket/:id" element={<ViewSupportTicket />} />
             <Route path="/canteen-manager/menu-management" element={<MenuManagement />} />
             <Route path="/canteen-manager/menu-management/add-menu-item" element={<AddMenuItem />} />
             <Route path="/canteen-manager/menu-management/view-menu/:id" element={<ViewMenuItem />} />

@@ -124,11 +124,11 @@ export default function RaiseItTicketModal({ open, onClose }) {
         <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
             <button type='button' className='absolute inset-0 bg-black/40' onClick={onClose} aria-label='Close' />
             <form onSubmit={submit} className='relative z-10 w-full max-w-lg bg-white rounded-2xl shadow-lg p-5'>
-                <h3 className='text-lg font-semibold text-black'>Raise Request</h3>
+                <h3 className='text-lg font-semibold text-black'>Raise Ticket</h3>
                 <p className='text-xs text-[#667085] mt-1'>
                     {usesCampusApiForKey(IT_TICKETS_KEY)
-                        ? 'Send a general campus request (IT, Housekeeping, Stores, and more). Track it under My Requests.'
-                        : 'Pick the department and category. The request appears for the campus support team in this browser.'}
+                        ? 'Raise a ticket for any department (IT, Housekeeping, Stores, Transport, and more). Track it under My Tickets.'
+                        : 'Pick the target department and category. The ticket is routed to that department inbox.'}
                 </p>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4'>
                     <label className='text-sm flex flex-col gap-1'>Department

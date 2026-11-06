@@ -617,6 +617,12 @@ export const parentSidebarLinks = [
 
 export const prmSidebarLinks = [
     {
+        id: "prm-dashboard",
+        title: "Dashboard",
+        to: "/front-office/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
         id: 1,
         title: "Admission Enquiry",
         to: "/front-office/admission-enquiry",
@@ -1005,6 +1011,12 @@ export const canteenManagerSidebarLinks = [
         icon: ClipboardCheck,
     },
     {
+        id: "canteen-tickets",
+        title: "Tickets",
+        to: "/canteen-manager/tickets",
+        icon: Ticket,
+    },
+    {
         id: 6,
         title: "Reports",
         to: "/canteen-manager/reports",
@@ -1107,6 +1119,12 @@ export const stationeryStoreManagerSidebarLinks = [
         icon: ClipboardCheck,
     },
     {
+        id: "stationery-tickets",
+        title: "Tickets",
+        to: "/stationery-store-manager/tickets",
+        icon: Ticket,
+    },
+    {
         id: 5,
         title: "Reports",
         to: "/stationery-store-manager/reports",
@@ -1168,6 +1186,12 @@ export const housekeepingManagerSidebarLinks = [
         title: "Requests & Approvals",
         to: "/housekeeping-manager/requests-approvals",
         icon: ClipboardCheck,
+    },
+    {
+        id: "hk-tickets",
+        title: "Tickets",
+        to: "/housekeeping-manager/tickets",
+        icon: Ticket,
     },
     {
         id: 5,
@@ -1247,7 +1271,8 @@ export const teacherSidebarLinks = [
         to: "#0",
         icon: School,
         subLinks: [
-            { icon: CalendarDays, title: "Class Timetable", to: "/teacher/class/class-routine" },
+            { icon: CalendarDays, title: "My Timetable", to: "/teacher/class/class-routine" },
+            { icon: CalendarDays, title: "Class-wise Timetable", to: "/teacher/class/class-timetable" },
             { icon: NotebookPen, title: "Lesson Plan", to: "/teacher/lesson-plan-approval" },
             { icon: UserPlus, title: "Extended Class", to: "/teacher/class/extra-class" },
             { icon: MonitorPlay, title: "Online Class", to: "/teacher/class/online-class" },
@@ -1347,8 +1372,8 @@ export const coordinatorSidebarLinks = [
         to: "#0",
         icon: School,
         subLinks: [
-            { icon: CalendarDays, title: "My Class Timetable", to: "/coordinator/class/class-routine" },
-            { icon: CalendarDays, title: "Create Class Timetable", to: "/coordinator/class/class-timetable" },
+            { icon: CalendarDays, title: "My Timetable", to: "/coordinator/class/class-routine" },
+            { icon: CalendarDays, title: "Class-wise Timetable", to: "/coordinator/class/class-timetable" },
             { icon: NotebookPen, title: "Lesson Plan", to: "/coordinator/lesson-plan-approval" },
             { icon: ClipboardCheck, title: "Lesson Plan Review", to: "/coordinator/lesson-plan-review" },
             { icon: UserPlus, title: "Extended Class", to: "/coordinator/class/extra-class" },
@@ -1489,6 +1514,12 @@ export const transportManagerSidebarLinks = [
         title: "Request Approvals",
         to: "/transport-manager/request-approvals",
         icon: ClipboardCheck,
+    },
+    {
+        id: "transport-tickets",
+        title: "Tickets",
+        to: "/transport-manager/tickets",
+        icon: Ticket,
     },
     {
         id: 15,
@@ -2484,15 +2515,17 @@ export const principalSidebarLinks = [
     },
     {
         id: 3,
-        title: "Examination Timetable",
-        to: "/principal/examination-timetable",
+        title: "Exams & Marks",
+        to: "#0",
         icon: CalendarCheck,
-    },
-    {
-        id: "principal-mark-approval",
-        title: "Mark Entry Approval",
-        to: "/principal/mark-entry-approval",
-        icon: ClipboardCheck,
+        subLinks: [
+            { icon: CalendarCheck, title: "Examination Timetable", to: "/principal/examination-timetable" },
+            { icon: ClipboardList, title: "Exam List", to: "/principal/student-evaluation/exam" },
+            { icon: ClipboardPen, title: "Mark Entry", to: "/principal/student-evaluation/mark-entry" },
+            { icon: ClipboardCheck, title: "Mark Entry Approval", to: "/principal/mark-entry-approval" },
+            { icon: BarChart3, title: "Result Summary", to: "/principal/student-evaluation/result-summary" },
+            { icon: FileText, title: "Report Cards", to: "/principal/student-evaluation/report-cards" },
+        ],
     },
     {
         id: "principal-lesson-plan-approval",

@@ -21,11 +21,24 @@ import MaterialGatePassList from '../Pages/FrontOffice/MaterialGatePass/Material
 import AddMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/AddMaterialGatePass'
 import EditMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/EditMaterialGatePass'
 import ViewMaterialGatePass from '../Pages/FrontOffice/MaterialGatePass/ViewMaterialGatePass'
+import DepartmentTicketsPage from '../Common/Tickets/DepartmentTicketsPage'
+import ViewSupportTicket from '../Pages/ITSupportManager/SupportTickets/ViewSupportTicket'
 
 const StationeryStoreManagerRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/stationery-store-manager/dashboard" element={<Dashboard />} />
+            <Route
+                path="/stationery-store-manager/tickets"
+                element={(
+                    <DepartmentTicketsPage
+                        defaultDepartment="Stationery Store"
+                        listBasePath="/stationery-store-manager/tickets"
+                        title="Stationery Tickets"
+                    />
+                )}
+            />
+            <Route path="/stationery-store-manager/tickets/view-ticket/:id" element={<ViewSupportTicket />} />
             <Route path="/stationery-store-manager/inventory" element={<Inventory />} />
             <Route path="/stationery-store-manager/inventory/add-item" element={<AddInventory />} />
             <Route path="/stationery-store-manager/inventory/view-item/:id" element={<ViewInventoryItem />} />

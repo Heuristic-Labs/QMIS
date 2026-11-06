@@ -84,6 +84,17 @@ def test_teacher_allocations_replace(client):
     assert put.json()[0]["employeeId"] == "TEA-1001"
 
 
+def test_admin_cannot_write_teacher_allocations(client):
+    """Client review: Teacher Allocation is Principal-owned (Admin may still manage class timetables)."""
+    admin = _login(client, settings.admin_seed_email, settings.admin_seed_password)
+    put = client.put(
+        "/api/v1/academics/teacher-allocations",
+        json=[{"employeeId": "TEA-ADMIN-BLOCK", "status": "Active", "mappings": []}],
+        headers=admin,
+    )
+    assert put.status_code == 403
+
+
 def _ensure_campus_subject(client, *, name: str, code: str) -> None:
     admin = _login(client, settings.admin_seed_email, settings.admin_seed_password)
     existing = client.get("/api/v1/masters/subjects", headers=admin)

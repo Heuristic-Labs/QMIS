@@ -87,8 +87,19 @@ export const getTimetableRoutes = (pathname = '') => {
             createPath: CREATE_ROUTE,
             editPath: (id) => `/director/edit-class-timetable/${id}`,
             reviewer: 'Director',
-            canApprove: true,
+            // Client review: timetable publish/change approval is Principal-only.
+            canApprove: false,
             canEdit: true,
+        }
+    }
+    if (String(pathname).startsWith('/teacher')) {
+        return {
+            listPath: '/teacher/class/class-timetable',
+            createPath: '/teacher/class/class-timetable',
+            editPath: () => '/teacher/class/class-timetable',
+            reviewer: 'Teacher',
+            canApprove: false,
+            canEdit: false,
         }
     }
     return {

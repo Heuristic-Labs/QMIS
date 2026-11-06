@@ -212,6 +212,10 @@ def create_exam(
     from app.services.class_section_catalog import require_active_class_section
 
     require_active_class_section(db, actor.campus_id, class_name, section)
+    # Older DBs missing exams.schedule crash with UndefinedColumn → opaque 500.
+    from app.services.exams_migrate import ensure_exams_schema
+
+    ensure_exams_schema()
     year_label = (academic_year or "").strip() or None
     schedule = _normalize_schedule(timelines=timelines, section=section, teacher_name=teacher_name)
     exam = Exam(
@@ -225,11 +229,29 @@ def create_exam(
         schedule=schedule,
         created_by=actor.id,
     )
-    db.add(exam)
-    db.flush()
-    write_audit(db, action="EXAM_CREATED", entity_type="exam", entity_id=str(exam.id),
-                actor_id=actor.id, campus_id=actor.campus_id, details=f"{exam.class_name}/{etype.code}")
-    db.commit()
+    try:
+        db.add(exam)
+        db.flush()
+        write_audit(
+            db,
+            action="EXAM_CREATED",
+            entity_type="exam",
+            entity_id=str(exam.id),
+            actor_id=actor.id,
+            campus_id=actor.campus_id,
+            details=f"{exam.class_name}/{etype.code}",
+        )
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        msg = str(getattr(exc, "orig", None) or exc)
+        if "schedule" in msg.lower() or "undefinedcolumn" in msg.lower().replace(" ", ""):
+            fail(
+                503,
+                "schema_outdated",
+                "Database is missing exams.schedule. Run alembic upgrade head (revision 0022) after backup.",
+            )
+        raise
     return _exam_out(db, exam)
 
 

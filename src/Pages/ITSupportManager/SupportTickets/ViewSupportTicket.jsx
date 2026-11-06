@@ -1,9 +1,19 @@
 import React, { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CircleCheck } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { getTicketById, updateTicket } from '../../../Common/demoDomain/itTickets'
 import { STATUS_OPTIONS, priorityBadgeColor, statusBadgeColor } from './supportTicketsData'
+
+const listPathFromLocation = (pathname = '') => {
+    if (pathname.includes('/tickets/view-ticket/')) {
+        return pathname.split('/view-ticket/')[0]
+    }
+    if (pathname.includes('/support-tickets/view-ticket/')) {
+        return pathname.split('/view-ticket/')[0]
+    }
+    return '/it-support-manager/support-tickets'
+}
 
 const Section = ({ title, children }) => (
     <div className='bg-white rounded-2xl shadow-md p-4'>
@@ -37,6 +47,8 @@ const formatHistoryAt = (value) => {
 
 const ViewSupportTicket = () => {
     const navigate = useNavigate()
+    const location = useLocation()
+    const listPath = listPathFromLocation(location.pathname)
     const { id } = useParams()
     const [ticket, setTicket] = useState(() => getTicketById(id))
     const [status, setStatus] = useState(ticket?.status ?? 'Open')
@@ -65,7 +77,7 @@ const ViewSupportTicket = () => {
     return (
         <section className='space-y-6'>
             <div className='flex flex-wrap items-center gap-3'>
-                <button type='button' onClick={() => navigate('/it-support-manager/support-tickets')} className='inline-flex items-center gap-2 text-sm text-[#515DEF] border border-[#515DEF] rounded-md px-4 py-2 hover:bg-[#515DEF] hover:text-white transition-colors cursor-pointer'>
+                <button type='button' onClick={() => navigate(listPath)} className='inline-flex items-center gap-2 text-sm text-[#515DEF] border border-[#515DEF] rounded-md px-4 py-2 hover:bg-[#515DEF] hover:text-white transition-colors cursor-pointer'>
                     <ArrowLeft size={18} />
                     Back to list
                 </button>

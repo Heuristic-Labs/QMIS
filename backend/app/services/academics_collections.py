@@ -38,9 +38,12 @@ COLLECTIONS: dict[str, str] = {
 }
 
 _FULL_WRITERS = {"principal", "admin", "superadmin", "managing_director", "director"}
+# Teacher Allocation is Principal-owned (client review). Admin may still edit class timetables.
+_ALLOCATION_WRITERS = {"principal", "superadmin", "managing_director"}
 _CHANGE_WRITERS = _FULL_WRITERS | {"teacher", "coordinator"}
 _EXTRA_WRITERS = _CHANGE_WRITERS
 # Coordinators create/edit class timetables; teachers use change-requests only.
+# Timetable *change approval* is Principal-only (see _normalize_timetable_approvals).
 _TIMETABLE_WRITERS = _FULL_WRITERS | {"coordinator"}
 _STAFF_DELIVERABLE_COLLECTIONS = {
     "extra-classes",
@@ -82,6 +85,8 @@ def _can_read(db: Session, actor: User) -> bool:
 
 def _can_write(db: Session, actor: User, collection: str) -> bool:
     code = _code(db, actor)
+    if collection == "teacher-allocations":
+        return code in _ALLOCATION_WRITERS
     if collection == "class-timetable-change-requests":
         return code in _CHANGE_WRITERS
     if collection == "class-timetables":
@@ -326,7 +331,8 @@ def _validate_teacher_allocation_subjects(db: Session, campus_id: UUID, items: l
                 )
 
 
-_TIMETABLE_APPROVERS = frozenset(_FULL_WRITERS)
+# Client review: timetable change / publish approval is Principal-owned (MD/Super Admin override).
+_TIMETABLE_APPROVERS = frozenset({"principal", "superadmin", "managing_director"})
 
 
 def _parse_clock_minutes(value: str) -> int | None:
@@ -413,7 +419,7 @@ def _allocation_covers_period(body: dict, class_name: str, section_name: str, su
 
 
 def _normalize_timetable_approvals(actor_code: str, items: list) -> None:
-    """TT-05: only Principal/Director/Admin family may set Approved/Denied; others stay Pending."""
+    """TT-05: only Principal (or MD/Super Admin) may set Approved/Denied; others stay Pending."""
     can_approve = actor_code in _TIMETABLE_APPROVERS
     for raw in items:
         if not isinstance(raw, dict):

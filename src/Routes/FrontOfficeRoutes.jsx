@@ -52,11 +52,12 @@ import ViewTcRequest from '../Pages/FrontOffice/TcRequest/ViewTcRequest'
 import { TaskManagementRoutes } from '../Common/TaskManagement/TaskManagementRoutes'
 import AnnouncementList from '../Pages/FrontOffice/Announcement/AnnouncementList'
 import ViewAnnouncement from '../Pages/FrontOffice/Announcement/ViewAnnouncement'
+import Dashboard from '../Pages/FrontOffice/Dashboard/Dashboard'
 
 const FrontOfficeRoutes = () => {
     return (
         <ReactRoutes>
-            <Route path="/front-office/dashboard" element={<div>Front Office Dashboard</div>} />
+            <Route path="/front-office/dashboard" element={<Dashboard />} />
             <Route path="/front-office/attendance" element={<Navigate to="/front-office/attendance/my-attendance" replace />} />
             <Route path="/front-office/attendance/my-attendance" element={<MyAttendance />} />
             <Route path="/front-office/admission-enquiry" element={<AdmissionEnquiry />} />

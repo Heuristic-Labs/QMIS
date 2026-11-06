@@ -35,11 +35,24 @@ import AnnouncementList from '../Pages/TransportManager/Announcement/Announcemen
 import ViewAnnouncement from '../Pages/TransportManager/Announcement/ViewAnnouncement'
 import TcNocList from '../Pages/TransportManager/TcNoc/TcNocList'
 import ViewTcNoc from '../Pages/TransportManager/TcNoc/ViewTcNoc'
+import DepartmentTicketsPage from '../Common/Tickets/DepartmentTicketsPage'
+import ViewSupportTicket from '../Pages/ITSupportManager/SupportTickets/ViewSupportTicket'
 
 const TransportManagerRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/transport-manager/dashboard" element={<Dashboard />} />
+            <Route
+                path="/transport-manager/tickets"
+                element={(
+                    <DepartmentTicketsPage
+                        defaultDepartment="Transport"
+                        listBasePath="/transport-manager/tickets"
+                        title="Transport Tickets"
+                    />
+                )}
+            />
+            <Route path="/transport-manager/tickets/view-ticket/:id" element={<ViewSupportTicket />} />
             <Route path="/transport-manager/driver-management" element={<DriverManagement />} />
             <Route path="/transport-manager/driver-management/view/:id" element={<ViewDriver />} />
             <Route path="/transport-manager/vehicle-management" element={<VehicleManagement />} />

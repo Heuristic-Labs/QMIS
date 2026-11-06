@@ -318,7 +318,7 @@ const ClassAttendance = ({ canOverrideBiometric = false }) => {
                         </select>
                         {api && classOptions && classOptions.length === 0 && (
                             <p className='text-xs text-[#B42318]'>
-                                {optionsError || 'No classes are assigned to you for attendance.'}
+                                {optionsError || 'No classes are assigned to you for Manual Attendance. Ask Principal to complete Teacher Allocation (or a live Substitute Duty) for the current academic year.'}
                             </p>
                         )}
                     </div>
