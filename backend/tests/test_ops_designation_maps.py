@@ -20,9 +20,11 @@ def test_transport_manager_and_driver_map():
 
 def test_unrelated_designations_unchanged():
     assert map_role_from_designation("Public Relations Officer") == "pro"
+    assert map_role_from_designation("Assistant PRO") == "pro"
     assert map_role_from_designation("Parent Relationship Manager") == "prm"
     assert map_role_from_designation("System Administrator") == "itsupportmanager"
     assert map_role_from_designation("File Room Officer") == "fileroom"
+    assert map_role_from_designation("Control Room - Officer") == "cctv"
     assert map_role_from_designation("EA to MD") == ""
 
 

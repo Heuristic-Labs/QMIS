@@ -22,6 +22,7 @@ from app.core.security import hash_password, verify_password
 from app.models import Campus, HrEmployee, Role, User
 from app.services.audit import write_audit
 from app.services.hr import _role_code
+from app.services.staff_designation_map import map_role_from_designation
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _OBJECT_RE = re.compile(r"\{[^{}]+\}")
@@ -160,8 +161,12 @@ def provision_missing_staff_logins(
         if email:
             seen_emails[email] = item.employee_code
 
-        role_code = _role_code(item.role) if item.role else None
-        if not item.role or role_code is None:
+        # Prefer explicit roster role; otherwise map from designation (partner procedure).
+        role_code = _role_code(item.role) if (item.role or "").strip() else None
+        if role_code is None and (item.designation or "").strip():
+            mapped = map_role_from_designation(item.designation)
+            role_code = mapped or None
+        if role_code is None:
             report.directory_only_skipped += 1
             if item.email and not is_valid_login_email(item.email):
                 report.review.append(

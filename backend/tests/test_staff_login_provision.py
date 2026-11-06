@@ -97,10 +97,21 @@ def test_roster_loader_counts_and_eligibility():
     assert len(roster) == 120
     with_role = [row for row in roster if row.role]
     without_role = [row for row in roster if not row.role]
-    assert len(with_role) == 100
-    assert len(without_role) == 20
+    assert len(with_role) == 106
+    assert len(without_role) == 14
     assert all(row.employee_code.startswith("EMP-QMIS-") for row in roster)
     assert all(is_valid_login_email(row.email) for row in with_role)
+    # Target ops portals carry explicit role codes in hrSeed.
+    by_code = {row.employee_code: row for row in roster}
+    assert by_code["EMP-QMIS-082"].role == "pro"
+    assert by_code["EMP-QMIS-088"].role == "transportmanager"
+    assert by_code["EMP-QMIS-092"].role == "cctv"
+    assert by_code["EMP-QMIS-099"].role == "cctv"
+    assert by_code["EMP-QMIS-105"].role == "fileroom"
+    assert by_code["EMP-QMIS-107"].role == "housekeepingmanager"
+    assert by_code["EMP-QMIS-110"].role == "pro"
+    assert by_code["EMP-QMIS-117"].role == "fileroom"
+    assert by_code["EMP-QMIS-117"].email == "emp-qmis-117@queenmira.com"
 
 
 def test_provision_creates_missing_only_and_is_idempotent(db_session, monkeypatch):
@@ -126,35 +137,40 @@ def test_provision_creates_missing_only_and_is_idempotent(db_session, monkeypatc
     first = provision_missing_staff_logins(
         db_session, campus=campus, roster=_mini_roster(), dry_run=False, commit=True
     )
-    assert first.new_accounts_created == 1
-    assert first.directory_only_skipped == 1
+    # Teacher (explicit role) + File Room Officer (designation→fileroom fallback).
+    assert first.new_accounts_created == 2
+    assert first.directory_only_skipped == 0
     assert first.invalid_identity_skipped == 1
     assert first.existing_accounts_preserved == 0
-    assert len(first.created) == 1
-    assert first.created[0].must_change_password is True
-    assert first.created[0].role == "teacher"
+    assert len(first.created) == 2
+    roles_created = {cred.role for cred in first.created}
+    assert roles_created == {"teacher", "fileroom"}
+    assert all(cred.must_change_password is True for cred in first.created)
     assert notify_calls == []
 
-    temp = first.created[0].temporary_password
+    teacher_cred = next(c for c in first.created if c.role == "teacher")
+    temp = teacher_cred.temporary_password
     user = db_session.scalar(select(User).where(User.email == "uat.teacher.one@queenmira.com"))
     assert user is not None
     assert user.must_change_password is True
     assert temp not in (user.password_hash or "")
     assert verify_password(temp, user.password_hash)
+    fileroom_user = db_session.scalar(select(User).where(User.email == "uat.directory@queenmira.com"))
+    assert fileroom_user is not None
+    assert fileroom_user.must_change_password is True
 
     emp = db_session.scalar(select(HrEmployee).where(HrEmployee.employee_code == "EMP-QMIS-901"))
     assert emp is not None
     assert emp.user_id == user.id
 
-    # Directory-only: employee may be absent (we skip before insert) — no User.
-    assert db_session.scalar(select(User).where(User.email == "uat.directory@queenmira.com")) is None
+    # Invalid email still skipped; designation-mapped File Room login is created.
     assert db_session.scalar(select(User).where(User.email == "not-an-email")) is None
 
     second = provision_missing_staff_logins(
         db_session, campus=campus, roster=_mini_roster(), dry_run=False, commit=True
     )
     assert second.new_accounts_created == 0
-    assert second.existing_accounts_preserved == 1
+    assert second.existing_accounts_preserved == 2
 
     director_after = db_session.scalar(select(User).where(User.email == settings.director_seed_email.lower()))
     assert director_after.password_hash == director_hash_before
@@ -243,9 +259,9 @@ def test_full_roster_provision_on_isolated_db_and_demo_logins(db_session, tmp_pa
         db_session, campus=campus, roster=roster, dry_run=False, commit=True
     )
     assert report.inspected == 120
-    assert report.directory_only_skipped == 20
+    assert report.directory_only_skipped == 11
     assert report.invalid_identity_skipped == 0
-    assert report.new_accounts_created == 100
+    assert report.new_accounts_created == 109
     assert report.existing_accounts_preserved == 0
     assert len(report.ambiguous) == 0
     assert notify_calls == []
@@ -275,8 +291,14 @@ def test_full_roster_provision_on_isolated_db_and_demo_logins(db_session, tmp_pa
         db_session.scalar(select(User).where(User.email == settings.director_seed_email.lower())).password_hash,
     )
 
+    from app.services.hr import _role_code
+    from app.services.staff_designation_map import map_role_from_designation
+
     for row in roster:
-        if not row.role:
+        role_code = _role_code(row.role) if (row.role or "").strip() else None
+        if role_code is None and (row.designation or "").strip():
+            role_code = map_role_from_designation(row.designation) or None
+        if role_code is None:
             assert db_session.scalar(select(User).where(User.email == row.email.lower())) is None
 
     teacher_cred = next(row for row in report.created if row.role == "teacher")
@@ -288,7 +310,7 @@ def test_full_roster_provision_on_isolated_db_and_demo_logins(db_session, tmp_pa
         db_session, campus=campus, roster=roster, dry_run=False, commit=True
     )
     assert again.new_accounts_created == 0
-    assert again.existing_accounts_preserved == 100
+    assert again.existing_accounts_preserved == 109
 
     handoff = tmp_path / "handoff.json"
     write_credential_handoff(handoff, report.created, note="test")
