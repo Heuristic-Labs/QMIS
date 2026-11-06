@@ -1,0 +1,88 @@
+name: Live account audit (read-only)
+
+# SELECT-only eight-account audit. Never remaps roles or resets passwords.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type AUDIT_READONLY to run'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  AWS_ROLE_ARN: arn:aws:iam::626357443497:role/qmis-github-deploy
+  ECS_CLUSTER: qmis-erp
+  ECS_SERVICE: qmis-backend
+
+jobs:
+  audit:
+    if: ${{ inputs.confirm == 'AUDIT_READONLY' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Run read-only ECS audit task
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, json
+          from pathlib import Path
+          src = Path("backend/scripts/_live_eight_account_audit_readonly.py").read_bytes()
+          encoded = base64.b64encode(src).decode()
+          cmd = "import base64; exec(base64.b64decode('" + encoded + "').decode())"
+          Path("/tmp/overrides.json").write_text(
+              json.dumps({"containerOverrides": [{"name": "backend", "command": ["python", "-c", cmd]}]}),
+              encoding="utf-8",
+          )
+          print("override_bytes", len(encoded))
+          PY
+          SVC=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
+            --query 'services[0]' --output json)
+          TASK_DEF=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["taskDefinition"])' <<<"$SVC")
+          AWSVPC=$(python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["networkConfiguration"]["awsvpcConfiguration"]))' <<<"$SVC")
+          echo "Using taskDefinition=$TASK_DEF"
+          RUN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration=$AWSVPC" \
+            --overrides "file:///tmp/overrides.json" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Started $RUN"
+          test -n "$RUN" && test "$RUN" != "None"
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$RUN"
+          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$RUN" --output json > /tmp/task.json
+          python3 - <<'PY'
+          import json, sys
+          t = json.load(open("/tmp/task.json"))["tasks"][0]
+          c = t["containers"][0]
+          print("exitCode=", c.get("exitCode"))
+          print("reason=", c.get("reason"))
+          print("stoppedReason=", t.get("stoppedReason"))
+          sys.exit(0 if c.get("exitCode") == 0 else 1)
+          PY
+      - name: Fetch CloudWatch logs
+        if: always()
+        run: |
+          set -euo pipefail
+          GROUP=$(aws ecs describe-task-definition --task-definition qmis-backend \
+            --query 'taskDefinition.containerDefinitions[0].logConfiguration.options."awslogs-group"' \
+            --output text)
+          echo "logGroup=$GROUP"
+          if [ -z "$GROUP" ] || [ "$GROUP" = "None" ]; then exit 0; fi
+          STREAMS=$(aws logs describe-log-streams --log-group-name "$GROUP" \
+            --order-by LastEventTime --descending --max-items 10 \
+            --query 'logStreams[*].logStreamName' --output text)
+          for s in $STREAMS; do
+            echo "===== stream $s ====="
+            aws logs get-log-events --log-group-name "$GROUP" --log-stream-name "$s" \
+              --limit 120 --query 'events[*].message' --output text || true
+          done
