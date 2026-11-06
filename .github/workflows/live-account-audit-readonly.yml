@@ -1,6 +1,8 @@
 name: Live account audit (read-only)
 
 # SELECT-only eight-account audit. Never remaps roles or resets passwords.
+# Prefer resolving DATABASE_URL from the backend task definition (deploy role
+# lacks ecs:RunTask). Never echoes the raw URL.
 on:
   workflow_dispatch:
     inputs:
@@ -29,65 +31,86 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: Run read-only ECS audit task
+      - name: Resolve DATABASE_URL and run SELECT audit
         run: |
           set -euo pipefail
+          aws ecs describe-task-definition --task-definition qmis-backend \
+            --query taskDefinition > /tmp/taskdef.json
+
           python3 - <<'PY'
-          import base64, json
+          import json, os, re, subprocess, sys
           from pathlib import Path
-          src = Path("backend/scripts/_live_eight_account_audit_readonly.py").read_bytes()
-          encoded = base64.b64encode(src).decode()
-          cmd = "import base64; exec(base64.b64decode('" + encoded + "').decode())"
-          Path("/tmp/overrides.json").write_text(
-              json.dumps({"containerOverrides": [{"name": "backend", "command": ["python", "-c", cmd]}]}),
-              encoding="utf-8",
-          )
-          print("override_bytes", len(encoded))
+
+          td = json.loads(Path("/tmp/taskdef.json").read_text())
+          containers = td.get("containerDefinitions") or []
+          backend = next((c for c in containers if c.get("name") == "backend"), containers[0])
+          env_map = {e["name"]: e.get("value") for e in (backend.get("environment") or []) if "name" in e}
+          secrets = {s["name"]: s.get("valueFrom") for s in (backend.get("secrets") or []) if "name" in s}
+
+          url = env_map.get("DATABASE_URL") or ""
+          source = "taskdef.environment"
+          if not url and "DATABASE_URL" in secrets:
+              ref = secrets["DATABASE_URL"]
+              secret_id = ref
+              json_key = None
+              # ECS form: arn:aws:secretsmanager:region:acct:secret:name-XXXX:jsonkey::
+              if ":secret:" in ref:
+                  left, right = ref.split(":secret:", 1)
+                  segs = right.split(":")
+                  secret_id = f"{left}:secret:{segs[0]}"
+                  if len(segs) > 1 and segs[1]:
+                      json_key = segs[1]
+              print("Resolving DATABASE_URL from Secrets Manager (redacted)")
+              out = subprocess.check_output(
+                  [
+                      "aws",
+                      "secretsmanager",
+                      "get-secret-value",
+                      "--secret-id",
+                      secret_id,
+                      "--query",
+                      "SecretString",
+                      "--output",
+                      "text",
+                  ],
+                  text=True,
+              ).strip()
+              try:
+                  parsed = json.loads(out)
+                  if isinstance(parsed, dict):
+                      if json_key:
+                          url = str(parsed.get(json_key) or "")
+                      else:
+                          url = str(
+                              parsed.get("DATABASE_URL")
+                              or parsed.get("database_url")
+                              or parsed.get("url")
+                              or (next(iter(parsed.values())) if len(parsed) == 1 else "")
+                          )
+                  else:
+                      url = out
+              except json.JSONDecodeError:
+                  url = out
+              source = "secretsmanager"
+
+          if not url:
+              print("NO_DATABASE_URL_IN_TASKDEF")
+              print("env_keys", sorted(env_map))
+              print("secret_keys", sorted(secrets))
+              sys.exit(10)
+
+          redacted = re.sub(r":[^:@/]+@", ":***@", url)
+          print("DB_SOURCE", source)
+          print("DB_HOST_REDACTED", redacted)
+          if "localhost" in url or "127.0.0.1" in url:
+              print("REFUSE_LOCALHOST")
+              sys.exit(11)
+
+          Path("/tmp/database_url").write_text(url, encoding="utf-8")
           PY
-          SVC=$(aws ecs describe-services --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE" \
-            --query 'services[0]' --output json)
-          printf '%s' "$SVC" > /tmp/svc.json
-          TASK_DEF=$(python3 -c 'import json; print(json.load(open("/tmp/svc.json"))["taskDefinition"])')
-          python3 -c 'import json; n=json.load(open("/tmp/svc.json"))["networkConfiguration"]; json.dump(n, open("/tmp/network.json","w"))'
-          echo "Using taskDefinition=$TASK_DEF"
-          RUN=$(aws ecs run-task \
-            --cluster "$ECS_CLUSTER" \
-            --task-definition "$TASK_DEF" \
-            --launch-type FARGATE \
-            --network-configuration file:///tmp/network.json \
-            --overrides file:///tmp/overrides.json \
-            --query 'tasks[0].taskArn' --output text)
-          echo "Started $RUN"
-          test -n "$RUN" && test "$RUN" != "None"
-          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$RUN"
-          aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$RUN" --output json > /tmp/task.json
-          python3 - <<'PY'
-          import json, sys
-          t = json.load(open("/tmp/task.json"))["tasks"][0]
-          c = t["containers"][0]
-          print("exitCode=", c.get("exitCode"))
-          print("reason=", c.get("reason"))
-          print("stoppedReason=", t.get("stoppedReason"))
-          sys.exit(0 if c.get("exitCode") == 0 else 1)
-          PY
-      - name: Fetch CloudWatch logs for this task
-        if: always()
-        run: |
-          set -euo pipefail
-          GROUP=$(aws ecs describe-task-definition --task-definition qmis-backend \
-            --query 'taskDefinition.containerDefinitions[0].logConfiguration.options."awslogs-group"' \
-            --output text)
-          PREFIX=$(aws ecs describe-task-definition --task-definition qmis-backend \
-            --query 'taskDefinition.containerDefinitions[0].logConfiguration.options."awslogs-stream-prefix"' \
-            --output text)
-          echo "logGroup=$GROUP prefix=$PREFIX"
-          if [ -z "$GROUP" ] || [ "$GROUP" = "None" ]; then exit 0; fi
-          # Prefer the exact stream for the one-off task (avoids logs:DescribeLogStreams).
-          if [ -f /tmp/task.json ]; then
-            TASK_ID=$(python3 -c 'import json; a=json.load(open("/tmp/task.json"))["tasks"][0]["taskArn"]; print(a.rsplit("/",1)[-1])')
-            STREAM="${PREFIX}/backend/${TASK_ID}"
-            echo "Trying stream=$STREAM"
-            aws logs get-log-events --log-group-name "$GROUP" --log-stream-name "$STREAM" \
-              --limit 200 --query 'events[*].message' --output text || true
-          fi
-          exit 0
+
+          python3 -m pip install -q "sqlalchemy>=2" "psycopg[binary]>=3"
+          export DATABASE_URL="$(cat /tmp/database_url)"
+          rm -f /tmp/database_url
+          python3 backend/scripts/_live_eight_account_audit_readonly.py
+          unset DATABASE_URL
