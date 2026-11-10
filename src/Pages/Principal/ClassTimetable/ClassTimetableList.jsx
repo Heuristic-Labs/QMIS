@@ -3,10 +3,13 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { ChevronLeft, ChevronRight, Download, Eye, Plus, EllipsisIcon } from 'lucide-react'
 import { classKeysMatch, normalizeClassKey, normalizeSectionKey } from '../../../Common/Teacher/teacherAssignedClasses'
+import { useTeacherAssignments } from '../../../Common/Teacher/useTeacherAssignments'
 import DeleteRequestModal from '../../../Common/CommonComponents/DeleteRequestModal'
+import { canShowDeleteOption } from '../../../Common/CommonComponents/approvalGates'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ClassTimeTableModal from './Components/ClassTimeTableModal'
+import { useAuth } from '../../../context/AuthContext'
 import {
     CLASS_TIMETABLES_UPDATED_EVENT,
     approvalStatusColor,
@@ -46,6 +49,9 @@ const uniqueByClassKey = (labels) => {
 const ClassTimetableList = () => {
     const location = useLocation()
     const navigate = useNavigate()
+    const { role, name: sessionName } = useAuth() || {}
+    const showDelete = canShowDeleteOption(role)
+    const teacherScope = useTeacherAssignments()
     const { createPath, editPath, canApprove, canEdit, reviewer } = getTimetableRoutes(location.pathname)
     const isCoordinator = location.pathname.startsWith('/coordinator')
     const isTeacher = location.pathname.startsWith('/teacher')
@@ -147,9 +153,31 @@ const ClassTimetableList = () => {
         toast.success(approved ? 'Class timetable approved.' : 'Class timetable denied.')
     }
 
+    const scopedRecords = useMemo(() => {
+        if (!isTeacher && !isCoordinator) return records
+        const myName = String(teacherScope.profile?.name || sessionName || '').trim().toLowerCase()
+        const allowedClassSections = new Set(
+            (teacherScope.classSections || []).map((item) =>
+                `${normalizeClassKey(item.className || item.class)}::${normalizeSectionKey(item.section)}`,
+            ),
+        )
+        const allowedClasses = new Set((teacherScope.classes || []).map((item) => normalizeClassKey(item)))
+        return records.filter((record) => {
+            const owner = String(record.ownerTeacherName || '').trim().toLowerCase()
+            if (myName && owner && owner === myName) return true
+            return periodsOf(record).some((row) => {
+                const classKey = normalizeClassKey(row.className || record.className)
+                const sectionKey = normalizeSectionKey(row.section || record.section)
+                if (allowedClassSections.size && allowedClassSections.has(`${classKey}::${sectionKey}`)) return true
+                if (!allowedClassSections.size && allowedClasses.has(classKey)) return true
+                return false
+            })
+        })
+    }, [records, isTeacher, isCoordinator, teacherScope.classSections, teacherScope.classes, teacherScope.profile?.name, sessionName])
+
     const filteredRecords = useMemo(() => {
         const query = search.trim().toLowerCase()
-        return records.filter((record) => {
+        return scopedRecords.filter((record) => {
             if (academicYearFilter && record.academicYear !== academicYearFilter) return false
             if (statusFilter && record.approvalStatus !== statusFilter) return false
             if (teacherFilter && String(record.ownerTeacherName || '').trim() !== teacherFilter) return false
@@ -164,7 +192,7 @@ const ClassTimetableList = () => {
             const haystack = `${record.id} ${getClassSectionLabel(record)} ${record.academicYear} ${record.term} ${record.ownerTeacherName || ''} ${record.createdByRole || ''}`.toLowerCase()
             return haystack.includes(query)
         })
-    }, [records, search, academicYearFilter, statusFilter, teacherFilter, classFilter, sectionFilter])
+    }, [scopedRecords, search, academicYearFilter, statusFilter, teacherFilter, classFilter, sectionFilter])
 
     const classWiseRows = useMemo(() => {
         const rows = []
@@ -571,7 +599,7 @@ const ClassTimetableList = () => {
                                                             Edit
                                                         </button>
                                                     ) : null}
-                                                    {!isCoordinator && !isTeacher ? (
+                                                    {showDelete && !isCoordinator && !isTeacher ? (
                                                         <button
                                                             type='button'
                                                             onClick={() => setDeleteRequestModal(true)}

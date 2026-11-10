@@ -600,12 +600,16 @@ const MatrixDocuments = ({ context, meta, onChange, resourceId }) => {
             <p className='text-xs text-[#667085]'>
                 Attach evidence for {context.month} {context.year} · {context.grade}-{context.section}. Files are stored securely and only staff with Star of the Month access can download them.
             </p>
-            <input
-                type='file'
-                accept='.pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,image/*,application/pdf'
-                disabled={uploading}
-                onChange={onUpload}
-            />
+            <label className={`inline-flex items-center gap-2 rounded-md bg-[#515DEF] px-4 py-2 text-sm font-medium text-white cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+                Browse
+                <input
+                    type='file'
+                    accept='.pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,image/png,image/*,application/pdf'
+                    disabled={uploading}
+                    onChange={onUpload}
+                    className='sr-only'
+                />
+            </label>
             {uploading ? <p className='text-xs text-[#667085]'>Uploading…</p> : null}
             {!documents.length ? (
                 <p className='text-xs text-[#667085]'>No documents attached yet.</p>

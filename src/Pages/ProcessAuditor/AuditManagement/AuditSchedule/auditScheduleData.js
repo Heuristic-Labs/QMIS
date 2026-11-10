@@ -185,10 +185,53 @@ export const saveAuditSchedules = (records) => {
     saveCampusJson(STORAGE_KEY, records)
 }
 
+export const addAuditSchedule = (payload) => {
+    const current = getAuditSchedules()
+    const scheduleId = `SCH-PA-${Date.now()}`
+    const record = buildSchedule({
+        scheduleId,
+        auditId: payload.auditId || `AUD-PA-${Date.now()}`,
+        auditName: payload.auditName,
+        department: payload.department || 'Academic',
+        frequency: payload.recurrenceType === 'Weekly' ? 'WEEKLY' : payload.recurrenceType === 'Monthly' ? 'MONTHLY' : 'Ad-hoc',
+        assignedDate: payload.startDate,
+        dueDate: payload.startDate,
+        assignedBy: payload.assignedBy || 'Process Audit Manager',
+        status: 'Scheduled',
+    })
+    const next = [
+        ...current,
+        {
+            ...record,
+            isRecurring: payload.isRecurring,
+            recurrenceType: payload.isRecurring ? payload.recurrenceType : '',
+            dayOfWeek: payload.dayOfWeek,
+            dayOfMonth: payload.dayOfMonth,
+            startDate: payload.startDate,
+            endDate: payload.endDate || '',
+        },
+    ]
+    saveAuditSchedules(next)
+    return next
+}
+
+const coerceScheduleRecords = (stored) => {
+    if (stored == null) return null
+    if (typeof stored === 'string') {
+        try {
+            const parsed = JSON.parse(stored)
+            return Array.isArray(parsed) ? parsed : null
+        } catch {
+            return null
+        }
+    }
+    return Array.isArray(stored) ? stored : null
+}
+
 export const getAuditSchedules = () => {
     try {
-        const stored = loadCampusJson(STORAGE_KEY, null)
-        if (stored) return migrateSchedules(JSON.parse(stored))
+        const stored = coerceScheduleRecords(loadCampusJson(STORAGE_KEY, null))
+        if (stored?.length) return migrateSchedules(stored)
     } catch {
         /* ignore */
     }

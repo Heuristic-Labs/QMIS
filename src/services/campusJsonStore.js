@@ -176,29 +176,29 @@ export const persistCampusJsonItem = async (storageKey, record) => {
 
     if (usesCampusApiForKey(storageKey)) {
         const meta = resolveCampusCollection(storageKey)
-        if (!meta || meta.kind !== 'ops' || !canUse('ops')) {
-            return { success: false, message: 'Ops API is not available for this collection.' }
+        if (!meta || !canUse(meta.kind)) {
+            return { success: false, message: 'API is not available for this collection.' }
         }
-        if (!OPS_ITEM_UPSERT_COLLECTIONS.has(meta.collection)) {
-            // Fall back to merging into the hydrated list then whole-list replace.
-            const current = getCampusMemory(storageKey) || []
-            const next = [row, ...current.filter((item) => recordIdForUpsert(item) !== id)]
-            return persistCampusJson(storageKey, next)
-        }
-        try {
-            const saved = stripOpsMeta(await upsertOpsItemApi(meta.collection, id, stripOpsMeta(row)))
-            const current = getCampusMemory(storageKey) || []
-            const next = [saved, ...current.filter((item) => recordIdForUpsert(item) !== id)]
-            memoryByKey.set(storageKey, next)
+        // Ops item-upsert path (concurrent-safe). Audit and other collections merge + replace.
+        if (meta.kind === 'ops' && OPS_ITEM_UPSERT_COLLECTIONS.has(meta.collection)) {
             try {
-                localStorage.removeItem(storageKey)
-            } catch {
-                /* ignore */
+                const saved = stripOpsMeta(await upsertOpsItemApi(meta.collection, id, stripOpsMeta(row)))
+                const current = getCampusMemory(storageKey) || []
+                const next = [saved, ...current.filter((item) => recordIdForUpsert(item) !== id)]
+                memoryByKey.set(storageKey, next)
+                try {
+                    localStorage.removeItem(storageKey)
+                } catch {
+                    /* ignore */
+                }
+                return { success: true, api: true, record: saved }
+            } catch (err) {
+                return { success: false, api: true, message: err?.message || 'API save failed', record: row }
             }
-            return { success: true, api: true, record: saved }
-        } catch (err) {
-            return { success: false, api: true, message: err?.message || 'API save failed', record: row }
         }
+        const current = getCampusMemory(storageKey) || []
+        const next = [row, ...current.filter((item) => recordIdForUpsert(item) !== id)]
+        return persistCampusJson(storageKey, next)
     }
 
     const current = loadCampusJson(storageKey, [])

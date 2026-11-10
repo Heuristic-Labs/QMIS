@@ -145,8 +145,12 @@ export const superAdminSidebarLinks = [
     {
         id: 10,
         title: "Task Management",
-        to: "/super-admin/task-management/assign-tasks",
+        to: "#0",
         icon: ClipboardList,
+        subLinks: [
+            { icon: UserPlus, title: "Assign Tasks", to: "/super-admin/task-management/assign-tasks" },
+            { icon: ListChecks, title: "My Tasks", to: "/super-admin/task-management/my-tasks" },
+        ],
     },
     {
         id: 11,
@@ -1294,7 +1298,7 @@ export const teacherSidebarLinks = [
             { icon: UsersRound, title: "Parents List", to: "/teacher/user-management/parents-list" },
             { icon: FileText, title: "CA / RCT", to: "/teacher/unit-tests" },
             { icon: CalendarCheck, title: "Exam", to: "/teacher/student-evaluation/exam" },
-            { icon: CalendarDays, title: "Create Exam Schedule", to: "/teacher/examination/create-schedule" },
+            { icon: CalendarDays, title: "Exam Schedule", to: "/teacher/student-evaluation/exam" },
             { icon: CircleHelp, title: "Question Bank", to: "/teacher/student-deliverables/sample-questions" },
             { icon: ClipboardPen, title: "Mark Entry", to: "/teacher/student-evaluation/mark-entry" },
             { icon: BarChart3, title: "Result Summary", to: "/teacher/student-evaluation/result-summary" },
@@ -1826,14 +1830,12 @@ export const processAuditorSidebarLinks = [
             { icon: FileText, title: "Audit Reports", to: "/process-auditor/reports/audit-reports" },
             { icon: ShieldAlert, title: "Observation Reports", to: "/process-auditor/reports/observation-reports" },
             { icon: BarChart3, title: "Compliance Reports", to: "/process-auditor/reports/compliance-reports" },
-            { icon: AlertTriangle, title: "Pending Actions", to: "/process-auditor/reports/pending-actions" },
-            { icon: ShieldCheck, title: "Closed Actions", to: "/process-auditor/reports/closed-actions" },
         ],
     },
     {
         id: 6,
         title: "Communication",
-        to: "/process-auditor/communication",
+        to: "/process-auditor/communication/inbox",
         icon: MessageCircle,
     },
     {
@@ -1898,14 +1900,12 @@ export const qualityAuditorSidebarLinks = [
             { icon: FileText, title: "Audit Reports", to: "/quality-auditor/reports/audit-reports" },
             { icon: ShieldAlert, title: "Observation Reports", to: "/quality-auditor/reports/observation-reports" },
             { icon: BarChart3, title: "Compliance Reports", to: "/quality-auditor/reports/compliance-reports" },
-            { icon: AlertTriangle, title: "Pending Actions", to: "/quality-auditor/reports/pending-actions" },
-            { icon: ShieldCheck, title: "Closed Actions", to: "/quality-auditor/reports/closed-actions" },
         ],
     },
     {
         id: 6,
         title: "Communication",
-        to: "/quality-auditor/communication",
+        to: "/quality-auditor/communication/inbox",
         icon: MessageCircle,
     },
     {

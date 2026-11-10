@@ -13,24 +13,24 @@ const ExportModal = ({
     title,
     exportDescription = (
         <>
-            You are exporting 05 records{' '}
-            <span className='text-[#515DEF]'>( Filtered: Due in 7 Days )</span>
+            Export the currently filtered records for any selected date range.
         </>
     ),
 }) => {
-    const [format, setFormat] = useState('csv')
+    const [format, setFormat] = useState('excel')
     const [exporting, setExporting] = useState(false)
 
     const handleExport = () => {
         if (exporting) return
         setExporting(true)
         try {
+            const exportFormat = format === 'csv' ? 'excel' : format
             if (typeof onExport === 'function') {
-                onExport(format)
+                onExport(exportFormat)
                 setExportModal(false)
                 return
             }
-            const result = runTableExport(format, {
+            const result = runTableExport(exportFormat, {
                 filename,
                 rows: Array.isArray(rows) ? rows : [],
                 columns,
@@ -41,9 +41,9 @@ const ExportModal = ({
                 return
             }
             toast.success(
-                format === 'pdf'
+                exportFormat === 'pdf'
                     ? 'PDF preview opened. Use Print to save the file.'
-                    : `Exported ${Array.isArray(rows) ? rows.length : 0} record(s) as ${format === 'excel' ? 'Excel' : 'CSV'}.`,
+                    : `Exported ${Array.isArray(rows) ? rows.length : 0} record(s) as Excel.`,
             )
             setExportModal(false)
         } finally {
@@ -72,11 +72,7 @@ const ExportModal = ({
 
                             <div className='flex flex-col gap-x-2'>
                                 <label htmlFor="" className='text-base font-medium text-[#1E1E1E] my-4'>Choose Format</label>
-                                <div className='flex justify-between w-full items-center gap-x-2'>
-                                    <div className='flex items-center gap-x-2'>
-                                        <input type="radio" name="format" id="csv" checked={format === 'csv'} onChange={() => setFormat('csv')} className='w-4 h-4 cursor-pointer border-[#515DEF] text-[#515DEF]' />
-                                        <label htmlFor="csv">CSV</label>
-                                    </div>
+                                <div className='flex w-full items-center gap-x-6'>
                                     <div className='flex items-center gap-x-2'>
                                         <input type="radio" name="format" id="excel" checked={format === 'excel'} onChange={() => setFormat('excel')} className='w-4 h-4 cursor-pointer border-[#515DEF] text-[#515DEF]' />
                                         <label htmlFor="excel">Excel (XLSX)</label>

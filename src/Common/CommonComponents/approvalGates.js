@@ -37,3 +37,6 @@ export const canEditWithoutApproval = (role) => DIRECT_MUTATION_ROLES.has(normal
 export const canDeleteWithoutApproval = (role) => canEditWithoutApproval(role)
 
 export const requiresEditApproval = (role) => !canEditWithoutApproval(role)
+
+/** Hide Delete entirely for roles that are not authorized to delete records. */
+export const canShowDeleteOption = (role) => canEditWithoutApproval(role)

@@ -1,42 +1,17 @@
 # Testing report
 
-Latest regression for central Admin / Super Admin provisioning (10 November 2026).
+Latest regression for Audit / communication / nav bug-fix pass (10 November 2026).
 
 ## Focused suites
 
 ```bash
 cd backend
-python -m pytest tests/test_central_admin_accounts.py -q
+python -m pytest tests/test_ops_and_audit_collections.py -q
 ```
 
-**Result:** 8 passed, 1 warning (~18s).
+**Result:** 10 passed, 1 warning (~17s).
 
-```bash
-python -m pytest tests/test_central_admin_accounts.py tests/test_admin_users.py -q
-```
+## Notes
 
-**Result (after email-domain fix):** central suite green; admin users suite previously co-run with 43 passed overall once central failures fixed (re-confirm central alone: 8 passed).
-
-## Dry-run (isolated)
-
-```bash
-python scripts/provision_central_admins.py --dry-run
-```
-
-**Result:** would create `adminerp@gmail.com` (`admin`) and `superadminerp@gmail.com` (`superadmin`); no users committed; no passwords issued.
-
-## Frontend
-
-```bash
-npm run build
-```
-
-**Result:** PASS.
-
-## Coverage notes
-
-- Create-missing-only; idempotent; no plaintext password storage.
-- Login returns correct roles + `must_change_password`.
-- Admin creatable roles exclude fileroom/cctv/admin/superadmin; Super Admin may create admin/fileroom/cctv but not another superadmin.
-- Teacher denied Admin Users API.
-- Production DB not used by tests.
+- Frontend changes are demo-domain / React module fixes (schedule persistence, campus JSON item save for audit collections, communication routes, export formats). No new backend tests added in this pass.
+- Full `tests/` suite was started but not completed in-session (long runtime); focused audit/ops collection suite is green.

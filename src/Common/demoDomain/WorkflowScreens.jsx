@@ -112,14 +112,17 @@ export function AuditComponentsPage() {
     return (
         <RegisterPage
             title='Audit Components & Rubrics'
-            description='Demo master based on the named quality-audit components. The workbook file was not in this project, so this is not a full official import.'
+            description='Master list of audit components. Each component stores Rubric-1 through Rubric-4.'
             storageKey={AUDIT_COMPONENTS_KEY}
             seed={COMPONENT_SEED}
             columns={[
                 { key: 'component', label: 'Component' },
                 { key: 'subComponent', label: 'Sub Component' },
                 { key: 'grades', label: 'Grades' },
-                { key: 'rubrics', label: 'Rubrics' },
+                { key: 'rubric1', label: 'Rubric-1' },
+                { key: 'rubric2', label: 'Rubric-2' },
+                { key: 'rubric3', label: 'Rubric-3' },
+                { key: 'rubric4', label: 'Rubric-4' },
                 { key: 'frequency', label: 'Frequency' },
                 { key: 'ratingScale', label: 'Scale' },
                 { key: 'stream', label: 'Stream' },
@@ -129,7 +132,10 @@ export function AuditComponentsPage() {
                 { key: 'component', label: 'Component', required: true },
                 { key: 'subComponent', label: 'Sub Component', required: true },
                 { key: 'grades', label: 'Applicable Grades' },
-                { key: 'rubrics', label: 'Rubrics' },
+                { key: 'rubric1', label: 'Rubric-1', required: true },
+                { key: 'rubric2', label: 'Rubric-2', required: true },
+                { key: 'rubric3', label: 'Rubric-3', required: true },
+                { key: 'rubric4', label: 'Rubric-4', required: true },
                 { key: 'frequency', label: 'Frequency', type: 'select', options: ['ONE_TIME', 'DAILY', 'WEEKLY', 'FORTNIGHTLY', 'MONTHLY', 'TERMLY', 'YEARLY'] },
                 { key: 'ratingScale', label: 'Rating Scale', type: 'select', options: ['3', '5'] },
                 { key: 'stream', label: 'Stream', type: 'select', options: ['QUALITY', 'PROCESS'] },
@@ -137,7 +143,7 @@ export function AuditComponentsPage() {
             ]}
             idField='id'
             idPrefix='AC-'
-            searchKeys={['component', 'subComponent', 'stream']}
+            searchKeys={['component', 'subComponent', 'stream', 'rubric1', 'rubric2', 'rubric3', 'rubric4']}
             statusKey='active'
         />
     )

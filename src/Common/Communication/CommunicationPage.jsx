@@ -168,33 +168,35 @@ const CommunicationPage = ({ roleKey }) => {
         toast.success('Conversation deleted')
     }
 
-    const createOrOpenConversation = (contact) => {
+    const createOrOpenConversation = async (contact) => {
         if (canUseCommunicationApi()) {
             setShowNewMessage(false)
-            startConversationApi(contact.id)
-                .then((row) => {
-                    setConversations((current) =>
-                        current.some((conv) => conv.id === row.id)
-                            ? current.map((conv) => (conv.id === row.id ? row : conv))
-                            : [row, ...current],
-                    )
-                    navigate(`${roleConfig.routeBase}/inbox/${row.id}`)
-                    toast.success(`Started conversation with ${contact.name}`)
-                })
-                .catch(() => toast.error('The conversation could not be started.'))
-            return
+            try {
+                const row = await startConversationApi(contact.id)
+                setConversations((current) =>
+                    current.some((conv) => conv.id === row.id)
+                        ? current.map((conv) => (conv.id === row.id ? row : conv))
+                        : [row, ...current],
+                )
+                navigate(`${roleConfig.routeBase}/inbox/${row.id}`)
+                toast.success(`Started conversation with ${contact.name}`)
+                return row
+            } catch {
+                toast.error('The conversation could not be started.')
+                return null
+            }
         }
         const existing = conversations.find(
-            (conv) => !conv.deleted && conv.participant.id === contact.id
+            (conv) => !conv.deleted && String(conv.participant?.id) === String(contact.id)
         )
         setShowNewMessage(false)
         if (existing) {
             openConversation(existing.id)
-            return
+            return existing
         }
 
         const newConversation = {
-            id: `conv-${Date.now()}`,
+            id: `conv-${Date.now()}-${contact.id}`,
             participant: contact,
             lastMessage: 'Conversation started',
             lastMessageAt: new Date().toISOString(),
@@ -203,7 +205,7 @@ const CommunicationPage = ({ roleKey }) => {
             deleted: false,
             messages: [
                 {
-                    id: `m-${Date.now()}`,
+                    id: `m-${Date.now()}-${contact.id}`,
                     senderId: currentUser.id,
                     type: 'text',
                     content: 'Hi, I would like to connect with you.',
@@ -217,6 +219,18 @@ const CommunicationPage = ({ roleKey }) => {
         persist(next)
         navigate(`${roleConfig.routeBase}/inbox/${newConversation.id}`)
         toast.success(`Started conversation with ${contact.name}`)
+        return newConversation
+    }
+
+    const createOrOpenMany = async (contacts) => {
+        if (!Array.isArray(contacts) || !contacts.length) return
+        setShowNewMessage(false)
+        let last = null
+        for (const contact of contacts) {
+            last = await createOrOpenConversation(contact)
+        }
+        if (last?.id) navigate(`${roleConfig.routeBase}/inbox/${last.id}`)
+        if (contacts.length > 1) toast.success(`Started ${contacts.length} conversations`)
     }
 
     const sendMessage = async ({ text, files = [], replyTo }) => {
@@ -389,8 +403,10 @@ const CommunicationPage = ({ roleKey }) => {
                 currentUserId={currentUser.id}
                 existingParticipantIds={conversations
                     .filter((c) => !c.deleted)
-                    .map((c) => c.participant.id)}
+                    .map((c) => c.participant?.id)
+                    .filter(Boolean)}
                 onSelect={createOrOpenConversation}
+                onSelectMany={createOrOpenMany}
                 contacts={canUseCommunicationApi() ? directory : undefined}
             />
         </div>

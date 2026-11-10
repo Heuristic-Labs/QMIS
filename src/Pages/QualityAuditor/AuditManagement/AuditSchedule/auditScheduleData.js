@@ -279,16 +279,16 @@ export const saveAuditSchedules = (records) => {
 
 export const addAuditSchedule = (payload) => {
     const current = getAuditSchedules().filter((item) => !item.parentScheduleId)
-    const scheduleId = `SCH-PA-${Date.now()}`
+    const scheduleId = `SCH-QA-${Date.now()}`
     const record = buildSchedule({
         scheduleId,
-        auditId: payload.auditId || `AUD-${Date.now()}`,
+        auditId: payload.auditId || `AUD-QA-${Date.now()}`,
         auditName: payload.auditName,
         department: payload.department || 'Academic',
         frequency: payload.recurrenceType === 'Weekly' ? 'WEEKLY' : payload.recurrenceType === 'Monthly' ? 'MONTHLY' : 'Ad-hoc',
         assignedDate: payload.startDate,
         dueDate: payload.startDate,
-        assignedBy: payload.assignedBy || 'Process Audit Manager',
+        assignedBy: payload.assignedBy || 'Quality Audit Manager',
         status: 'Scheduled',
     })
     const next = [...current, {
@@ -305,11 +305,24 @@ export const addAuditSchedule = (payload) => {
     return materialized
 }
 
+const coerceScheduleRecords = (stored) => {
+    if (stored == null) return null
+    if (typeof stored === 'string') {
+        try {
+            const parsed = JSON.parse(stored)
+            return Array.isArray(parsed) ? parsed : null
+        } catch {
+            return null
+        }
+    }
+    return Array.isArray(stored) ? stored : null
+}
+
 export const getAuditSchedules = () => {
     let records = DEFAULT_AUDIT_SCHEDULES
     try {
-        const stored = loadCampusJson(STORAGE_KEY, null)
-        if (stored) records = JSON.parse(stored)
+        const stored = coerceScheduleRecords(loadCampusJson(STORAGE_KEY, null))
+        if (stored?.length) records = stored
     } catch {
         records = DEFAULT_AUDIT_SCHEDULES
     }

@@ -59,7 +59,9 @@ const ProcessAuditorRoutes = () => {
             <Route path="/process-auditor/reports/pending-actions" element={<PendingActionsReport />} />
             <Route path="/process-auditor/reports/closed-actions" element={<ClosedActionsReport />} />
             <Route path="/process-auditor/reports" element={<Navigate to="/process-auditor/reports/audit-reports" replace />} />
-            <Route path="/process-auditor/communication" element={<CommunicationPage roleKey="processAuditor" />} />
+            <Route path="/process-auditor/communication" element={<Navigate to="/process-auditor/communication/inbox" replace />} />
+            <Route path="/process-auditor/communication/inbox" element={<CommunicationPage roleKey="processAuditor" />} />
+            <Route path="/process-auditor/communication/inbox/:conversationId" element={<CommunicationPage roleKey="processAuditor" />} />
             <Route path="/process-auditor/components" element={<AuditComponentsPage />} />
             <Route path="/process-auditor/shared-deviations" element={<SharedDeviationsPage />} />
 

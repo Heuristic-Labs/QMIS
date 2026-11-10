@@ -225,7 +225,12 @@ export default function RegisterPage({
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6'>
                     <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>
                         Search
-                        <input value={search} onChange={(event) => setSearch(event.target.value)} className={inputClass} placeholder='Search records' />
+                        <div className='flex gap-2'>
+                            <input value={search} onChange={(event) => setSearch(event.target.value)} className={inputClass} placeholder='Search records' />
+                            <button type='button' className='shrink-0 bg-[#515DEF] text-white text-sm px-3 py-2 rounded-md cursor-pointer'>
+                                Search
+                            </button>
+                        </div>
                     </label>
                     {statusKey && (
                         <label className='flex flex-col gap-y-2 text-sm text-[#808080]'>

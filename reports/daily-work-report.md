@@ -8,6 +8,30 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 10 November 2026 — Audit / communication / nav bug fixes (client feedback)
+
+**Status:** Bug-only fixes from Audit + role feedback. Feature redesigns left pending (onboarding–finance, rename Escalation, filters page, library dashboard, Request Product, relieving app, etc.).
+
+### Done
+- Audit schedule: Search button + working filters; create/save visibility (fixed double `JSON.parse` on campus store); Process Auditor create schedule form added.
+- Components & Rubrics: save via audit campus API (was failing as “Ops API unavailable”); Rubric-1..4 fields; list after save.
+- Compliance Reports blank page: normalize empty/array API payloads (Quality Auditor).
+- Observations: blank Grade/Section/Subject (no sticky NA); removable title duplication; file attachment control; editable reference + recipient; components from saved master + schedules.
+- Communication (Process/Quality Auditor): role config + `/inbox/:id` routes (was falling back to student/my-account); multi-member select on New Message.
+- Export: PDF + Excel only; removed CSV; drop “7 days” default copy; pass filtered rows where wired.
+- Star of the Month: Browse styled as button; PNG kept in accept list.
+- Nav: Super Admin Assign + My Tasks; remove duplicate Pending/Closed Actions under Audit Reports; teacher Exam Schedule view-only (create redirected); Extended Class create enabled for teacher.
+- Timetable: teacher/coordinator Class-wise list scoped to own/allotted classes; hide Delete where unauthorized (approval gate + teacher activity lists).
+- Performance Analytics: Class-wise + Individual views.
+
+### Still open (pending / not in this pass)
+- Merge Components into Schedule entity; escalate-on-observation workflow redesign; finance-linked student onboarding; Escalation rename; Filters page; Request Product / relieving / library features; full Create/Receive matrix across every ops module; Remaining search pages not yet wired; broader Delete hide across all list UIs.
+
+### Tests
+- Backend pytest run recorded in `testing-report.md`.
+
+---
+
 ## 10 November 2026 — Central Admin + Super Admin account provisioning
 
 **Status:** Code + tests + dry-run ready. Live create **not executed** (awaiting separate approval). `deploy-aws-ecs.yml` untouched.

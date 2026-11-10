@@ -60,7 +60,9 @@ const QualityAuditorRoutes = () => {
             <Route path="/quality-auditor/reports/pending-actions" element={<PendingActionsReport />} />
             <Route path="/quality-auditor/reports/closed-actions" element={<ClosedActionsReport />} />
             <Route path="/quality-auditor/reports" element={<Navigate to="/quality-auditor/reports/audit-reports" replace />} />
-            <Route path="/quality-auditor/communication" element={<CommunicationPage roleKey="qualityAuditor" />} />
+            <Route path="/quality-auditor/communication" element={<Navigate to="/quality-auditor/communication/inbox" replace />} />
+            <Route path="/quality-auditor/communication/inbox" element={<CommunicationPage roleKey="qualityAuditor" />} />
+            <Route path="/quality-auditor/communication/inbox/:conversationId" element={<CommunicationPage roleKey="qualityAuditor" />} />
             <Route path="/quality-auditor/components" element={<AuditComponentsPage />} />
             <Route path="/quality-auditor/shared-deviations" element={<SharedDeviationsPage />} />
 

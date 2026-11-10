@@ -23,6 +23,8 @@ const PerformanceAnalytics = () => {
     const [examsById, setExamsById] = useState({})
     const [publishedExams, setPublishedExams] = useState([])
     const [studentId, setStudentId] = useState('')
+    const [viewMode, setViewMode] = useState('individual')
+    const [classFilter, setClassFilter] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
 
@@ -200,35 +202,108 @@ const PerformanceAnalytics = () => {
         ? Math.round((series.scores.reduce((sum, value) => sum + value, 0) / series.scores.length) * 10) / 10
         : null
 
+    const classOptions = useMemo(() => {
+        const labels = students.map((student) => {
+            const grade = student.className || student.class || ''
+            const section = student.section ? `-${student.section}` : ''
+            return grade ? `${grade}${section}` : ''
+        }).filter(Boolean)
+        return [...new Set(labels)].sort()
+    }, [students])
+
+    const classWiseRows = useMemo(() => {
+        const groups = new Map()
+        students.forEach((student) => {
+            const grade = student.className || student.class || 'Unassigned'
+            const section = student.section || ''
+            const key = section ? `${grade}-${section}` : grade
+            if (classFilter && key !== classFilter) return
+            if (!groups.has(key)) groups.set(key, { classLabel: key, students: 0, scores: [] })
+            const group = groups.get(key)
+            group.students += 1
+            const studentBatches = batches.flatMap((batch) => {
+                const entry = (batch.entries || []).find((item) => String(item.studentId) === String(student.id))
+                if (!entry || entry.absent || entry.marks == null || !batch.maxMarks) return []
+                return [(Number(entry.marks) / Number(batch.maxMarks)) * 100]
+            })
+            group.scores.push(...studentBatches)
+        })
+        return [...groups.values()].map((group) => ({
+            classLabel: group.classLabel,
+            students: group.students,
+            average: group.scores.length
+                ? Math.round((group.scores.reduce((sum, value) => sum + value, 0) / group.scores.length) * 10) / 10
+                : null,
+            assessments: group.scores.length,
+        }))
+    }, [students, batches, classFilter])
+
+    const classOption = useMemo(() => ({
+        color: ['#515DEF'],
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: classWiseRows.map((row) => row.classLabel) },
+        yAxis: { type: 'value', min: 0, max: 100 },
+        series: [{
+            name: 'Class average %',
+            type: 'bar',
+            data: classWiseRows.map((row) => row.average ?? 0),
+        }],
+    }), [classWiseRows])
+
     return (
         <section className='bg-white rounded-2xl shadow-md p-4 space-y-4'>
             <div className='flex justify-between gap-3 flex-wrap items-start'>
                 <div>
-                    <h2 className='text-xl font-semibold'>Student performance comparison</h2>
+                    <h2 className='text-xl font-semibold'>Performance analytics</h2>
                     <p className='text-sm text-[#667085]'>
-                        Scores from your marks batches and published results for students in assigned classes.
+                        Class-wise and individual student analytics for assigned classes.
                     </p>
                     {assignments.emptyReason ? (
                         <p className='text-sm text-[#E65100] mt-1'>{assignments.emptyReason}</p>
                     ) : null}
                     {error ? <p className='text-sm text-[#FF0000] mt-1'>{error}</p> : null}
                 </div>
-                <select
-                    value={studentId}
-                    onChange={(event) => setStudentId(event.target.value)}
-                    className={selectClass}
-                    disabled={!students.length}
-                >
-                    {!students.length ? <option value=''>No assigned students</option> : null}
-                    {students.map((student) => (
-                        <option key={student.id} value={String(student.id)}>
-                            {student.name} ({student.className || student.class}{student.section ? `-${student.section}` : ''})
-                        </option>
-                    ))}
-                </select>
+                <div className='flex flex-wrap gap-2 items-center'>
+                    <div className='flex rounded-lg border border-[#D9D9D9] overflow-hidden text-sm'>
+                        <button
+                            type='button'
+                            onClick={() => setViewMode('class')}
+                            className={`px-3 py-2 cursor-pointer ${viewMode === 'class' ? 'bg-[#515DEF] text-white' : 'text-[#667085]'}`}
+                        >
+                            Class-wise
+                        </button>
+                        <button
+                            type='button'
+                            onClick={() => setViewMode('individual')}
+                            className={`px-3 py-2 cursor-pointer ${viewMode === 'individual' ? 'bg-[#515DEF] text-white' : 'text-[#667085]'}`}
+                        >
+                            Individual
+                        </button>
+                    </div>
+                    {viewMode === 'class' ? (
+                        <select value={classFilter} onChange={(event) => setClassFilter(event.target.value)} className={selectClass}>
+                            <option value=''>All classes</option>
+                            {classOptions.map((label) => <option key={label} value={label}>{label}</option>)}
+                        </select>
+                    ) : (
+                        <select
+                            value={studentId}
+                            onChange={(event) => setStudentId(event.target.value)}
+                            className={selectClass}
+                            disabled={!students.length}
+                        >
+                            {!students.length ? <option value=''>No assigned students</option> : null}
+                            {students.map((student) => (
+                                <option key={student.id} value={String(student.id)}>
+                                    {student.name} ({student.className || student.class}{student.section ? `-${student.section}` : ''})
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                </div>
             </div>
 
-            {selected ? (
+            {viewMode === 'individual' && selected ? (
                 <p className='text-sm text-[#667085]'>
                     {selected.name}
                     {selected.className || selected.class
@@ -240,6 +315,36 @@ const PerformanceAnalytics = () => {
 
             {loading ? (
                 <p className='text-sm text-[#667085]'>Loading analytics…</p>
+            ) : viewMode === 'class' ? (
+                !classWiseRows.length ? (
+                    <p className='text-sm text-[#667085]'>No class-wise data for assigned students yet.</p>
+                ) : (
+                    <>
+                        <ReactECharts option={classOption} style={{ height: 320 }} />
+                        <div className='overflow-x-auto'>
+                            <table className='w-full text-sm'>
+                                <thead>
+                                    <tr className='text-left text-[#667085] border-b'>
+                                        <th className='py-2 pr-3'>Class</th>
+                                        <th className='py-2 pr-3'>Students</th>
+                                        <th className='py-2 pr-3'>Assessments</th>
+                                        <th className='py-2'>Average %</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {classWiseRows.map((row) => (
+                                        <tr key={row.classLabel} className='border-b border-[#F0F0F0]'>
+                                            <td className='py-2 pr-3'>{row.classLabel}</td>
+                                            <td className='py-2 pr-3'>{row.students}</td>
+                                            <td className='py-2 pr-3'>{row.assessments}</td>
+                                            <td className='py-2'>{row.average ?? '—'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )
             ) : !canUseExamsApi() ? (
                 <p className='text-sm text-[#667085]'>Sign in with API auth to load exam marks.</p>
             ) : !series.rows.length ? (
@@ -251,7 +356,7 @@ const PerformanceAnalytics = () => {
                 <ReactECharts option={option} style={{ height: 320 }} />
             )}
 
-            {series.rows.length > 0 ? (
+            {viewMode === 'individual' && series.rows.length > 0 ? (
                 <div className='overflow-x-auto'>
                     <table className='w-full text-sm'>
                         <thead>
