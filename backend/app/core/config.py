@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     admin_seed_password: str = "admin123"
     superadmin_seed_email: str = "superadmin@qmis.edu"
     superadmin_seed_password: str = "superadmin123"
+    # Production central operators (emails only — passwords are never configured here).
+    # Provision via scripts/provision_central_admins.py (create-missing-only + temp handoff).
+    central_admin_email: str = "Adminerp@gmail.com"
+    central_superadmin_email: str = "superadminerp@gmail.com"
     hr_seed_email: str = "hr@qmis.edu"
     hr_seed_password: str = "hr12345"
     accounthead_seed_email: str = "accounthead@qmis.edu"

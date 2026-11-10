@@ -35,7 +35,12 @@ import { ensureClassCatalogHydrated } from '../services/classDetailsApi'
 
 export { ROLES }
 
-const SUPER_ADMIN_EMAILS = ['superadmin@qmis.edu', 'superadmin@school.com', 'superadmin2@school.com']
+const SUPER_ADMIN_EMAILS = [
+    'superadmin@qmis.edu',
+    'superadmin@school.com',
+    'superadmin2@school.com',
+    'superadminerp@gmail.com',
+]
 
 /**
  * Offline demo password. Supplied only through the (git-ignored) VITE_DEMO_PASSWORD of a

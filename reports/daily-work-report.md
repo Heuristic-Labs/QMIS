@@ -8,6 +8,48 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 10 November 2026 — Central Admin + Super Admin account provisioning
+
+**Status:** Code + tests + dry-run ready. Live create **not executed** (awaiting separate approval). `deploy-aws-ecs.yml` untouched.
+
+### Done
+- Config emails (no passwords): `Adminerp@gmail.com` → `admin`, `superadminerp@gmail.com` → `superadmin`.
+- Create-missing-only service `central_admin_provision.py` + script `provision_central_admins.py` (isolated default; live needs `--i-understand-live --skip-seed --write-credentials`).
+- Temps generated at create; `must_change_password=true`; existing users preserved (no password/role reset).
+- Tests for auth, creatable-role isolation, no Super Admin self-escalation, idempotency.
+- Isolated dry-run: would create both accounts; no passwords issued.
+
+### Still open
+- Approved live provision write + secure handoff of temps.
+- Manual first-login password change for the two central accounts after create.
+
+### Tests
+- `test_central_admin_accounts`: **8 passed**; frontend build **PASS**.
+
+---
+
+## 6 November 2026 — Ops portal role mapping (PRO / CCTV / File Room / Transport / Maintenance)
+
+**Status:** Implemented, tested, committed, and pushed to Heuristic-Labs `main` (deploy workflow). Live account login/password/role remaps left for manual verification after deploy. Uncommitted `deploy-aws-ecs.yml` left untouched.
+
+### Done
+- Staff login provision: if roster `role` is empty, map from designation via `map_role_from_designation` (create-missing-only; no duplicate accounts).
+- `hrSeed` explicit roles for target ops staff: PRO (082/110), Transport Manager (088), CCTV (092/099), File Room (105/117; 117 email normalized), Maintenance → `housekeepingmanager` (107).
+- Tests: designation maps, provision counts/idempotency, new ops role login/portals suite (login role, FE homes, authz, recovery/password-change paths).
+- Frontend production build green; related portal/admin suites green.
+- No Alembic migrations; no production DB writes; deploy YAML not included in commit.
+
+### Still open
+- Manual live login/portal checks for the five account groups after ECS deploy succeeds.
+- Existing live wrong-role data (if any) is not remapped by this deploy—only code/seed/provision paths for future create-missing.
+
+### Tests
+- `test_ops_role_login_portals_suite` + designation + provision: **21 passed**
+- Portal/admin related: **81 passed**
+- Frontend `npm run build`: **PASS**
+
+---
+
 ## 6 November 2026 — Client review (attendance, exams, timetables, PRM, tickets)
 
 **Status:** Implemented locally. No commit/push/prod migration.
