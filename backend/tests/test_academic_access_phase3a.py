@@ -235,16 +235,30 @@ def _content_items(collection: str) -> list[dict]:
 @pytest.mark.parametrize("collection", CONTENT)
 def test_class_content_scoped_to_childs_class_and_section(w, collection):
     c, h = w["c"], w["h"]
-    _ok(c.put(f"/api/v1/academics/{collection}", json=_content_items(collection), headers=h["teacher"]))
+    # Seed campus-wide via principal; teachers may only mutate their allocated classes.
+    _ok(c.put(f"/api/v1/academics/{collection}", json=_content_items(collection), headers=h["principal"]))
     try:
         ids = lambda who: {i["id"] for i in _ok(c.get(f"/api/v1/academics/{collection}", headers=h[who]))}  # noqa: E731
         assert ids("parent_a") == {f"{collection}-5A", f"{collection}-V-a"}
         assert ids("student_a") == {f"{collection}-5A", f"{collection}-V-a"}
         assert ids("parent_c") == {f"{collection}-5B"}
         assert ids("parent_d") == {f"{collection}-8A"}
-        assert len(ids("teacher")) == 6 and len(ids("principal")) == 6
+        # Teacher is Grade 5-A class teacher: 5A + V/a + whole-class Grade 5 (empty section).
+        assert ids("teacher") == {
+            f"{collection}-5A",
+            f"{collection}-V-a",
+            f"{collection}-nosection",
+        }
+        assert len(ids("principal")) == 6
+        # Negative: teacher cannot plant Grade 8 content through the academics API.
+        denied = c.put(
+            f"/api/v1/academics/{collection}",
+            json=[{"id": f"{collection}-8A-hack", "className": "Grade 8", "section": "A", "title": "nope"}],
+            headers=h["teacher"],
+        )
+        assert denied.status_code == 403
     finally:
-        _ok(c.put(f"/api/v1/academics/{collection}", json=[], headers=h["teacher"]))
+        _ok(c.put(f"/api/v1/academics/{collection}", json=[], headers=h["principal"]))
 
 
 def test_home_fun_submission_details_never_reach_portal(w):
@@ -283,7 +297,13 @@ def test_portal_sees_only_approved_timetable_versions(w):
             assert _ok(c.get("/api/v1/academics/class-timetable-change-requests", headers=h[who])) == []
         assert _ok(c.get("/api/v1/academics/class-timetables", headers=h["parent_d"])) == []
         every = {i["id"] for i in items}
-        for who in ("teacher", "coordinator", "principal", "director", "admin"):
+        grade5 = {i["id"] for i in items if i["className"] == "Grade 5"}
+        # Teacher is class teacher of Grade 5-A only — must not receive Grade 8 rows.
+        assert {t["id"] for t in _ok(c.get("/api/v1/academics/class-timetables", headers=h["teacher"]))} == grade5
+        # Coordinator band 1-6 includes Grade 5, excludes Grade 8.
+        assert {t["id"] for t in _ok(c.get("/api/v1/academics/class-timetables", headers=h["coordinator"]))} == grade5
+        assert {t["id"] for t in _ok(c.get("/api/v1/academics/class-timetables", headers=h["senior"]))} == {"T-8A-PEND"}
+        for who in ("principal", "director", "admin"):
             assert {t["id"] for t in _ok(c.get("/api/v1/academics/class-timetables", headers=h[who]))} == every
         assert [r["id"] for r in _ok(c.get("/api/v1/academics/class-timetable-change-requests", headers=h["principal"]))] == ["TCR-3A"]
     finally:

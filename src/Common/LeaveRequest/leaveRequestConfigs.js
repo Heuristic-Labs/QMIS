@@ -23,6 +23,8 @@ export const LEAVE_ROUTE_CONFIG = {
         myList: '/coordinator/leave-request/my-requests',
         add: '/coordinator/leave-request/my-requests/add',
         myView: '/coordinator/leave-request/my-requests/view',
+        receivedList: '/coordinator/leave-request/received',
+        receivedView: '/coordinator/leave-request/received/view',
     },
     principal: {
         myList: '/principal/leave-request/my-requests',

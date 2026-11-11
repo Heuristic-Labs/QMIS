@@ -53,8 +53,8 @@ const GatePassList = () => {
     const refresh = () => setRecords(getStudentGatePasses())
 
     const filteredRecords = useMemo(
-        () => filterStudentGatePasses(records, { search, status }),
-        [records, search, status],
+        () => filterStudentGatePasses(records, { search, status, fromDate, toDate }),
+        [records, search, status, fromDate, toDate],
     )
 
     const visibleRecords = filteredRecords.slice(0, entriesPerPage)
@@ -282,6 +282,9 @@ const GatePassList = () => {
                 exportModal={exportModal}
                 setExportModal={setExportModal}
                 filename='student-gate-passes'
+                title='Student Gate Passes'
+                enableDateRange
+                dateKeys={['date']}
                 rows={filteredRecords.map((r) => ({
                     id: r.id || r.publicId,
                     studentName: r.studentName,
@@ -290,7 +293,15 @@ const GatePassList = () => {
                     date: r.date,
                     status: r.status,
                 }))}
-                exportDescription={<>You are exporting {filteredRecords.length} record{filteredRecords.length === 1 ? '' : 's'}.</>}
+                columns={[
+                    { key: 'id', label: 'ID' },
+                    { key: 'studentName', label: 'Student' },
+                    { key: 'classSection', label: 'Class' },
+                    { key: 'reason', label: 'Reason' },
+                    { key: 'date', label: 'Date' },
+                    { key: 'status', label: 'Status' },
+                ]}
+                exportDescription={<>You are exporting {filteredRecords.length} record{filteredRecords.length === 1 ? '' : 's'} from the current filters. Optionally narrow by date range.</>}
             />
         </section>
     )

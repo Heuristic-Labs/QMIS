@@ -120,6 +120,7 @@ const buildObservation = ({
     observationId,
     referenceNumber: referenceNumber || observationId,
     auditReference,
+    auditStream: 'QUALITY',
     department,
     location,
     category,
@@ -146,8 +147,8 @@ const buildObservation = ({
 
 const DEFAULT_OBSERVATIONS = [
     buildObservation({
-        observationId: 'OBS-PA-2026-014',
-        auditReference: 'AUD-PA-2026-043',
+        observationId: 'OBS-QA-2026-014',
+        auditReference: 'AUD-QA-2026-043',
         department: 'Canteen',
         location: 'Canteen Building — Kitchen',
         category: 'Safety & Hygiene',
@@ -164,8 +165,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '10-06-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-013',
-        auditReference: 'AUD-PA-2026-041',
+        observationId: 'OBS-QA-2026-013',
+        auditReference: 'AUD-QA-2026-041',
         department: 'Finance',
         location: 'Admin Block — Room 102',
         category: 'Financial Control',
@@ -183,8 +184,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '09-06-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-012',
-        auditReference: 'AUD-PA-2026-045',
+        observationId: 'OBS-QA-2026-012',
+        auditReference: 'AUD-QA-2026-045',
         department: 'Housekeeping',
         location: 'Main Academic Block — 2nd Floor',
         category: 'Housekeeping',
@@ -202,8 +203,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '05-06-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-011',
-        auditReference: 'AUD-PA-2026-038',
+        observationId: 'OBS-QA-2026-011',
+        auditReference: 'AUD-QA-2026-038',
         department: 'Transport',
         location: 'Transport Office — Fleet Yard',
         category: 'Transport',
@@ -221,8 +222,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '06-06-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-009',
-        auditReference: 'AUD-PA-2026-039',
+        observationId: 'OBS-QA-2026-009',
+        auditReference: 'AUD-QA-2026-039',
         department: 'IT Support',
         location: 'IT Server Room',
         category: 'IT Security',
@@ -240,8 +241,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '01-06-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-007',
-        auditReference: 'AUD-PA-2026-031',
+        observationId: 'OBS-QA-2026-007',
+        auditReference: 'AUD-QA-2026-031',
         department: 'Canteen',
         location: 'Canteen Building',
         category: 'Safety & Hygiene',
@@ -259,8 +260,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '22-05-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-005',
-        auditReference: 'AUD-PA-2026-022',
+        observationId: 'OBS-QA-2026-005',
+        auditReference: 'AUD-QA-2026-022',
         department: 'Finance',
         location: 'Admin Block — Finance Wing',
         category: 'Financial Control',
@@ -278,8 +279,8 @@ const DEFAULT_OBSERVATIONS = [
         createdDate: '01-05-2026',
     }),
     buildObservation({
-        observationId: 'OBS-PA-2026-003',
-        auditReference: 'AUD-PA-2026-018',
+        observationId: 'OBS-QA-2026-003',
+        auditReference: 'AUD-QA-2026-018',
         department: 'Academic',
         location: 'Examination Cell',
         category: 'Documentation',
@@ -302,10 +303,26 @@ export const saveObservations = (records) => {
     saveCampusJson(STORAGE_KEY, records)
 }
 
+const belongsToQualityStream = (item) => {
+    const stream = String(item?.auditStream || item?.stream || '').trim().toUpperCase()
+    if (stream === 'PROCESS') return false
+    if (stream === 'QUALITY') return true
+    const blob = [
+        item?.id,
+        item?.observationId,
+        item?.auditReference,
+        item?.auditNumber,
+        item?.atrNumber,
+        item?.scheduleId,
+    ].join(' ')
+    if (/\b(OBS|AUD|ATR|SCH|RCA)-PA\b/.test(blob)) return false
+    return true
+}
+
 export const getObservations = () => {
     try {
         const stored = loadCampusJson(STORAGE_KEY, null)
-        if (stored) return stored
+        if (Array.isArray(stored)) return stored.filter(belongsToQualityStream)
     } catch {
         /* ignore */
     }
@@ -328,7 +345,7 @@ export const generateObservationId = () => {
         const num = Number(item.observationId.split('-').pop())
         return Number.isNaN(num) ? acc : Math.max(acc, num)
     }, 0)
-    return `OBS-PA-2026-${String(max + 1).padStart(3, '0')}`
+    return `OBS-QA-2026-${String(max + 1).padStart(3, '0')}`
 }
 
 export const emptyObservationForm = () => ({
@@ -379,14 +396,14 @@ export const createObservation = (form) => {
 }
 
 export const AUDIT_REFERENCES = [
-    'AUD-PA-2026-041',
-    'AUD-PA-2026-042',
-    'AUD-PA-2026-043',
-    'AUD-PA-2026-044',
-    'AUD-PA-2026-038',
-    'AUD-PA-2026-039',
-    'AUD-PA-2026-045',
-    'AUD-PA-2026-046',
+    'AUD-QA-2026-041',
+    'AUD-QA-2026-042',
+    'AUD-QA-2026-043',
+    'AUD-QA-2026-044',
+    'AUD-QA-2026-038',
+    'AUD-QA-2026-039',
+    'AUD-QA-2026-045',
+    'AUD-QA-2026-046',
 ]
 
 export const hydrateFromApi = (seed = DEFAULT_OBSERVATIONS) => hydrateCampusKey(STORAGE_KEY, seed)

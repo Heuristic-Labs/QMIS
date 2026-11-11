@@ -1,7 +1,10 @@
-import React, { useState } from 'react'
-import { X } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import { Calendar, X } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { runTableExport } from '../exportDownload'
+import { filterListRows, formatListDate } from '../listFiltering'
 
 const ExportModal = ({
     exportModal,
@@ -13,12 +16,26 @@ const ExportModal = ({
     title,
     exportDescription = (
         <>
-            Export the currently filtered records for any selected date range.
+            Export the currently filtered records. Optionally narrow further by date range before download.
         </>
     ),
+    enableDateRange = false,
+    dateKeys = ['createdDate', 'date', 'requestDate', 'issueDate'],
 }) => {
     const [format, setFormat] = useState('excel')
     const [exporting, setExporting] = useState(false)
+    const [fromDate, setFromDate] = useState(null)
+    const [toDate, setToDate] = useState(null)
+
+    const sourceRows = Array.isArray(rows) ? rows : []
+    const exportRows = useMemo(() => {
+        if (!enableDateRange || (!fromDate && !toDate)) return sourceRows
+        return filterListRows(sourceRows, {
+            fromDate,
+            toDate,
+            dateKeys,
+        })
+    }, [sourceRows, enableDateRange, fromDate, toDate, dateKeys])
 
     const handleExport = () => {
         if (exporting) return
@@ -26,24 +43,32 @@ const ExportModal = ({
         try {
             const exportFormat = format === 'csv' ? 'excel' : format
             if (typeof onExport === 'function') {
-                onExport(exportFormat)
+                onExport(exportFormat, {
+                    fromDate,
+                    toDate,
+                    rows: exportRows,
+                })
                 setExportModal(false)
                 return
             }
+            const rangeLabel = [
+                fromDate ? formatListDate(fromDate) : null,
+                toDate ? formatListDate(toDate) : null,
+            ].filter(Boolean).join(' to ')
             const result = runTableExport(exportFormat, {
                 filename,
-                rows: Array.isArray(rows) ? rows : [],
+                rows: exportRows,
                 columns,
-                title: title || filename,
+                title: rangeLabel ? `${title || filename} (${rangeLabel})` : (title || filename),
             })
             if (!result.ok) {
-                toast.error(result.reason === 'empty' ? 'No records to export.' : 'Export failed.')
+                toast.error(result.reason === 'empty' ? 'No records to export for the selected range.' : 'Export failed.')
                 return
             }
             toast.success(
                 exportFormat === 'pdf'
-                    ? 'PDF preview opened. Use Print to save the file.'
-                    : `Exported ${Array.isArray(rows) ? rows.length : 0} record(s) as Excel.`,
+                    ? `PDF preview opened (${exportRows.length} record(s)). Use Print to save the file.`
+                    : `Exported ${exportRows.length} record(s) as Excel.`,
             )
             setExportModal(false)
         } finally {
@@ -69,6 +94,39 @@ const ExportModal = ({
                         </div>
                         <div className='pt-4'>
                             <p className='text-sm font-normal'>{exportDescription}</p>
+                            <p className='text-xs text-[#667085] mt-2'>
+                                {exportRows.length} record(s) ready to export
+                                {sourceRows.length !== exportRows.length ? ` (from ${sourceRows.length} filtered rows)` : ''}.
+                            </p>
+
+                            {enableDateRange ? (
+                                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4'>
+                                    <div className='flex flex-col gap-y-2'>
+                                        <label className='text-sm font-medium text-[#1E1E1E]'>From date</label>
+                                        <div className='relative w-full'>
+                                            <DatePicker
+                                                selected={fromDate}
+                                                onChange={setFromDate}
+                                                isClearable
+                                                className='w-full text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-3 py-2 pr-10 focus:outline-none'
+                                            />
+                                            <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
+                                        </div>
+                                    </div>
+                                    <div className='flex flex-col gap-y-2'>
+                                        <label className='text-sm font-medium text-[#1E1E1E]'>To date</label>
+                                        <div className='relative w-full'>
+                                            <DatePicker
+                                                selected={toDate}
+                                                onChange={setToDate}
+                                                isClearable
+                                                className='w-full text-sm text-[#808080] border border-[#D9D9D9] rounded-md px-3 py-2 pr-10 focus:outline-none'
+                                            />
+                                            <Calendar size={16} className='absolute right-3 top-1/2 -translate-y-1/2 text-[#808080] pointer-events-none' />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
 
                             <div className='flex flex-col gap-x-2'>
                                 <label htmlFor="" className='text-base font-medium text-[#1E1E1E] my-4'>Choose Format</label>

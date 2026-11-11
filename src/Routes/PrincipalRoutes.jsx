@@ -59,11 +59,13 @@ import ExamSchedule from '../Pages/Teacher/StudentEvaluation/ExamSchedule/ExamSc
 import MarkEntry from '../Pages/Teacher/StudentEvaluation/MarkEntry/MarkEntry'
 import ResultSummary from '../Pages/Teacher/MarksResults/ResultSummary/ResultSummary'
 import ReportCardsPage from '../Common/ReportCards/ReportCardsPage'
+import StudentGatePassApprovals from '../Pages/Principal/GatePass/StudentGatePassApprovals'
 
 const PrincipalRoutes = () => {
     return (
         <ReactRoutes>
             <Route path="/principal/dashboard" element={<Dashboard />} />
+            <Route path="/principal/gate-pass/student-approvals" element={<StudentGatePassApprovals />} />
             <Route path="/principal/my-profile" element={<MyProfilePage roleLabel="Principal" attendancePath="/principal/attendance/my-attendance" leavePath="/principal/leave-request/my-requests" />} />
             <Route path="/principal/attendance" element={<Navigate to="/principal/attendance/my-attendance" replace />} />
             <Route path="/principal/attendance/my-attendance" element={<MyAttendance />} />

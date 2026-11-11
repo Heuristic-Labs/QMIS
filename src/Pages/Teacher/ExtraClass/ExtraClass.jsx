@@ -7,6 +7,8 @@ import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import EditRequestModal from '../../../Common/CommonComponents/EditRequestModal'
 import DeleteRequestModal from '../../../Common/CommonComponents/DeleteRequestModal'
+import { canShowDeleteOption } from '../../../Common/CommonComponents/approvalGates'
+import { useAuth } from '../../../context/AuthContext'
 import { useEditRequestFlow } from '../../../Common/CommonComponents/useEditRequestFlow'
 import { canUseAcademicsApi } from '../../../services/academicsApi'
 import {
@@ -30,6 +32,8 @@ const ExtraClass = ({
     const [exportModal, setExportModal] = useState(false)
     const { editRequestModal, setEditRequestModal, requestEdit, confirmEditRequest } = useEditRequestFlow()
     const [deleteRequestModal, setDeleteRequestModal] = useState(false)
+    const { role } = useAuth()
+    const showDelete = canShowDeleteOption(role)
     const [rows, setRows] = useState([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
@@ -219,7 +223,7 @@ const ExtraClass = ({
                                             >
                                                 Edit
                                             </button>
-                                            <button type='button' onClick={() => setDeleteRequestModal(true)} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>
+                                            <button type='button' onClick={() => { if (showDelete) setDeleteRequestModal(true) }} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>
                                                 Delete
                                             </button>
                                         </Dropdown>

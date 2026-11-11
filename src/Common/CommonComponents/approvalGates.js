@@ -32,6 +32,25 @@ const DIRECT_MUTATION_ROLES = new Set([
     'superadmin',
 ])
 
+/**
+ * Roles that must never see Delete / "Send delete request" on campus records.
+ * Teachers may still remove their own CA/RCT rows via ownership-scoped APIs.
+ */
+const DELETE_HIDDEN_ROLES = new Set([
+    normalizeRole(ROLES.TEACHER),
+    normalizeRole(ROLES.PARENT),
+    normalizeRole(ROLES.STUDENT),
+    normalizeRole(ROLES.DRIVER),
+    normalizeRole(ROLES.PROCESS_AUDITOR),
+    normalizeRole(ROLES.QUALITY_AUDITOR),
+    'teacher',
+    'parent',
+    'student',
+    'driver',
+    'processauditor',
+    'qualityauditor',
+])
+
 export const canEditWithoutApproval = (role) => DIRECT_MUTATION_ROLES.has(normalizeRole(role))
 
 export const canDeleteWithoutApproval = (role) => canEditWithoutApproval(role)
@@ -39,4 +58,8 @@ export const canDeleteWithoutApproval = (role) => canEditWithoutApproval(role)
 export const requiresEditApproval = (role) => !canEditWithoutApproval(role)
 
 /** Hide Delete entirely for roles that are not authorized to delete records. */
-export const canShowDeleteOption = (role) => canEditWithoutApproval(role)
+export const canShowDeleteOption = (role) => {
+    const code = normalizeRole(role)
+    if (!code || DELETE_HIDDEN_ROLES.has(code)) return false
+    return DIRECT_MUTATION_ROLES.has(code)
+}

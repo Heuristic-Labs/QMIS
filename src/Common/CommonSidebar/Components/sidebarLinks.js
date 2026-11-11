@@ -1164,6 +1164,12 @@ export const stationeryStoreManagerSidebarLinks = [
         to: "/stationery-store-manager/purchase-workflow",
         icon: ClipboardCheck,
     },
+    {
+        id: "stationery-receive-goods",
+        title: "Receive Goods (GRN)",
+        to: "/stationery-store-manager/purchase-workflow?stage=receive",
+        icon: Package,
+    },
 ];
 
 export const housekeepingManagerSidebarLinks = [
@@ -2532,6 +2538,12 @@ export const principalSidebarLinks = [
         title: "Lesson Plan Approval",
         to: "/principal/lesson-plan-approval",
         icon: NotebookPen,
+    },
+    {
+        id: "principal-student-gate-pass",
+        title: "Student Gate Pass Approvals",
+        to: "/principal/gate-pass/student-approvals",
+        icon: DoorOpen,
     },
     {
         id: 4,

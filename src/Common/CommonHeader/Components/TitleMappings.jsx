@@ -798,6 +798,7 @@ export const singleTitleMapping = {
 
     // ── Principal Role ──────────────────────────────────────────────────────────
     "/principal/dashboard": "Dashboard",
+    "/principal/gate-pass/student-approvals": "Student Gate Pass Approvals",
     "/principal/my-profile": "My Profile",
     "/principal/task-management/assign-tasks": "Assign Tasks List",
     "/principal/task-management/assign-tasks/add": "Assign Task",

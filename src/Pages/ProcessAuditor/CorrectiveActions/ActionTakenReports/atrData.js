@@ -301,10 +301,19 @@ export const saveAtrRecords = (records) => {
     saveCampusJson(STORAGE_KEY, records)
 }
 
+const belongsToProcessStream = (item) => {
+    const stream = String(item?.auditStream || item?.stream || '').trim().toUpperCase()
+    if (stream === 'QUALITY') return false
+    if (stream === 'PROCESS') return true
+    const blob = [item?.id, item?.atrNumber, item?.observationId, item?.auditNumber].join(' ')
+    if (/\b(OBS|AUD|ATR|SCH|RCA)-QA\b/.test(blob)) return false
+    return true
+}
+
 export const getAtrRecords = () => {
     try {
         const stored = loadCampusJson(STORAGE_KEY, null)
-    if (stored) return stored
+        if (Array.isArray(stored)) return stored.filter(belongsToProcessStream)
     } catch {
         /* ignore */
     }

@@ -6,6 +6,8 @@ import { Calendar, ChevronLeft, ChevronRight, EllipsisIcon, Plus, Download } fro
 import Dropdown from '../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../Common/CommonComponents/ExportModal'
 import DeleteRequestModal from '../../../Common/CommonComponents/DeleteRequestModal'
+import { canShowDeleteOption } from '../../../Common/CommonComponents/approvalGates'
+import { useAuth } from '../../../context/AuthContext'
 import { canUseAcademicsApi } from '../../../services/academicsApi'
 import { classKeysMatch } from '../../../Common/Teacher/teacherAssignedClasses'
 import { useTeacherAssignments } from '../../../Common/Teacher/useTeacherAssignments'
@@ -25,6 +27,8 @@ const OnlineClass = ({
     viewPath = '/teacher/class/online-class/view',
 }) => {
     const location = useLocation()
+    const { role } = useAuth()
+    const showDelete = canShowDeleteOption(role)
     const api = canUseAcademicsApi()
     const assignments = useTeacherAssignments()
     const [fromDate, setFromDate] = useState(null)
@@ -239,7 +243,7 @@ const OnlineClass = ({
                                             <Dropdown buttonContent={<EllipsisIcon size={16} className='text-black' />}>
                                                 <NavLink to={`${viewPath}/${record.id}`} className='block w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>View</NavLink>
                                                 {canCreate ? (
-                                                    <button type='button' onClick={() => setDeleteTarget(record)} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>Delete</button>
+                                                    <button type='button' onClick={() => { if (showDelete) setDeleteTarget(record) }} className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'>Delete</button>
                                                 ) : null}
                                             </Dropdown>
                                         </td>

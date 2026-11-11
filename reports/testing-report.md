@@ -1,17 +1,28 @@
 # Testing report
 
-Latest regression for Audit / communication / nav bug-fix pass (10 November 2026).
+Latest regression for remaining P1 Search/Filters/Export/Store-Gate pass (11 November 2026).
 
 ## Focused suites
 
 ```bash
 cd backend
-python -m pytest tests/test_ops_and_audit_collections.py -q
+python -m pytest tests/test_p1_security_isolation.py tests/test_ops_and_audit_collections.py -q
+node --test backend/scripts/_test_list_filtering.mjs
 ```
 
-**Result:** 10 passed, 1 warning (~17s).
+**Pytest result:** 19 passed, 1 warning (~24s).  
+**Node listFiltering result:** 6 passed.
+
+## Frontend
+
+```bash
+npm run build
+```
+
+**Result:** PASS (~1m 9s; chunk-size warnings only).
 
 ## Notes
 
-- Frontend changes are demo-domain / React module fixes (schedule persistence, campus JSON item save for audit collections, communication routes, export formats). No new backend tests added in this pass.
-- Full `tests/` suite was started but not completed in-session (long runtime); focused audit/ops collection suite is green.
+- Security P1 isolation suite remains green (no regressions to #55/#31/#34/#58a).
+- New FE filter helpers covered by Node unit tests (no Vitest harness in repo).
+- Full `tests/` suite not re-run end-to-end in this pass.

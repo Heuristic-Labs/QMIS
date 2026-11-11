@@ -68,6 +68,7 @@ const buildAtr = ({
     atrNumber,
     observationId,
     auditNumber,
+    auditStream: 'QUALITY',
     department,
     assignedTo,
     reportTo,
@@ -83,10 +84,10 @@ const buildAtr = ({
 
 const DEFAULT_ATR_RECORDS = [
     buildAtr({
-        id: 'ATR-PA-2026-005',
-        atrNumber: 'ATR-PA-2026-005',
-        observationId: 'OBS-PA-2026-011',
-        auditNumber: 'AUD-PA-2026-038',
+        id: 'ATR-QA-2026-005',
+        atrNumber: 'ATR-QA-2026-005',
+        observationId: 'OBS-QA-2026-011',
+        auditNumber: 'AUD-QA-2026-038',
         department: 'Transport',
         assignedTo: 'Mr. Suresh Patel',
         reportTo: 'Director of Operations',
@@ -128,10 +129,10 @@ const DEFAULT_ATR_RECORDS = [
         statusTimeline: buildStatusTimeline(7),
     }),
     buildAtr({
-        id: 'ATR-PA-2026-004',
-        atrNumber: 'ATR-PA-2026-004',
-        observationId: 'OBS-PA-2026-014',
-        auditNumber: 'AUD-PA-2026-043',
+        id: 'ATR-QA-2026-004',
+        atrNumber: 'ATR-QA-2026-004',
+        observationId: 'OBS-QA-2026-014',
+        auditNumber: 'AUD-QA-2026-043',
         department: 'Canteen',
         assignedTo: 'Mr. Ramesh Iyer',
         reportTo: 'Director of Operations',
@@ -169,10 +170,10 @@ const DEFAULT_ATR_RECORDS = [
         statusTimeline: buildStatusTimeline(5),
     }),
     buildAtr({
-        id: 'ATR-PA-2026-003',
-        atrNumber: 'ATR-PA-2026-003',
-        observationId: 'OBS-PA-2026-009',
-        auditNumber: 'AUD-PA-2026-039',
+        id: 'ATR-QA-2026-003',
+        atrNumber: 'ATR-QA-2026-003',
+        observationId: 'OBS-QA-2026-009',
+        auditNumber: 'AUD-QA-2026-039',
         department: 'IT Support',
         assignedTo: 'Mr. Arjun Mehta',
         reportTo: 'IT Manager',
@@ -210,10 +211,10 @@ const DEFAULT_ATR_RECORDS = [
         statusTimeline: buildStatusTimeline(7),
     }),
     buildAtr({
-        id: 'ATR-PA-2026-002',
-        atrNumber: 'ATR-PA-2026-002',
-        observationId: 'OBS-PA-2026-012',
-        auditNumber: 'AUD-PA-2026-045',
+        id: 'ATR-QA-2026-002',
+        atrNumber: 'ATR-QA-2026-002',
+        observationId: 'OBS-QA-2026-012',
+        auditNumber: 'AUD-QA-2026-045',
         department: 'Housekeeping',
         assignedTo: 'Mr. Ganesh Pillai',
         reportTo: 'Facility Manager',
@@ -252,10 +253,10 @@ const DEFAULT_ATR_RECORDS = [
         statusTimeline: buildStatusTimeline(5),
     }),
     buildAtr({
-        id: 'ATR-PA-2026-001',
-        atrNumber: 'ATR-PA-2026-001',
-        observationId: 'OBS-PA-2026-013',
-        auditNumber: 'AUD-PA-2026-041',
+        id: 'ATR-QA-2026-001',
+        atrNumber: 'ATR-QA-2026-001',
+        observationId: 'OBS-QA-2026-013',
+        auditNumber: 'AUD-QA-2026-041',
         department: 'Finance',
         assignedTo: 'Mr. Vikram Singh',
         reportTo: 'Finance Manager',
@@ -301,10 +302,19 @@ export const saveAtrRecords = (records) => {
     saveCampusJson(STORAGE_KEY, records)
 }
 
+const belongsToQualityStream = (item) => {
+    const stream = String(item?.auditStream || item?.stream || '').trim().toUpperCase()
+    if (stream === 'PROCESS') return false
+    if (stream === 'QUALITY') return true
+    const blob = [item?.id, item?.atrNumber, item?.observationId, item?.auditNumber].join(' ')
+    if (/\b(OBS|AUD|ATR|SCH|RCA)-PA\b/.test(blob)) return false
+    return true
+}
+
 export const getAtrRecords = () => {
     try {
         const stored = loadCampusJson(STORAGE_KEY, null)
-    if (stored) return stored
+        if (Array.isArray(stored)) return stored.filter(belongsToQualityStream)
     } catch {
         /* ignore */
     }

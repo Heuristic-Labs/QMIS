@@ -163,9 +163,18 @@ def test_inactive_or_mismatched_allocation_grants_nothing(w, allocation):
 
 def test_unassigned_teacher_cannot_read_or_mark_and_self_declared_duty_does_not_count(w):
     day = "2026-10-19"
-    # A teacher-written record (extra class / change request) is not an administrative substitute assignment.
-    _ok(w["c"].put("/api/v1/academics/extra-classes", headers=w["h"]["teacher"],
-                   json=[{"id": "EC-P2", "className": "Grade 8", "section": "A", "teacher": "teacher@qmis.edu", "date": day}]))
+    # Self-declared Grade 8 extra-class is rejected (outside allocation). Seed via principal instead.
+    denied_extra = w["c"].put(
+        "/api/v1/academics/extra-classes",
+        headers=w["h"]["teacher"],
+        json=[{"id": "EC-P2", "className": "Grade 8", "section": "A", "teacher": "teacher@qmis.edu", "date": day}],
+    )
+    assert denied_extra.status_code == 403
+    _ok(w["c"].put(
+        "/api/v1/academics/extra-classes",
+        headers=w["h"]["principal"],
+        json=[{"id": "EC-P2", "className": "Grade 8", "section": "A", "teacher": "teacher@qmis.edu", "date": day}],
+    ))
     _ok(w["c"].put("/api/v1/academics/class-timetable-change-requests", headers=w["h"]["teacher"],
                    json=[{"id": "TCR-P2", "className": "Grade 8", "section": "A", "substituteTeacher": "teacher@qmis.edu"}]))
     try:
@@ -179,7 +188,7 @@ def test_unassigned_teacher_cannot_read_or_mark_and_self_declared_duty_does_not_
         assert refused.status_code == 403
         assert w["s"]["d"] not in _marked_ids(w, day)
     finally:
-        _ok(w["c"].put("/api/v1/academics/extra-classes", json=[], headers=w["h"]["teacher"]))
+        _ok(w["c"].put("/api/v1/academics/extra-classes", json=[], headers=w["h"]["principal"]))
         _ok(w["c"].put("/api/v1/academics/class-timetable-change-requests", json=[], headers=w["h"]["teacher"]))
 
 
@@ -412,7 +421,12 @@ def test_portal_timetables_limited_to_childs_class_and_section(w, timetables):
 
 def test_staff_timetable_access_preserved(w, timetables):
     every = {"TT-5A", "TT-5B", "TT-5", "TT-8A", "TT-MIX"}
-    for who in ("teacher", "coordinator", "principal", "director", "admin"):
+    _band(w, 1, 6)
+    # Teacher allocation + class-teacher Grade 5-A: Grade 5 rows only (not Grade 8-only).
+    assert _ids(w, "teacher", "class-timetables") == {"TT-5A", "TT-5"}
+    # Coordinator grades 1-6: Grade 5 + MIX (timeline hits Grade 5); not Grade 8-A alone.
+    assert _ids(w, "coordinator", "class-timetables") == {"TT-5A", "TT-5B", "TT-5", "TT-MIX"}
+    for who in ("principal", "director", "admin"):
         assert _ids(w, who, "class-timetables") == every
     assert _ids(w, "teacher", "class-timetable-change-requests") == {"TCR-1"}
     assert _ids(w, "principal", "teacher-allocations") == {"P2-T9"}

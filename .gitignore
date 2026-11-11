@@ -35,6 +35,9 @@ dist-ssr
 !README.md
 !backend/README.md
 !backend/docs/**/*.md
+!docs/QMIS_FINAL_BUG_CLOSURE_REPORT.md
+!docs/QMIS_P1_SECURITY_FIX_REPORT.md
+!docs/QMIS_REMAINING_P1_IMPLEMENTATION_REPORT.md
 !reports/daily-work-report.md
 !reports/testing-report.md
 !reports/QMIS-ERP-Full-Panel-Test-Guide.md

@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react'
 import { X, CircleAlert } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import { canDeleteWithoutApproval } from './approvalGates'
+import { canDeleteWithoutApproval, canShowDeleteOption } from './approvalGates'
 
 /**
  * Delete confirmation / approval request.
  * Privileged roles never see "Send Request to Super Admin".
+ * Unauthorized roles never see this modal (Delete must be hidden in the list UI too).
  */
 const DeleteRequestModal = ({
     deleteRequestModal,
@@ -17,9 +18,14 @@ const DeleteRequestModal = ({
     autoRunForPrivileged = false,
 }) => {
     const { role } = useAuth()
+    const allowed = canShowDeleteOption(role)
     const direct = canDeleteWithoutApproval(role)
 
     const handleConfirm = () => {
+        if (!allowed) {
+            setDeleteRequestModal(false)
+            return
+        }
         if (typeof onConfirm === 'function') {
             onConfirm()
             return
@@ -28,14 +34,21 @@ const DeleteRequestModal = ({
     }
 
     useEffect(() => {
-        if (!deleteRequestModal || !direct || !autoRunForPrivileged) return undefined
+        if (!deleteRequestModal || !allowed) return undefined
+        if (!direct || !autoRunForPrivileged) return undefined
         if (typeof onConfirm !== 'function') return undefined
         handleConfirm()
         return undefined
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [deleteRequestModal, direct, autoRunForPrivileged])
+    }, [deleteRequestModal, allowed, direct, autoRunForPrivileged])
 
-    if (!deleteRequestModal) return null
+    useEffect(() => {
+        if (deleteRequestModal && !allowed) {
+            setDeleteRequestModal(false)
+        }
+    }, [deleteRequestModal, allowed, setDeleteRequestModal])
+
+    if (!deleteRequestModal || !allowed) return null
 
     if (direct && autoRunForPrivileged && typeof onConfirm === 'function') {
         return null

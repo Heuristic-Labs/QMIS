@@ -8,6 +8,42 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 11 November 2026 — Remaining P1: Search / Filters / Export / Store-Gate / Create-Receive
+
+**Status:** Focused implementation after verified security P1s. Report: `docs/QMIS_REMAINING_P1_IMPLEMENTATION_REPORT.md`. No commit / push / deploy.
+
+### Done
+- Shared `listFiltering` helpers + node unit tests (6 passed).
+- Process/Quality Observations: wired search, filters, Clear, Reference column, filtered export + modal date range.
+- Stationery Issue & Returns: same pattern; Receive Goods (GRN) sidebar + purchase workflow `?stage=receive`.
+- FO Gate Pass date filters + export columns; Principal Student Gate Pass Approvals inbox (#47a).
+- Coordinator leave Receive route config aligned with sidebar (#64 slice).
+- ExportModal optional custom date range (Excel/PDF). Security suites still **19 passed**; `npm run build` PASS; browser search filter confirmed on QA Observations.
+
+### Still open
+- Remaining inert Search/Export call sites campus-wide; hostel/TC NOC chains; full Create/Receive matrix beyond leave/store.
+
+---
+
+## 11 November 2026 — P1 security and data isolation (#55, #31, #34, #58a)
+
+**Status:** Four P1 items implemented and verified locally. No commit / push / deploy. No production DB or credential changes.
+
+### Done
+- **#55** Server-side class-timetable (and related academics) scoping for teacher allocation and coordinator grade bands; scoped PUT merge so writers cannot wipe out-of-scope rows.
+- **#31** Process vs Quality campus-audit stream isolation (cross-read 403, foreign ID write 422); Quality FE seeds remapped to QA IDs with stream filters.
+- **#34** Delete hidden for unauthorized roles (`canShowDeleteOption` + `DeleteRequestModal`); Teacher list pages gated; ops wipe negative kept.
+- **#58a** CA/RCT (`unit-tests`) ownership scoping; teacher denied RCA/ATR audit APIs.
+- Evidence report: `docs/QMIS_P1_SECURITY_FIX_REPORT.md`; tracker matrix in `docs/QMIS_FINAL_BUG_CLOSURE_REPORT.md` updated for these four IDs.
+
+### Still open
+- Remaining non-P1 items from the 38-bug closure audit (nav consistency, biometric attendance, observation UX, etc.).
+
+### Tests
+- Focused pytest **43 passed** (P1 isolation + ops/audit + academic phase3a + selected phase2 + teacher portal). Frontend `npm run build` PASS. Live local API negatives verified on `:8000`.
+
+---
+
 ## 10 November 2026 — Audit / communication / nav bug fixes (client feedback)
 
 **Status:** Bug-only fixes from Audit + role feedback. Feature redesigns left pending (onboarding–finance, rename Escalation, filters page, library dashboard, Request Product, relieving app, etc.).

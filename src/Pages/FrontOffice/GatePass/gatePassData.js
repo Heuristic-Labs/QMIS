@@ -1,4 +1,5 @@
 import { getStudentById, getStudentsList } from '../../../Common/StudentDatabase/studentDatabaseData'
+import { filterListRows } from '../../../Common/listFiltering'
 import {
     createFrontOfficeItem,
     deleteFrontOfficeItem,
@@ -208,6 +209,24 @@ export const updateStudentGatePass = async (id, payload) => {
     return { success: true, record: records[index] }
 }
 
+/** Principal / approver status decision without re-editing FO form fields. */
+export const decideStudentGatePassStatus = async (id, status, { decidedBy = 'Principal' } = {}) => {
+    if (!STATUS_OPTIONS.includes(status) || status === 'Pending') {
+        return { success: false, message: 'Choose Approved or Rejected.' }
+    }
+    const existing = getStudentGatePassById(id)
+    if (!existing) return { success: false, message: 'Gate pass not found.' }
+    if (existing.status !== 'Pending') {
+        return { success: false, message: `Gate pass is already ${existing.status}.` }
+    }
+    return updateStudentGatePass(id, {
+        ...existing,
+        status,
+        decidedBy,
+        decidedAt: new Date().toISOString(),
+    })
+}
+
 export const deleteStudentGatePass = async (id) => {
     if (frontOfficeApiOn()) {
         try {
@@ -221,26 +240,27 @@ export const deleteStudentGatePass = async (id) => {
     return { success: true }
 }
 
-export const filterStudentGatePasses = (records, { search = '', status = '' } = {}) => {
-    const query = search.trim().toLowerCase()
-
-    return records.filter((record) => {
-        const matchesStatus = !status || record.status === status
-        if (!matchesStatus) return false
-        if (!query) return true
-
-        return [
-            record.gatePassId,
-            record.studentId,
-            record.studentName,
-            record.classSection,
-            record.mobileNumber,
-            record.city,
-            record.reason,
-            record.status,
-        ].some((value) => String(value || '').toLowerCase().includes(query))
+export const filterStudentGatePasses = (records, { search = '', status = '', fromDate = null, toDate = null } = {}) =>
+    filterListRows(records, {
+        search,
+        searchKeys: [
+            'gatePassId',
+            'id',
+            'studentId',
+            'studentName',
+            'classSection',
+            'className',
+            'section',
+            'mobileNumber',
+            'city',
+            'reason',
+            'status',
+        ],
+        equals: { status: status || '' },
+        fromDate,
+        toDate,
+        dateKeys: ['date', 'requestDate', 'fromDate', 'createdDate'],
     })
-}
 
 export const toGatePassFormState = (record) => ({
     ...DEFAULT_GATE_PASS_FORM,

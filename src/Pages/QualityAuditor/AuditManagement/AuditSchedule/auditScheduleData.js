@@ -53,8 +53,8 @@ const buildSchedule = ({
 
 const DEFAULT_AUDIT_SCHEDULES = [
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-001',
-        auditId: 'AUD-PA-2026-041',
+        scheduleId: 'SCH-QA-2026-001',
+        auditId: 'AUD-QA-2026-041',
         auditName: 'Petty Cash & Voucher Compliance',
         department: 'Finance',
         frequency: 'Monthly',
@@ -67,8 +67,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 0,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-002',
-        auditId: 'AUD-PA-2026-042',
+        scheduleId: 'SCH-QA-2026-002',
+        auditId: 'AUD-QA-2026-042',
         auditName: 'Employee Onboarding Process',
         department: 'HR',
         frequency: 'Quarterly',
@@ -81,8 +81,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 1,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-003',
-        auditId: 'AUD-PA-2026-043',
+        scheduleId: 'SCH-QA-2026-003',
+        auditId: 'AUD-QA-2026-043',
         auditName: 'Food Safety & Kitchen Hygiene',
         department: 'Canteen',
         frequency: 'Monthly',
@@ -95,8 +95,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 2,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-004',
-        auditId: 'AUD-PA-2026-044',
+        scheduleId: 'SCH-QA-2026-004',
+        auditId: 'AUD-QA-2026-044',
         auditName: 'Inventory Control & Stock Reconciliation',
         department: 'Store',
         frequency: 'Quarterly',
@@ -109,8 +109,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 3,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-005',
-        auditId: 'AUD-PA-2026-038',
+        scheduleId: 'SCH-QA-2026-005',
+        auditId: 'AUD-QA-2026-038',
         auditName: 'Fleet Maintenance & Trip Logs',
         department: 'Transport',
         frequency: 'Monthly',
@@ -123,8 +123,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 4,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-006',
-        auditId: 'AUD-PA-2026-039',
+        scheduleId: 'SCH-QA-2026-006',
+        auditId: 'AUD-QA-2026-039',
         auditName: 'Data Backup & Access Control Policy',
         department: 'IT Support',
         frequency: 'Quarterly',
@@ -137,8 +137,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 0,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-007',
-        auditId: 'AUD-PA-2026-045',
+        scheduleId: 'SCH-QA-2026-007',
+        auditId: 'AUD-QA-2026-045',
         auditName: 'Classroom Safety & Housekeeping Standards',
         department: 'Housekeeping',
         frequency: 'Monthly',
@@ -151,8 +151,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 1,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-2026-008',
-        auditId: 'AUD-PA-2026-046',
+        scheduleId: 'SCH-QA-2026-008',
+        auditId: 'AUD-QA-2026-046',
         auditName: 'Examination Workflow Compliance',
         department: 'Academic',
         frequency: 'Ad-hoc',
@@ -165,8 +165,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 2,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-REC-WEEK',
-        auditId: 'AUD-PA-REC-WEEK',
+        scheduleId: 'SCH-QA-REC-WEEK',
+        auditId: 'AUD-QA-REC-WEEK',
         auditName: 'Weekly Gate Safety Walk',
         department: 'Security',
         frequency: 'WEEKLY',
@@ -177,8 +177,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
         colorIdx: 3,
     }),
     buildSchedule({
-        scheduleId: 'SCH-PA-REC-MONTH',
-        auditId: 'AUD-PA-REC-MONTH',
+        scheduleId: 'SCH-QA-REC-MONTH',
+        auditId: 'AUD-QA-REC-MONTH',
         auditName: 'Monthly Fee Register Audit',
         department: 'Finance',
         frequency: 'MONTHLY',
@@ -191,8 +191,8 @@ const DEFAULT_AUDIT_SCHEDULES = [
 ]
 
 const RECURRENCE_META = {
-    'SCH-PA-REC-WEEK': { isRecurring: true, recurrenceType: 'Weekly', dayOfWeek: 1, startDate: '01-09-2026', endDate: '', scheduleKind: 'Recurring' },
-    'SCH-PA-REC-MONTH': { isRecurring: true, recurrenceType: 'Monthly', dayOfMonth: 15, startDate: '01-06-2026', endDate: '', scheduleKind: 'Recurring' },
+    'SCH-QA-REC-WEEK': { isRecurring: true, recurrenceType: 'Weekly', dayOfWeek: 1, startDate: '01-09-2026', endDate: '', scheduleKind: 'Recurring' },
+    'SCH-QA-REC-MONTH': { isRecurring: true, recurrenceType: 'Monthly', dayOfMonth: 15, startDate: '01-06-2026', endDate: '', scheduleKind: 'Recurring' },
 }
 
 const auditIdByName = () =>
@@ -356,7 +356,7 @@ export const buildSeedCalendarEvents = () => {
         events.unshift({
             id: generateId(),
             title: 'Finance Process Walkthrough',
-            description: 'SCH-PA-2026-000 · Finance · Due today',
+            description: 'SCH-QA-2026-000 · Finance · Due today',
             date: todayKey,
             startTime: '09:00',
             endTime: '10:00',
@@ -367,7 +367,7 @@ export const buildSeedCalendarEvents = () => {
     events.push({
         id: generateId(),
         title: 'Transport Compliance Review',
-        description: 'SCH-PA-2026-009 · Transport · Due next week',
+        description: 'SCH-QA-2026-009 · Transport · Due next week',
         date: toDateKey(addDays(today, 7)),
         startTime: '14:00',
         endTime: '15:30',

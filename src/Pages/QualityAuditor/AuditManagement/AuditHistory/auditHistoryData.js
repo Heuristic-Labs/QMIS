@@ -50,7 +50,7 @@ const buildHistory = ({
 
 const DEFAULT_AUDIT_HISTORY = [
     buildHistory({
-        auditNumber: 'AUD-PA-2026-038',
+        auditNumber: 'AUD-QA-2026-038',
         auditName: 'Fleet Maintenance & Trip Logs',
         department: 'Transport',
         campus: 'Main Campus',
@@ -62,7 +62,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-039',
+        auditNumber: 'AUD-QA-2026-039',
         auditName: 'Data Backup & Access Control Policy',
         department: 'IT Support',
         campus: 'Main Campus',
@@ -74,7 +74,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-031',
+        auditNumber: 'AUD-QA-2026-031',
         auditName: 'Canteen Hygiene & Food Safety Audit',
         department: 'Canteen',
         campus: 'Main Campus',
@@ -86,7 +86,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Partial',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-029',
+        auditNumber: 'AUD-QA-2026-029',
         auditName: 'Store Inventory & Stock Control',
         department: 'Store',
         campus: 'North Campus',
@@ -98,7 +98,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-025',
+        auditNumber: 'AUD-QA-2026-025',
         auditName: 'HR Onboarding & Documentation Review',
         department: 'HR',
         campus: 'Main Campus',
@@ -110,7 +110,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-022',
+        auditNumber: 'AUD-QA-2026-022',
         auditName: 'Finance Petty Cash Reconciliation',
         department: 'Finance',
         campus: 'Main Campus',
@@ -122,7 +122,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Fail',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-018',
+        auditNumber: 'AUD-QA-2026-018',
         auditName: 'Housekeeping Standards — Academic Block',
         department: 'Housekeeping',
         campus: 'South Campus',
@@ -134,7 +134,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-015',
+        auditNumber: 'AUD-QA-2026-015',
         auditName: 'Examination Cell Process Compliance',
         department: 'Academic',
         campus: 'East Campus',
@@ -146,7 +146,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Partial',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-012',
+        auditNumber: 'AUD-QA-2026-012',
         auditName: 'Laboratory Safety & Equipment Check',
         department: 'Academic',
         campus: 'Main Campus',
@@ -158,7 +158,7 @@ const DEFAULT_AUDIT_HISTORY = [
         result: 'Pass',
     }),
     buildHistory({
-        auditNumber: 'AUD-PA-2026-008',
+        auditNumber: 'AUD-QA-2026-008',
         auditName: 'Security & Visitor Management Audit',
         department: 'Academic',
         campus: 'North Campus',

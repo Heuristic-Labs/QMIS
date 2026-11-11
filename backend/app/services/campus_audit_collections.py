@@ -66,7 +66,9 @@ _ADMINS = {"admin", "superadmin", "managing_director"}
 _JD_AUDIT = {"jointdirectoraudit"} | _ADMINS
 _PROCESS = {"processauditor"} | _ADMINS
 _QUALITY = {"qualityauditor"} | _ADMINS
-_READ_ALL_AUDIT = _JD_AUDIT | _PROCESS | _QUALITY | {"jointdirector", "principal", "director"}
+# Leadership may oversee both streams; Process and Quality must not cross-read each other.
+_OVERSIGHT = _JD_AUDIT | {"jointdirector", "principal", "director"}
+_READ_ALL_AUDIT = _OVERSIGHT | _PROCESS | _QUALITY
 
 
 def _writers_for(collection: str) -> set[str]:
@@ -80,7 +82,17 @@ def _writers_for(collection: str) -> set[str]:
 
 
 def _readers_for(collection: str) -> set[str]:
-    return _READ_ALL_AUDIT | _writers_for(collection)
+    writers = _writers_for(collection)
+    if collection.startswith("process-"):
+        # Process stream: Process Auditor + JD Audit + campus oversight. Not Quality Auditor.
+        return writers | _OVERSIGHT
+    if collection.startswith("quality-"):
+        # Quality stream: Quality Auditor + JD Audit + campus oversight. Not Process Auditor.
+        return writers | _OVERSIGHT
+    if collection.startswith("audit-"):
+        # Shared JD configuration remains readable by both auditor personas.
+        return _READ_ALL_AUDIT
+    return writers
 
 
 def _code(db: Session, actor: User) -> str:
@@ -117,6 +129,47 @@ def _public_id_for(body: dict, fallback: str) -> str:
     return fallback
 
 
+def _stream_for_collection(collection: str) -> str | None:
+    if collection.startswith("process-"):
+        return "PROCESS"
+    if collection.startswith("quality-"):
+        return "QUALITY"
+    return None
+
+
+def _item_allowed_in_stream(collection: str, item: dict) -> bool:
+    """Reject cross-stream IDs / stamps that land in the wrong auditor collection."""
+    stream = _stream_for_collection(collection)
+    if stream is None:
+        return True
+    stamped = str(item.get("auditStream") or item.get("stream") or "").strip().upper()
+    if stamped and stamped != stream:
+        return False
+    foreign = "QA" if stream == "PROCESS" else "PA"
+    blob = " ".join(
+        str(item.get(key) or "")
+        for key in (
+            "id",
+            "observationId",
+            "auditId",
+            "auditNumber",
+            "auditReference",
+            "atrNumber",
+            "scheduleId",
+            "rcaId",
+            "referenceNumber",
+        )
+    )
+    markers = (
+        f"OBS-{foreign}",
+        f"AUD-{foreign}",
+        f"ATR-{foreign}",
+        f"SCH-{foreign}",
+        f"RCA-{foreign}",
+    )
+    return not any(marker in blob for marker in markers)
+
+
 def list_records(db: Session, actor: User, collection: str) -> list[dict]:
     _ensure_collection(collection)
     if not _can_read(db, actor, collection):
@@ -129,7 +182,11 @@ def list_records(db: Session, actor: User, collection: str) -> list[dict]:
         )
         .order_by(CampusAuditRecord.created_at.desc())
     ).all()
-    return [_as_item(row) for row in rows]
+    return [
+        item
+        for item in (_as_item(row) for row in rows)
+        if _item_allowed_in_stream(collection, item)
+    ]
 
 
 def replace_records(db: Session, actor: User, collection: str, items: list) -> list[dict]:
@@ -140,6 +197,7 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
         fail(422, "invalid_body", "Body must be a JSON array.")
 
     previous = list_records(db, actor, collection)
+    stream = _stream_for_collection(collection)
     db.execute(
         delete(CampusAuditRecord).where(
             CampusAuditRecord.campus_id == actor.campus_id,
@@ -161,6 +219,14 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
             fail(422, "duplicate", f"Duplicate id in payload: {public_id}")
         seen.add(public_id)
         payload = {**raw, "id": public_id}
+        if stream:
+            payload["auditStream"] = stream
+            if not _item_allowed_in_stream(collection, payload):
+                fail(
+                    422,
+                    "invalid_body",
+                    f"Record {public_id} does not belong to the {stream} audit stream.",
+                )
         db.add(
             CampusAuditRecord(
                 id=uuid.uuid4(),

@@ -5,6 +5,8 @@ import Dropdown from '../../../../Common/CommonComponents/Dropdown'
 import ExportModal from '../../../../Common/CommonComponents/ExportModal'
 import EditRequestModal from '../../../../Common/CommonComponents/EditRequestModal'
 import DeleteRequestModal from '../../../../Common/CommonComponents/DeleteRequestModal'
+import { canShowDeleteOption } from '../../../../Common/CommonComponents/approvalGates'
+import { useAuth } from '../../../../context/AuthContext'
 import pdf_icon from '../../../../assets/images/pdf-icon.png'
 import noAssign from '../../../../assets/images/no-assign.png'
 import {
@@ -60,6 +62,8 @@ const SampleQuestionsEmpty = ({ routeBase, viewMode }) => {
 const SampleQuestionsList = ({ items, routeBase, viewMode }) => {
     const isStudent = viewMode === 'student'
     const { activeStudent } = useActiveStudent()
+    const { role } = useAuth()
+    const showDelete = canShowDeleteOption(role)
     const assignments = useTeacherAssignments()
     const [filters, setFilters] = useState(emptyFilters)
     const [exportModal, setExportModal] = useState(false)
@@ -257,7 +261,7 @@ const SampleQuestionsList = ({ items, routeBase, viewMode }) => {
                                                     </button>
                                                     <button
                                                         type='button'
-                                                        onClick={() => setDeleteRequestModal(true)}
+                                                        onClick={() => { if (showDelete) setDeleteRequestModal(true) }}
                                                         className='w-full text-left p-2 hover:bg-[#515DEF] hover:text-white rounded cursor-pointer'
                                                     >
                                                         Delete

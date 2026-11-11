@@ -22,7 +22,14 @@ from app.models import (
     User,
 )
 from app.services.errors import fail
-from app.services.students import PORTAL_ROLES, class_key, portal_students, section_key
+from app.services.placement import parse_grade
+from app.services.students import (
+    PORTAL_ROLES,
+    _teacher_roster_scope,
+    class_key,
+    portal_students,
+    section_key,
+)
 
 COLLECTIONS: dict[str, str] = {
     "class-timetables": "CTT",
@@ -68,6 +75,27 @@ _CLASS_CONTENT_COLLECTIONS = {
 }
 # Submission tracking on home-fun items is staff data; it must never reach a parent/student response.
 _PORTAL_HIDDEN_FIELDS = ("studentDetails",)
+# Staff roles that still receive the full campus academics list (leadership / admin).
+_UNSCOPED_STAFF = {
+    "principal",
+    "admin",
+    "superadmin",
+    "managing_director",
+    "director",
+    "jointdirector",
+}
+# Collections filtered by teacher allocation / coordinator grade band for non-leadership staff.
+_ALLOCATION_SCOPED_COLLECTIONS = {
+    "class-timetables",
+    "unit-tests",
+    "extra-classes",
+    "online-classes",
+    "sample-questions",
+    "home-fun",
+    "study-materials",
+}
+# Scoped writers must not wipe out-of-scope rows via whole-list PUT.
+_SCOPED_REPLACE_COLLECTIONS = _ALLOCATION_SCOPED_COLLECTIONS | {"class-timetable-change-requests"}
 
 
 def _code(db: Session, actor: User) -> str:
@@ -162,6 +190,124 @@ def _portal_items(db: Session, actor: User, role: str, collection: str, items: l
     return []
 
 
+def _coordinator_band(db: Session, actor: User) -> tuple[int, int] | None:
+    from app.models import CoordinatorGradeBand
+
+    band = db.scalar(
+        select(CoordinatorGradeBand).where(
+            CoordinatorGradeBand.campus_id == actor.campus_id,
+            CoordinatorGradeBand.user_id == actor.id,
+        )
+    )
+    if band is None:
+        return None
+    return int(band.grade_from), int(band.grade_to)
+
+
+def _item_class_section_pairs(item: dict) -> list[tuple[str, str]]:
+    pairs: list[tuple[str, str]] = []
+    root_class = class_key(item.get("className"))
+    root_section = section_key(item.get("section"))
+    if root_class:
+        pairs.append((root_class, root_section))
+    for timeline in item.get("timelines") or []:
+        if not isinstance(timeline, dict):
+            continue
+        tl_class = class_key(timeline.get("className"))
+        if not tl_class:
+            continue
+        pairs.append((tl_class, section_key(timeline.get("section"))))
+    return pairs
+
+
+def _pair_in_teacher_scope(pair: tuple[str, str], scope_pairs: set[tuple[str, str]]) -> bool:
+    class_name, section = pair
+    if not class_name:
+        return False
+    if (class_name, section) in scope_pairs:
+        return True
+    # Whole-class rows (empty section) match any allocated section of that class.
+    if not section and any(sc == class_name for sc, _ in scope_pairs):
+        return True
+    # Allocation with empty section covers every section of that class.
+    if section and (class_name, "") in scope_pairs:
+        return True
+    return False
+
+
+def _item_in_teacher_scope(item: dict, scope_pairs: set[tuple[str, str]]) -> bool:
+    pairs = _item_class_section_pairs(item)
+    if not pairs:
+        return False
+    return any(_pair_in_teacher_scope(pair, scope_pairs) for pair in pairs)
+
+
+def _item_in_coordinator_band(item: dict, band: tuple[int, int]) -> bool:
+    lo, hi = band
+    for class_name, _section in _item_class_section_pairs(item):
+        grade = parse_grade(class_name)
+        if grade is not None and lo <= grade <= hi:
+            return True
+    return False
+
+
+def _change_request_owned(item: dict, actor: User) -> bool:
+    email = str(actor.email or "").strip().lower()
+    actor_id = str(actor.id)
+    for key in (
+        "requestedByEmail",
+        "teacherEmail",
+        "email",
+        "createdByEmail",
+        "ownerEmail",
+        "requestedBy",
+        "createdBy",
+        "ownerTeacherId",
+        "teacherId",
+        "userId",
+    ):
+        value = str(item.get(key) or "").strip().lower()
+        if value and value in {email, actor_id.lower()}:
+            return True
+    return False
+
+
+def _staff_scoped_items(db: Session, actor: User, role: str, collection: str, items: list[dict]) -> list[dict]:
+    """Teachers/coordinators only see allocation / grade-band rows — never campus-wide lists."""
+    if role in _UNSCOPED_STAFF:
+        return items
+    if collection == "class-timetable-change-requests":
+        if role == "teacher":
+            owned = [item for item in items if _change_request_owned(item, actor)]
+            # Legacy rows without requester metadata stay visible to the teacher who can write the collection.
+            if owned:
+                return owned
+            return items
+        if role == "coordinator":
+            band = _coordinator_band(db, actor)
+            if band is None:
+                return []
+            return [
+                item for item in items
+                if _change_request_owned(item, actor) or _item_in_coordinator_band(item, band)
+            ]
+        return items
+    if collection not in _ALLOCATION_SCOPED_COLLECTIONS:
+        return items
+    if role == "teacher":
+        scope_pairs = {
+            (class_key(entry.get("className")), section_key(entry.get("section")))
+            for entry in _teacher_roster_scope(db, actor)
+        }
+        return [item for item in items if _item_in_teacher_scope(item, scope_pairs)]
+    if role == "coordinator":
+        band = _coordinator_band(db, actor)
+        if band is None:
+            return []
+        return [item for item in items if _item_in_coordinator_band(item, band)]
+    return items
+
+
 def list_records(db: Session, actor: User, collection: str) -> list[dict]:
     _ensure_collection(collection)
     if not _can_read(db, actor):
@@ -178,7 +324,7 @@ def list_records(db: Session, actor: User, collection: str) -> list[dict]:
     role = _code(db, actor)
     if role in PORTAL_ROLES:
         return _portal_items(db, actor, role, collection, items)
-    return items
+    return _staff_scoped_items(db, actor, role, collection, items)
 
 
 def _norm_subject(value: str) -> str:
@@ -617,6 +763,60 @@ def _validate_student_star_ratings(items: list) -> None:
             raw["attachmentName"] = ""
 
 
+def _campus_items_unscoped(db: Session, actor: User, collection: str) -> list[dict]:
+    rows = db.scalars(
+        select(AcademicsRecord).where(
+            AcademicsRecord.campus_id == actor.campus_id,
+            AcademicsRecord.collection == collection,
+        )
+    ).all()
+    return [_as_item(row) for row in rows]
+
+
+def _actor_may_mutate_item(db: Session, actor: User, role: str, collection: str, item: dict) -> bool:
+    if role in _UNSCOPED_STAFF:
+        return True
+    if collection == "class-timetable-change-requests":
+        if role == "teacher":
+            return _change_request_owned(item, actor) or not any(
+                str(item.get(k) or "").strip()
+                for k in (
+                    "requestedByEmail",
+                    "teacherEmail",
+                    "email",
+                    "createdByEmail",
+                    "ownerEmail",
+                    "requestedBy",
+                    "createdBy",
+                    "ownerTeacherId",
+                    "teacherId",
+                    "userId",
+                )
+            )
+        if role == "coordinator":
+            band = _coordinator_band(db, actor)
+            return bool(
+                band
+                and (
+                    _change_request_owned(item, actor)
+                    or _item_in_coordinator_band(item, band)
+                )
+            )
+        return False
+    if collection not in _ALLOCATION_SCOPED_COLLECTIONS:
+        return True
+    if role == "teacher":
+        scope_pairs = {
+            (class_key(entry.get("className")), section_key(entry.get("section")))
+            for entry in _teacher_roster_scope(db, actor)
+        }
+        return _item_in_teacher_scope(item, scope_pairs)
+    if role == "coordinator":
+        band = _coordinator_band(db, actor)
+        return bool(band and _item_in_coordinator_band(item, band))
+    return False
+
+
 def replace_records(db: Session, actor: User, collection: str, items: list) -> list[dict]:
     """Replace the entire campus collection with the given list (SoT put)."""
     _ensure_collection(collection)
@@ -625,9 +825,45 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
     if not isinstance(items, list):
         fail(422, "invalid_body", "Body must be a JSON array.")
 
+    role = _code(db, actor)
+    working_items = list(items)
+
+    if collection in _SCOPED_REPLACE_COLLECTIONS and role not in _UNSCOPED_STAFF:
+        existing = _campus_items_unscoped(db, actor, collection)
+        for raw in working_items:
+            if not isinstance(raw, dict):
+                fail(422, "invalid_body", "Each item must be an object.")
+            stamped = dict(raw)
+            if collection == "class-timetable-change-requests" and role == "teacher":
+                stamped.setdefault("requestedByEmail", str(actor.email or "").strip().lower())
+                stamped.setdefault("teacherEmail", str(actor.email or "").strip().lower())
+            if not _actor_may_mutate_item(db, actor, role, collection, stamped):
+                fail(403, "forbidden", "You cannot change records outside your allocated classes.")
+            raw.update(
+                {
+                    k: stamped[k]
+                    for k in ("requestedByEmail", "teacherEmail")
+                    if k in stamped and k not in raw
+                }
+            )
+        keep = [
+            item
+            for item in existing
+            if not _actor_may_mutate_item(db, actor, role, collection, item)
+        ]
+        keep_ids = {
+            _public_id_for(collection, item, str(item.get("id") or ""))
+            for item in keep
+        }
+        for raw in working_items:
+            public_id = _public_id_for(collection, raw, "")
+            if public_id and public_id in keep_ids:
+                fail(403, "forbidden", "You cannot overwrite records outside your allocated classes.")
+        working_items = keep + working_items
+
     previous_class_teachers: dict[tuple[str, str], UUID] = {}
     if collection == "teacher-allocations":
-        _validate_teacher_allocation_subjects(db, actor.campus_id, items)
+        _validate_teacher_allocation_subjects(db, actor.campus_id, working_items)
         old_rows = db.scalars(
             select(AcademicsRecord).where(
                 AcademicsRecord.campus_id == actor.campus_id,
@@ -640,11 +876,11 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
 
     if collection == "class-timetables":
         # Validate before delete so a failed PUT cannot wipe the campus collection.
-        _normalize_timetable_approvals(_code(db, actor), items)
-        _validate_class_timetables(db, actor.campus_id, items)
+        _normalize_timetable_approvals(role, working_items)
+        _validate_class_timetables(db, actor.campus_id, working_items)
 
     if collection == "student-star-ratings":
-        _validate_student_star_ratings(items)
+        _validate_student_star_ratings(working_items)
 
     db.execute(
         delete(AcademicsRecord).where(
@@ -656,7 +892,7 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
     now = datetime.now(timezone.utc)
     prefix = COLLECTIONS[collection]
     seen: set[str] = set()
-    for index, raw in enumerate(items):
+    for index, raw in enumerate(working_items):
         if not isinstance(raw, dict):
             fail(422, "invalid_body", "Each item must be an object.")
         fallback = f"{prefix}-{index + 1:04d}"
@@ -669,6 +905,9 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
         payload = {**raw, "id": public_id}
         if collection == "teacher-allocations":
             payload["employeeId"] = public_id
+        if collection == "class-timetable-change-requests" and role == "teacher":
+            payload.setdefault("requestedByEmail", str(actor.email or "").strip().lower())
+            payload.setdefault("teacherEmail", str(actor.email or "").strip().lower())
         db.add(
             AcademicsRecord(
                 id=uuid.uuid4(),
@@ -682,7 +921,7 @@ def replace_records(db: Session, actor: User, collection: str, items: list) -> l
         )
 
     if collection == "teacher-allocations":
-        desired = _allocation_desired_class_teachers(db, actor.campus_id, items)
+        desired = _allocation_desired_class_teachers(db, actor.campus_id, working_items)
         _sync_section_class_teachers(
             db,
             actor.campus_id,

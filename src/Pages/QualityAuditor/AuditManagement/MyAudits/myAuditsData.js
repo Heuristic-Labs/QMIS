@@ -61,6 +61,7 @@ const buildAudit = ({
 }) => ({
     id: auditId,
     auditId,
+    auditStream: 'QUALITY',
     auditName,
     auditType,
     department,
@@ -75,7 +76,7 @@ const buildAudit = ({
 
 const DEFAULT_MY_AUDITS = [
     buildAudit({
-        auditId: 'AUD-PA-2026-041',
+        auditId: 'AUD-QA-2026-041',
         auditName: 'Petty Cash & Voucher Compliance',
         auditType: 'Financial Compliance',
         department: 'Finance',
@@ -88,7 +89,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Monthly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-042',
+        auditId: 'AUD-QA-2026-042',
         auditName: 'Employee Onboarding Process',
         auditType: 'Process Compliance',
         department: 'HR',
@@ -101,7 +102,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Quarterly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-043',
+        auditId: 'AUD-QA-2026-043',
         auditName: 'Food Safety & Kitchen Hygiene',
         auditType: 'Safety & Hygiene',
         department: 'Canteen',
@@ -114,7 +115,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Monthly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-044',
+        auditId: 'AUD-QA-2026-044',
         auditName: 'Inventory Control & Stock Reconciliation',
         auditType: 'Inventory Verification',
         department: 'Store',
@@ -127,7 +128,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Quarterly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-038',
+        auditId: 'AUD-QA-2026-038',
         auditName: 'Fleet Maintenance & Trip Logs',
         auditType: 'Operational Audit',
         department: 'Transport',
@@ -140,7 +141,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Monthly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-039',
+        auditId: 'AUD-QA-2026-039',
         auditName: 'Data Backup & Access Control Policy',
         auditType: 'IT Security Review',
         department: 'IT Support',
@@ -153,7 +154,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Quarterly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-045',
+        auditId: 'AUD-QA-2026-045',
         auditName: 'Classroom Safety & Housekeeping Standards',
         auditType: 'Safety & Hygiene',
         department: 'Housekeeping',
@@ -166,7 +167,7 @@ const DEFAULT_MY_AUDITS = [
         frequency: 'Monthly',
     }),
     buildAudit({
-        auditId: 'AUD-PA-2026-046',
+        auditId: 'AUD-QA-2026-046',
         auditName: 'Examination Workflow Compliance',
         auditType: 'Process Compliance',
         department: 'Academic',

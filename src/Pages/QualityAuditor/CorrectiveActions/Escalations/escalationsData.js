@@ -58,7 +58,7 @@ const buildEscalation = ({
 const DEFAULT_ESCALATIONS = [
     buildEscalation({
         escalationId: 'ESC-PA-2026-006',
-        observationId: 'OBS-PA-2026-014',
+        observationId: 'OBS-QA-2026-014',
         observationTitle: 'Food storage temperature log missing',
         department: 'Canteen',
         escalatedTo: 'Joint Director Audit',
@@ -70,7 +70,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2026-005',
-        observationId: 'OBS-PA-2026-011',
+        observationId: 'OBS-QA-2026-011',
         observationTitle: 'Fire extinguisher expired on Bus TN-12-AB-4521',
         department: 'Transport',
         escalatedTo: 'Principal',
@@ -82,7 +82,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2026-004',
-        observationId: 'OBS-PA-2026-013',
+        observationId: 'OBS-QA-2026-013',
         observationTitle: 'Petty cash voucher unsigned',
         department: 'Finance',
         escalatedTo: 'Department Head',
@@ -94,7 +94,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2026-003',
-        observationId: 'OBS-PA-2026-012',
+        observationId: 'OBS-QA-2026-012',
         observationTitle: 'Corridor cleaning schedule not displayed',
         department: 'Housekeeping',
         escalatedTo: 'Department Head',
@@ -106,7 +106,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2026-002',
-        observationId: 'OBS-PA-2026-009',
+        observationId: 'OBS-QA-2026-009',
         observationTitle: 'Backup verification log incomplete',
         department: 'IT Support',
         escalatedTo: 'Admin',
@@ -118,7 +118,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2026-001',
-        observationId: 'OBS-PA-2026-007',
+        observationId: 'OBS-QA-2026-007',
         observationTitle: 'Staff hygiene compliance below standard',
         department: 'Canteen',
         escalatedTo: 'Joint Director Audit',
@@ -130,7 +130,7 @@ const DEFAULT_ESCALATIONS = [
     }),
     buildEscalation({
         escalationId: 'ESC-PA-2025-012',
-        observationId: 'OBS-PA-2026-003',
+        observationId: 'OBS-QA-2026-003',
         observationTitle: 'Answer script register incomplete',
         department: 'Academic',
         escalatedTo: 'Principal',

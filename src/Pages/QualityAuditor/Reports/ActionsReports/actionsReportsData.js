@@ -23,10 +23,10 @@ export const computeDaysLeft = (dueDate, reference = new Date()) => {
 }
 
 const CLOSED_META = {
-    'OBS-PA-2026-009': { closedBy: 'Mr. Arjun Mehta', closedDate: '10-06-2026', daysTaken: 9 },
-    'OBS-PA-2026-007': { closedBy: 'Mr. Ramesh Iyer', closedDate: '28-05-2026', daysTaken: 6 },
-    'OBS-PA-2026-005': { closedBy: 'Mr. Vikram Singh', closedDate: '05-06-2026', daysTaken: 35 },
-    'OBS-PA-2026-003': { closedBy: 'Prof. Anil Kapoor', closedDate: '25-04-2026', daysTaken: 5 },
+    'OBS-QA-2026-009': { closedBy: 'Mr. Arjun Mehta', closedDate: '10-06-2026', daysTaken: 9 },
+    'OBS-QA-2026-007': { closedBy: 'Mr. Ramesh Iyer', closedDate: '28-05-2026', daysTaken: 6 },
+    'OBS-QA-2026-005': { closedBy: 'Mr. Vikram Singh', closedDate: '05-06-2026', daysTaken: 35 },
+    'OBS-QA-2026-003': { closedBy: 'Prof. Anil Kapoor', closedDate: '25-04-2026', daysTaken: 5 },
 }
 
 const buildPendingFromObservations = () =>
