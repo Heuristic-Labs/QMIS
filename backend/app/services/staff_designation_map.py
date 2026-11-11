@@ -65,8 +65,8 @@ def map_role_from_designation(designation: str) -> str:
     - Accountant / Accounts Trainee / Senior Accountant → accountassistant
     - HR Executive / Audit Cum HR Facilitator → hr
     - System Administrator → itsupportmanager
-    - HK Supervisor / Housekeeping / Maintenance Officer → housekeepingmanager
-      (no separate Maintenance Manager portal)
+    - HK Supervisor / Housekeeping → housekeepingmanager
+    - Maintenance Officer / Maintenance Manager → maintenancemanager
     - Transport Manager → transportmanager
     - Driver → driver
     - Librarian → librarian
@@ -154,15 +154,23 @@ def map_role_from_designation(designation: str) -> str:
     if "system administrator" in d:
         return "itsupportmanager"
 
-    # Housekeeping / Maintenance share the Housekeeping Manager portal (no separate Maintenance role).
+    # Housekeeping stays on the Housekeeping Manager portal.
     if (
         "hk supervisor" in d
         or "housekeep" in d
-        or "maintenance officer" in d
-        or "maintenance" in d
-        or compact in {"hksupervisor", "housekeepingmanager", "maintenanceofficer"}
+        or compact in {"hksupervisor", "housekeepingmanager"}
     ):
         return "housekeepingmanager"
+
+    # Maintenance is a separate department head portal (Facilities tickets + maint-* ops).
+    if (
+        "maintenance officer" in d
+        or "maintenance manager" in d
+        or "maintenance" in d
+        or "facilities manager" in d
+        or compact in {"maintenanceofficer", "maintenancemanager", "facilitiesmanager"}
+    ):
+        return "maintenancemanager"
 
     if (
         "transport manager" in d

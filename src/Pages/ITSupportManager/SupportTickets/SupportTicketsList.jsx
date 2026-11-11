@@ -35,10 +35,13 @@ const SupportTicketsList = ({
         }
     }, [])
 
-    const departmentOptions = useMemo(
-        () => [...new Set(tickets.map((ticket) => ticket.department).filter(Boolean))].sort(),
-        [tickets],
-    )
+    const departmentOptions = useMemo(() => {
+        const fromData = [...new Set(tickets.map((ticket) => ticket.department).filter(Boolean))]
+        if (defaultDepartment && !fromData.includes(defaultDepartment)) {
+            fromData.push(defaultDepartment)
+        }
+        return fromData.sort()
+    }, [tickets, defaultDepartment])
 
     const filtered = useMemo(() => tickets.filter((ticket) => {
         const query = search.trim().toLowerCase()

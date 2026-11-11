@@ -58,6 +58,7 @@ DEFAULT_AUDIENCE = [
     "gatekeeper",
     "admin",
     "housekeepingmanager",
+    "maintenancemanager",
     "stationerystoremanager",
     "canteenmanager",
     "itsupportmanager",

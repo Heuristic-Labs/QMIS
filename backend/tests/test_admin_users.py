@@ -429,6 +429,7 @@ def test_creatable_roles_for_admin(client):
         "itsupportmanager",
         "stationerystoremanager",
         "housekeepingmanager",
+        "maintenancemanager",
     } <= codes
     assert "admin" not in codes
     assert "superadmin" not in codes

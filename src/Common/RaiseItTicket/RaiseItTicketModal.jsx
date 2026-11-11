@@ -18,6 +18,7 @@ const ROLE_LABEL = {
     [ROLES.ACCOUNT_HEAD]: 'Finance Head',
     [ROLES.TRANSPORT_MANAGER]: 'Transport Manager',
     [ROLES.HOUSEKEEPING_MANAGER]: 'Housekeeping Manager',
+    [ROLES.MAINTENANCE_MANAGER]: 'Maintenance Manager',
     [ROLES.IT_SUPPORT_MANAGER]: 'IT Support Manager',
     [ROLES.GATEKEEPER]: 'Gate Keeper',
     [ROLES.GATEKEEPER_MANAGER]: 'Gate Keeper Manager',

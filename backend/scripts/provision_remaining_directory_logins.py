@@ -46,7 +46,7 @@ ROLE_LABELS = dict(ALL_ROLES)
 _TEMP_RULES: list[tuple[str, str]] = [
     ("hk supervisor", "housekeepingmanager"),
     ("housekeep", "housekeepingmanager"),
-    ("maintenance", "housekeepingmanager"),
+    ("maintenance", "maintenancemanager"),
     ("control room", "cctv"),
     ("file room", "fileroom"),
     ("stores", "stationerystoremanager"),

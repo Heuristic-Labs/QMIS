@@ -419,6 +419,11 @@ export const singleTitleMapping = {
 
     // ── Housekeeping Manager Role ─────────────────────────────────────────────
     "/housekeeping-manager/dashboard": "Dashboard",
+    "/maintenance-manager/dashboard": "Dashboard",
+    "/maintenance-manager/tickets": "Facilities Tickets",
+    "/maintenance-manager/duty-allotment": "Duty Allotment",
+    "/maintenance-manager/schedules": "Maintenance Schedules",
+    "/maintenance-manager/checklists": "Maintenance Checklists",
     "/housekeeping-manager/task-management/my-tasks": "My Tasks",
     "/housekeeping-manager/task-management/assign-tasks": "Assign Tasks List",
     "/housekeeping-manager/task-management/assign-tasks/add": "Assign Task",
@@ -1058,6 +1063,8 @@ const dynamicTitleMatchers = [
     { test: (p) => /^\/it-support-manager\/support-tickets\/view-ticket\/[^/]+$/.test(p), title: 'View Ticket' },
     { test: (p) => /^\/it-support-manager\/requests-approvals\/view-request\/[^/]+$/.test(p), title: 'View Request Details' },
     { test: (p) => /^\/it-support-manager\/broadcast\/view-broadcast\/[^/]+$/.test(p), title: 'View Announcement Details' },
+    { test: (p) => /^\/maintenance-manager\/tickets\/view-ticket\/[^/]+$/.test(p), title: 'View Facilities Ticket' },
+    { test: (p) => /^\/housekeeping-manager\/tickets\/view-ticket\/[^/]+$/.test(p), title: 'View Ticket' },
     { test: (p) => /^\/stationery-store-manager\/inventory\/view-item\/[^/]+$/.test(p), title: 'View Inventory Item' },
     { test: (p) => /^\/stationery-store-manager\/issue-returns\/view\/[^/]+$/.test(p), title: 'View Issue / Return' },
     { test: (p) => /^\/stationery-store-manager\/requests-approvals\/view-request\/[^/]+$/.test(p), title: 'View Request Details' },

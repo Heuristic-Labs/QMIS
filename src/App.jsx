@@ -17,6 +17,7 @@ const CanteenManagerLayout = lazy(() => import("./Layout/CanteenManagerLayout"))
 const ITSupportManagerLayout = lazy(() => import("./Layout/ITSupportManagerLayout"));
 const StationeryStoreManagerLayout = lazy(() => import("./Layout/StationeryStoreManagerLayout"));
 const HousekeepingManagerLayout = lazy(() => import("./Layout/HousekeepingManagerLayout"));
+const MaintenanceManagerLayout = lazy(() => import("./Layout/MaintenanceManagerLayout"));
 const TransportManagerLayout = lazy(() => import("./Layout/TransportManagerLayout"));
 const TeacherLayout = lazy(() => import("./Layout/TeacherLayout"));
 const CoordinatorLayout = lazy(() => import("./Layout/CoordinatorLayout"));
@@ -182,6 +183,13 @@ const App = () => {
     return withSuspense(<HousekeepingManagerLayout />);
   }
 
+  if (role === ROLES.MAINTENANCE_MANAGER) {
+    if (!pathname.startsWith("/maintenance-manager")) {
+      return <Navigate to={ROLE_HOME_PATHS[ROLES.MAINTENANCE_MANAGER]} replace />;
+    }
+    return withSuspense(<MaintenanceManagerLayout />);
+  }
+
   if (role === ROLES.TRANSPORT_MANAGER) {
     if (!pathname.startsWith("/transport-manager")) {
       return <Navigate to={ROLE_HOME_PATHS[ROLES.TRANSPORT_MANAGER]} replace />;
@@ -315,6 +323,7 @@ const App = () => {
     pathname.startsWith("/it-support-manager") ||
     pathname.startsWith("/stationery-store-manager") ||
     pathname.startsWith("/housekeeping-manager") ||
+    pathname.startsWith("/maintenance-manager") ||
     pathname.startsWith("/transport-manager") ||
     pathname.startsWith("/process-auditor") ||
     pathname.startsWith("/quality-auditor") ||

@@ -1,17 +1,17 @@
 # Testing report
 
-Latest regression for remaining P1 Search/Filters/Export/Store-Gate pass (11 November 2026).
+Latest regression for Maintenance Manager portal + Housekeeping isolation (11 November 2026).
 
 ## Focused suites
 
 ```bash
 cd backend
-python -m pytest tests/test_p1_security_isolation.py tests/test_ops_and_audit_collections.py -q
-node --test backend/scripts/_test_list_filtering.mjs
+python -m pytest tests/test_maintenance_housekeeping_isolation.py tests/test_ops_designation_maps.py -q
 ```
 
-**Pytest result:** 19 passed, 1 warning (~24s).  
-**Node listFiltering result:** 6 passed.
+**Pytest result:** 14 passed, 1 warning (~15s).
+
+Also verified ACL map helper: `hk-*` writers include `housekeepingmanager` only; `maint-*` writers include `maintenancemanager` only; tickets shared.
 
 ## Frontend
 
@@ -19,10 +19,10 @@ node --test backend/scripts/_test_list_filtering.mjs
 npm run build
 ```
 
-**Result:** PASS (~1m 9s; chunk-size warnings only).
+**Result:** PASS (MaintenanceManagerLayout chunk included; chunk-size warnings only).
 
 ## Notes
 
-- Security P1 isolation suite remains green (no regressions to #55/#31/#34/#58a).
-- New FE filter helpers covered by Node unit tests (no Vitest harness in repo).
-- Full `tests/` suite not re-run end-to-end in this pass.
+- Cross-department PUT isolation covered (Maintenance denied on `hk-*`; Housekeeping/teacher denied on `maint-*`).
+- Browser UAT (local): Maintenance duty/schedules/checklists/tickets + Housekeeping duty regression PASS.
+- Production account remap / deploy **not** tested.

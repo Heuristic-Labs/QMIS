@@ -35,6 +35,7 @@ export const ROLE_LABELS = {
     [ROLES.IT_SUPPORT_MANAGER]: 'IT Support Manager',
     [ROLES.STATIONERY_STORE_MANAGER]: 'Stationery Store Manager',
     [ROLES.HOUSEKEEPING_MANAGER]: 'Housekeeping Manager',
+    [ROLES.MAINTENANCE_MANAGER]: 'Maintenance Manager',
     [ROLES.TRANSPORT_MANAGER]: 'Transport Manager',
     [ROLES.TEACHER]: 'Teacher',
     [ROLES.COORDINATOR]: 'Coordinator',

@@ -19,6 +19,10 @@ export const CAMPUS_COLLECTION_BY_STORAGE_KEY = {
     'schoolerp-housekeeping-ro-testing-v1': { kind: 'ops', collection: 'hk-ro-testing' },
     'schoolerp-housekeeping-lost-found-v1': { kind: 'ops', collection: 'hk-lost-found' },
     'schoolerp-housekeeping-duty-v1': { kind: 'ops', collection: 'hk-duty-allotments' },
+    // Maintenance registers (isolated from housekeeping hk-*)
+    'schoolerp-maintenance-duty-v1': { kind: 'ops', collection: 'maint-duty-allotments' },
+    'schoolerp-maintenance-schedules-v1': { kind: 'ops', collection: 'maint-schedules' },
+    'schoolerp-maintenance-checklists-v1': { kind: 'ops', collection: 'maint-checklists' },
     // Shared inventory / procurement demos
     'schoolerp-inventory-v1': { kind: 'ops', collection: 'shared-inventory' },
     'schoolerp-inventory-movements-v1': { kind: 'ops', collection: 'shared-inventory-movements' },

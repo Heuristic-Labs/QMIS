@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -38,6 +38,9 @@ dist-ssr
 !docs/QMIS_FINAL_BUG_CLOSURE_REPORT.md
 !docs/QMIS_P1_SECURITY_FIX_REPORT.md
 !docs/QMIS_REMAINING_P1_IMPLEMENTATION_REPORT.md
+!docs/QMIS_MAINTENANCE_HOUSEKEEPING_ROLE_AUDIT.md
+!docs/QMIS_MAINTENANCE_ROLE_IMPLEMENTATION_REPORT.md
+!docs/QMIS_HK_MAINTENANCE_DOCUMENT_COVERAGE.md
 !reports/daily-work-report.md
 !reports/testing-report.md
 !reports/QMIS-ERP-Full-Panel-Test-Guide.md

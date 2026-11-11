@@ -145,6 +145,7 @@ def _seed_demo_users(db: Session, campus: Campus, roles_by_code: dict[str, Role]
         ("itsupportmanager", "itsupportmanager@qmis.edu", "itsupport123"),
         ("stationerystoremanager", "stationerystoremanager@qmis.edu", "stationery123"),
         ("housekeepingmanager", "housekeepingmanager@qmis.edu", "housekeeping123"),
+        ("maintenancemanager", settings.maintenance_seed_email, settings.maintenance_seed_password),
         ("fileroom", settings.fileroom_seed_email, settings.fileroom_seed_password),
         ("cctv", settings.cctv_seed_email, settings.cctv_seed_password),
         ("parent", "parent@qmis.edu", "parent123"),

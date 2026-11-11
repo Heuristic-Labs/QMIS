@@ -44,6 +44,7 @@ export const CREATABLE_ROLE_OPTIONS = [
     { role: ROLES.IT_SUPPORT_MANAGER, label: 'IT Support Manager', idPrefix: 'ITM' },
     { role: ROLES.STATIONERY_STORE_MANAGER, label: 'Stationery Store Manager', idPrefix: 'SSM' },
     { role: ROLES.HOUSEKEEPING_MANAGER, label: 'Housekeeping Manager', idPrefix: 'HKM' },
+    { role: ROLES.MAINTENANCE_MANAGER, label: 'Maintenance Manager', idPrefix: 'MTM' },
 ]
 
 export const CREATABLE_ROLES = CREATABLE_ROLE_OPTIONS.map((option) => option.role)

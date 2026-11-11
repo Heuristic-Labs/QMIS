@@ -53,6 +53,7 @@ export const ROLE_MODULES = [
             ROLES.IT_SUPPORT_MANAGER,
             ROLES.STATIONERY_STORE_MANAGER,
             ROLES.HOUSEKEEPING_MANAGER,
+            ROLES.MAINTENANCE_MANAGER,
             ROLES.TRANSPORT_MANAGER,
             ROLES.DRIVER,
         ],

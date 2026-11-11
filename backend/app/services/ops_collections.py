@@ -77,6 +77,11 @@ COLLECTIONS: dict[str, str] = {
     "hk-lost-found": "HLF",
     "hk-inventory-requirements": "HIR",
     "hk-procurement": "HPC",
+    # Maintenance (Facilities) — separate from Housekeeping hk-*
+    "maint-requests": "MRQ",
+    "maint-duty-allotments": "MDA",
+    "maint-schedules": "MSCH",
+    "maint-checklists": "MCL",
     # Shared stores
     "shared-inventory": "INV",
     "shared-inventory-movements": "IMV",
@@ -130,10 +135,12 @@ _CANTEEN = {"canteenmanager"} | _ADMINS
 _IT = {"itsupportmanager"} | _ADMINS
 _STATIONERY = {"stationerystoremanager"} | _ADMINS
 _HK = {"housekeepingmanager"} | _ADMINS
+_MAINT = {"maintenancemanager"} | _ADMINS
 # Multi-department ticket inbox roles (shared it-support-tickets collection).
 _TICKET_DEPT_ROLES = {
     "itsupportmanager",
     "housekeepingmanager",
+    "maintenancemanager",
     "stationerystoremanager",
     "transportmanager",
     "canteenmanager",
@@ -171,6 +178,8 @@ def _writers_for(collection: str) -> set[str]:
         return _STATIONERY
     if collection.startswith("hk-"):
         return _HK
+    if collection.startswith("maint-"):
+        return _MAINT
     if collection.startswith("shared-"):
         return _STORES
     if collection.startswith("jd-"):

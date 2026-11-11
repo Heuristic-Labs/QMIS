@@ -4,11 +4,15 @@ from app.services.admin_users import creatable_roles_for
 from app.services.staff_designation_map import map_role_from_designation
 
 
-def test_housekeeping_and_maintenance_map_to_housekeepingmanager():
+def test_housekeeping_maps_to_housekeepingmanager():
     assert map_role_from_designation("Housekeeping Manager") == "housekeepingmanager"
     assert map_role_from_designation("HK Supervisor") == "housekeepingmanager"
-    assert map_role_from_designation("Maintenance Officer") == "housekeepingmanager"
-    assert map_role_from_designation("maintenance") == "housekeepingmanager"
+
+
+def test_maintenance_maps_to_maintenancemanager():
+    assert map_role_from_designation("Maintenance Officer") == "maintenancemanager"
+    assert map_role_from_designation("Maintenance Manager") == "maintenancemanager"
+    assert map_role_from_designation("maintenance") == "maintenancemanager"
 
 
 def test_transport_manager_and_driver_map():
@@ -28,9 +32,10 @@ def test_unrelated_designations_unchanged():
     assert map_role_from_designation("EA to MD") == ""
 
 
-def test_admin_can_create_housekeeping_and_transport_manager():
+def test_admin_can_create_housekeeping_maintenance_and_transport_manager():
     admin = set(creatable_roles_for("admin"))
     assert "housekeepingmanager" in admin
+    assert "maintenancemanager" in admin
     assert "transportmanager" in admin
     assert "driver" in admin
     assert "pro" in admin
@@ -51,4 +56,5 @@ def test_superadmin_can_create_fileroom_cctv_admin():
     assert "admin" in sa
     assert "managing_director" in sa
     assert "housekeepingmanager" in sa
+    assert "maintenancemanager" in sa
     assert "pro" in sa

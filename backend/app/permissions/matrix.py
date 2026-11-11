@@ -16,6 +16,7 @@ FRONTEND_ROLES: list[tuple[str, str]] = [
     ("itsupportmanager", "IT Support Manager"),
     ("stationerystoremanager", "Stationery Store Manager"),
     ("housekeepingmanager", "Housekeeping Manager"),
+    ("maintenancemanager", "Maintenance Manager"),
     ("transportmanager", "Transport Manager"),
     ("teacher", "Teacher"),
     ("coordinator", "Coordinator"),
@@ -327,7 +328,8 @@ for _code, _perms in ROLE_PERMISSIONS.items():
 # (mirrors CREATOR_ROLE_KEYS in src/Common/Announcement/announcementData.js; Super Admin and the Managing
 # Director already hold every permission).
 _ANNOUNCEMENT_SENDERS = {
-    "admin", "principal", "director", "gatekeepermanager", "itsupportmanager", "housekeepingmanager", "hr",
+    "admin", "principal", "director", "gatekeepermanager", "itsupportmanager",
+    "housekeepingmanager", "maintenancemanager", "hr",
 }
 for _code, _perms in ROLE_PERMISSIONS.items():
     if "announcements.read" not in _perms:
@@ -417,6 +419,7 @@ _OPS_ROLES = {
     "itsupportmanager",
     "stationerystoremanager",
     "housekeepingmanager",
+    "maintenancemanager",
     "jointdirector",
     "jointdirectorassistant",
     "teacher",

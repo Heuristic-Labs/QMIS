@@ -32,7 +32,8 @@ SHEET_MAP = [
     ("File Room Officer", "fileroom"),
     ("File Room & Stores - In-charge", "fileroom"),
     ("Transport Manager", "transportmanager"),
-    ("Maintenance Officer", "housekeepingmanager"),
+    ("Maintenance Officer", "maintenancemanager"),
+    ("Housekeeping Manager", "housekeepingmanager"),
 ]
 
 SEED_LOGINS = [
@@ -41,6 +42,7 @@ SEED_LOGINS = [
     ("fileroom", settings.fileroom_seed_email, settings.fileroom_seed_password, "/file-room/dashboard"),
     ("transportmanager", "transportmanager@qmis.edu", "transport123", "/transport-manager/dashboard"),
     ("housekeepingmanager", "housekeepingmanager@qmis.edu", "housekeeping123", "/housekeeping-manager/dashboard"),
+    ("maintenancemanager", "maintenancemanager@qmis.edu", "maintenance123", "/maintenance-manager/dashboard"),
 ]
 
 
@@ -65,13 +67,14 @@ def test_sheet_designations_map_to_required_roles():
 
 
 def test_frontend_role_constants_and_home_paths():
-    for code in ("pro", "cctv", "fileroom", "transportmanager", "housekeepingmanager"):
+    for code in ("pro", "cctv", "fileroom", "transportmanager", "housekeepingmanager", "maintenancemanager"):
         assert f"'{code}'" in ROLES_JS or f'"{code}"' in ROLES_JS
     assert "[ROLES.PRO]: '/pro/dashboard'" in AUTH
     assert "[ROLES.CCTV]: '/cctv-room/dashboard'" in AUTH
     assert "[ROLES.FILE_ROOM]: '/file-room/dashboard'" in AUTH
     assert "[ROLES.TRANSPORT_MANAGER]: '/transport-manager/dashboard'" in AUTH
     assert "[ROLES.HOUSEKEEPING_MANAGER]: '/housekeeping-manager/dashboard'" in AUTH
+    assert "[ROLES.MAINTENANCE_MANAGER]: '/maintenance-manager/dashboard'" in AUTH
 
 
 @pytest.mark.parametrize("role,email,password,home", SEED_LOGINS)

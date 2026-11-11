@@ -15,6 +15,7 @@ export const ROLES = {
     IT_SUPPORT_MANAGER: 'itsupportmanager',
     STATIONERY_STORE_MANAGER: 'stationerystoremanager',
     HOUSEKEEPING_MANAGER: 'housekeepingmanager',
+    MAINTENANCE_MANAGER: 'maintenancemanager',
     TRANSPORT_MANAGER: 'transportmanager',
     TEACHER: 'teacher',
     COORDINATOR: 'coordinator',

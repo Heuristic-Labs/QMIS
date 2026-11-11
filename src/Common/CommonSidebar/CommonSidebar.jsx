@@ -1,8 +1,8 @@
-﻿import React, { useState, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { ChevronLeft, ChevronDown } from "lucide-react"
 import { PORTAL_LOGO, PORTAL_LOGO_ICON, PORTAL_LOGO_ALT } from "../../constants/portalLogo"
-import { superAdminSidebarLinks, canteenManagerSidebarLinks, gateKeeperManagerSidebarLinks, gateKeeperSidebarLinks, directorSidebarLinks, principalSidebarLinks, librarianSidebarLinks, prmSidebarLinks, proSidebarLinks, studentSidebarLinks, parentSidebarLinks, teacherSidebarLinks, coordinatorSidebarLinks, itSupportManagerSidebarLinks, stationeryStoreManagerSidebarLinks, housekeepingManagerSidebarLinks, transportManagerSidebarLinks, jointDirectorSidebarLinks, jointDirectorAssistantSidebarLinks, jointDirectorAuditSidebarLinks, processAuditorSidebarLinks, qualityAuditorSidebarLinks, hrSidebarLinks, accountHeadSidebarLinks, driverSidebarLinks, fileRoomSidebarLinks, cctvRoomSidebarLinks } from './Components/sidebarLinks'
+import { superAdminSidebarLinks, canteenManagerSidebarLinks, gateKeeperManagerSidebarLinks, gateKeeperSidebarLinks, directorSidebarLinks, principalSidebarLinks, librarianSidebarLinks, prmSidebarLinks, proSidebarLinks, studentSidebarLinks, parentSidebarLinks, teacherSidebarLinks, coordinatorSidebarLinks, itSupportManagerSidebarLinks, stationeryStoreManagerSidebarLinks, housekeepingManagerSidebarLinks, maintenanceManagerSidebarLinks, transportManagerSidebarLinks, jointDirectorSidebarLinks, jointDirectorAssistantSidebarLinks, jointDirectorAuditSidebarLinks, processAuditorSidebarLinks, qualityAuditorSidebarLinks, hrSidebarLinks, accountHeadSidebarLinks, driverSidebarLinks, fileRoomSidebarLinks, cctvRoomSidebarLinks } from './Components/sidebarLinks'
 import { getFilteredAdminSidebarLinks } from '../../Pages/SuperAdmin/UserCreation/adminUsersData'
 import {
     getFilteredCoordinatorSidebarLinks,
@@ -38,6 +38,7 @@ const CommonSidebar = ({ sidebarHidden, toggleSidebar }) => {
         if (location.pathname.startsWith('/it-support-manager')) return itSupportManagerSidebarLinks
         if (location.pathname.startsWith('/stationery-store-manager')) return stationeryStoreManagerSidebarLinks
         if (location.pathname.startsWith('/housekeeping-manager')) return housekeepingManagerSidebarLinks
+        if (location.pathname.startsWith('/maintenance-manager')) return maintenanceManagerSidebarLinks
         if (location.pathname.startsWith('/transport-manager')) return transportManagerSidebarLinks
         if (location.pathname.startsWith('/process-auditor')) return processAuditorSidebarLinks
         if (location.pathname.startsWith('/quality-auditor')) return qualityAuditorSidebarLinks

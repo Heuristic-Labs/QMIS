@@ -536,6 +536,7 @@ _DEPARTMENT_HEADS = {
     "accounthead",
     "transportmanager",
     "housekeepingmanager",
+    "maintenancemanager",
     "canteenmanager",
     "itsupportmanager",
     "librarian",

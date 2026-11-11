@@ -1172,6 +1172,39 @@ export const stationeryStoreManagerSidebarLinks = [
     },
 ];
 
+export const maintenanceManagerSidebarLinks = [
+    {
+        id: 1,
+        title: "Dashboard",
+        to: "/maintenance-manager/dashboard",
+        icon: LayoutDashboard,
+    },
+    {
+        id: 2,
+        title: "Tickets",
+        to: "/maintenance-manager/tickets",
+        icon: Ticket,
+    },
+    {
+        id: 3,
+        title: "Duty Allotment",
+        to: "/maintenance-manager/duty-allotment",
+        icon: ClipboardList,
+    },
+    {
+        id: 4,
+        title: "Schedules",
+        to: "/maintenance-manager/schedules",
+        icon: CalendarDays,
+    },
+    {
+        id: 5,
+        title: "Checklists",
+        to: "/maintenance-manager/checklists",
+        icon: ClipboardCheck,
+    },
+];
+
 export const housekeepingManagerSidebarLinks = [
     {
         id: 1,
@@ -1588,6 +1621,7 @@ export const jointDirectorSidebarLinks = [
             { icon: Monitor, title: "IT Team Manager", to: "/joint-director/employee-management/it-team-manager" },
             { icon: Bus, title: "Transport Manager", to: "/joint-director/employee-management/transport-manager" },
             { icon: Sparkles, title: "House Keeping Manager", to: "/joint-director/employee-management/housekeeping-manager" },
+            { icon: Wrench, title: "Maintenance Manager", to: "/joint-director/employee-management/maintenance-manager" },
             { icon: Car, title: "Drivers List", to: "/joint-director/employee-management/drivers" },
         ],
     },
@@ -1647,6 +1681,7 @@ export const jointDirectorAssistantSidebarLinks = [
             { icon: Monitor, title: "IT Team Manager", to: "/joint-director-assistant/employee-management/it-team-manager" },
             { icon: Bus, title: "Transport Manager", to: "/joint-director-assistant/employee-management/transport-manager" },
             { icon: Sparkles, title: "House Keeping Manager", to: "/joint-director-assistant/employee-management/housekeeping-manager" },
+            { icon: Wrench, title: "Maintenance Manager", to: "/joint-director-assistant/employee-management/maintenance-manager" },
             { icon: Car, title: "Drivers List", to: "/joint-director-assistant/employee-management/drivers" },
         ],
     },
@@ -2671,6 +2706,7 @@ export const roleBasedSidebarLinks = {
     ITSupportManager: itSupportManagerSidebarLinks,
     StationeryStoreManager: stationeryStoreManagerSidebarLinks,
     HousekeepingManager: housekeepingManagerSidebarLinks,
+    MaintenanceManager: maintenanceManagerSidebarLinks,
     TransportManager: transportManagerSidebarLinks,
     JointDirector: jointDirectorSidebarLinks,
     JointDirectorAssistant: jointDirectorAssistantSidebarLinks,

@@ -8,6 +8,22 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 11 November 2026 — Maintenance Manager portal (separate from Housekeeping)
+
+**Status:** Local role + portal + Duty/Schedules/Checklists implemented and wiring verified against Non-Academics PDF. Ready for additive git push (no force). No production DB/credential remap.
+
+### Done
+- Role `maintenancemanager` / portal `/maintenance-manager` with Facilities Tickets inbox.
+- Maintenance Duty Allotment, Schedules, Checklists on isolated `maint-*` collections (not `hk-*`).
+- Housekeeping portal and `hk-*` workflows left unchanged.
+- Docs: audit, implementation report, coverage matrix; gitignore allowlist for those docs.
+- Isolation tests **8 passed**; ACL wiring map PASS; browser UAT PASS for Maint + HK duty regression.
+
+### Still open
+- Maintenance announcements / store-purchase; staff portals; production remap of EMP-QMIS-107 (needs separate approval).
+
+---
+
 ## 11 November 2026 — Remaining P1: Search / Filters / Export / Store-Gate / Create-Receive
 
 **Status:** Focused implementation after verified security P1s. Report: `docs/QMIS_REMAINING_P1_IMPLEMENTATION_REPORT.md`. No commit / push / deploy.

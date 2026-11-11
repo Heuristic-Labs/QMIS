@@ -56,6 +56,7 @@ STAFF_ROLES: list[tuple[str, str, str]] = [
     ("itsupportmanager", "IT Support Manager", "ITM"),
     ("stationerystoremanager", "Stationery Store Manager", "SSM"),
     ("housekeepingmanager", "Housekeeping Manager", "HKM"),
+    ("maintenancemanager", "Maintenance Manager", "MTM"),
 ]
 # Super Admin only — campus Admin must not self-provision peer/elevated portals.
 _ADMIN_ROLE: tuple[str, str, str] = ("admin", "Administrator", "ADM")

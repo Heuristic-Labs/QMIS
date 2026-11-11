@@ -174,6 +174,7 @@ def test_central_admin_and_superadmin_creatable_roles_and_isolation(client, uniq
     assert "pro" in admin_roles
     assert "transportmanager" in admin_roles
     assert "housekeepingmanager" in admin_roles
+    assert "maintenancemanager" in admin_roles
     assert "teacher" in admin_roles
     assert "accounthead" in admin_roles
     assert "fileroom" not in admin_roles

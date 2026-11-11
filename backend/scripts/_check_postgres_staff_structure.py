@@ -26,6 +26,7 @@ NEEDED_ROLES = [
     "teacher",
     "jointdirectorassistant",
     "housekeepingmanager",
+    "maintenancemanager",
     "gatekeeper",
     "stationerystoremanager",
 ]

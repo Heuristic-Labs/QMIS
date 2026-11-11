@@ -333,6 +333,67 @@ export const EMPLOYEE_PROFILES = {
             { taskId: 'JD-T-018', title: 'Cleaning supplies reorder — Q2 stock', assignedDate: '06-06-2026', dueDate: '09-06-2026', status: 'Pending' },
         ],
     },
+    'maintenance-manager': {
+        roleTitle: 'Maintenance Manager',
+        profileLabel: 'Maintenance Manager Profile',
+        idLabel: 'Employee ID',
+        employee: {
+            profileImage: null,
+            employeeId: 'MTM-1001',
+            userId: 'USR-400107',
+            firstName: 'Kausik',
+            middleName: '',
+            lastName: '',
+            gender: 'Male',
+            dateOfBirth: '',
+            bloodGroup: '',
+            height: '',
+            weight: '',
+            medicalHistory: '',
+            address: {
+                address: 'Queen Mira International School, Madurai',
+                country: 'India',
+                state: 'Tamil Nadu',
+                city: 'Madurai',
+                zipCode: '',
+            },
+            contact: {
+                mobileNumber: '+91 9361830115',
+                alternativeNumber: '',
+                email: 'kausikg1@gmail.com',
+            },
+            professionalInfo: {
+                qualification: '',
+                designation: 'Maintenance Officer',
+                schoolName: 'Queen Mira International School',
+                yearsOfExperience: '',
+                previousOrganization: '',
+                joiningDate: '',
+            },
+            employmentInfo: {
+                employeeType: 'Full-time',
+                salary: '',
+                workShift: '',
+                assignedCampus: 'Main Campus',
+                managedStaff: 'Maintenance staff',
+                reportingTo: 'Joint Director',
+            },
+            account: {
+                username: 'kausikg1',
+                password: '',
+            },
+            documents: {
+                idProof: '',
+                qualificationCertificate: '',
+                experienceCertificate: '',
+            },
+        },
+        attendanceRecords: BASE_ATTENDANCE,
+        recentTasks: [
+            { taskId: 'JD-T-019', title: 'Facilities ticket backlog — Block B electrical', assignedDate: '08-06-2026', dueDate: '12-06-2026', status: 'In Progress' },
+            { taskId: 'JD-T-020', title: 'Campus plumbing inspection schedule', assignedDate: '07-06-2026', dueDate: '14-06-2026', status: 'Pending' },
+        ],
+    },
 }
 
 export const EMPLOYEE_ROLE_SLUGS = Object.keys(EMPLOYEE_PROFILES)
