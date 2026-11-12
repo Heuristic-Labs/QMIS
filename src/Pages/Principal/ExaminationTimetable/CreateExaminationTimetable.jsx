@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { Calendar } from 'lucide-react'
@@ -181,11 +182,15 @@ const CreateExaminationTimetable = () => {
                 await updateExamApi(editId, payload)
                 // Keep a local mirror so offline list/edit still reflect the latest save.
                 updateExamTimetable(editId, { ...form, timelines })
+                toast.success('Exam timetable updated and sent for Director approval.')
             } else {
                 const created = await createExamApi(payload)
                 // Draft → leave as campus draft. Published → submit for Director approval.
                 if (publish && created?.id) {
                     await submitExamApi(created.id)
+                    toast.success('Exam timetable submitted for Director approval.')
+                } else {
+                    toast.info('Saved as Draft. Choose Published and save again to send it to Director.')
                 }
             }
             navigate(listPath)

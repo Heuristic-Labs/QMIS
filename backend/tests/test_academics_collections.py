@@ -324,7 +324,37 @@ def test_teacher_cannot_replace_timetables(client):
 
 
 def test_coordinator_can_replace_timetables(client):
+    """Coordinator may create within grade band; approval is forced to Pending (TT-05)."""
+    admin = _login(client, settings.admin_seed_email, settings.admin_seed_password)
+    principal = _principal_headers(client)
+    options = client.get("/api/v1/masters/class-teacher-options", headers=admin)
+    assert options.status_code == 200, options.text
+    uid = {row["email"]: row["user_id"] for row in options.json()}
+    band = client.put(
+        "/api/v1/students/coordinator-grade-bands",
+        headers=principal,
+        json={"userId": uid[settings.coordinator_seed_email], "gradeFrom": 1, "gradeTo": 6},
+    )
+    assert band.status_code == 200, band.text
+
     headers = _login(client, settings.coordinator_seed_email, settings.coordinator_seed_password)
+
+    # No grade band / out of band → blocked.
+    denied = client.put(
+        "/api/v1/academics/class-timetables",
+        json=[
+            {
+                "id": "CTT-COORD-OUT",
+                "className": "Grade 8",
+                "section": "A",
+                "approvalStatus": "Pending",
+                "timelines": [],
+            }
+        ],
+        headers=headers,
+    )
+    assert denied.status_code == 403, denied.text
+
     put = client.put(
         "/api/v1/academics/class-timetables",
         json=[

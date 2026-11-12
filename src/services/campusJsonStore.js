@@ -13,17 +13,27 @@ import {
     stripCampusAuditMeta,
 } from './campusAuditApi'
 import { resolveCampusCollection } from './campusCollectionRegistry'
+import { coerceCampusRows } from '../Common/auditDomain/executeAuditDraftStore'
 
 /** In-memory campus SoT keyed by storageKey when API mode is on. */
 const memoryByKey = new Map()
 const hydratePromises = new Map()
 
 const recordIdForUpsert = (row) =>
-    String(row?.id || row?.itemId || row?.requestId || row?.dutyId || row?.ticketId || '').trim()
+    String(
+        row?.id ||
+            row?.itemId ||
+            row?.requestId ||
+            row?.dutyId ||
+            row?.ticketId ||
+            row?.header?.auditId ||
+            row?.header?.auditNumber ||
+            '',
+    ).trim()
 
 const clean = (kind, rows) => {
     const strip = kind === 'audit' ? stripCampusAuditMeta : stripOpsMeta
-    return Array.isArray(rows) ? rows.map(strip) : []
+    return coerceCampusRows(rows).map(strip)
 }
 
 const canUse = (kind) => (kind === 'audit' ? canUseCampusAuditApi() : canUseOpsApi())
@@ -47,7 +57,9 @@ export const getCampusMemory = (storageKey) => {
 }
 
 export const setCampusMemory = (storageKey, rows, { push = true } = {}) => {
-    const list = Array.isArray(rows) ? rows : []
+    // Preserve object-based drafts by wrapping into a one-item array (campus APIs are array-only).
+    // Do not silently wipe valid objects to [].
+    const list = coerceCampusRows(rows)
     memoryByKey.set(storageKey, list)
     if (!push) return Promise.resolve(true)
     const meta = resolveCampusCollection(storageKey)
@@ -137,7 +149,7 @@ export const saveCampusJson = (storageKey, value) => {
 
 /** Awaitable save — waits for ops/audit replace when API mode is on. */
 export const persistCampusJson = async (storageKey, value) => {
-    const list = Array.isArray(value) ? value : []
+    const list = coerceCampusRows(value)
     if (usesCampusApiForKey(storageKey)) {
         memoryByKey.set(storageKey, list)
         try {

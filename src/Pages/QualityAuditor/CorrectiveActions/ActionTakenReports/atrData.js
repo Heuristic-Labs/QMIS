@@ -328,5 +328,85 @@ export const getAtrById = (id) =>
 export const getAtrByObservationId = (observationId) =>
     getAtrRecords().find((item) => item.observationId === observationId) ?? null
 
+const generateCapaId = () => {
+    const list = getAtrRecords()
+    const max = list.reduce((acc, item) => {
+        const num = Number(String(item.atrNumber || item.id || '').split('-').pop())
+        return Number.isNaN(num) ? acc : Math.max(acc, num)
+    }, 0)
+    return `ATR-QA-2026-${String(max + 1).padStart(3, '0')}`
+}
+
+export const upsertCapaRecord = ({
+    observationId,
+    auditNumber,
+    department,
+    assignedTo,
+    reportTo,
+    dueDate,
+    findingRating,
+    riskLevel,
+    title,
+    evidence,
+}) => {
+    const existing = getAtrByObservationId(observationId)
+    const atrNumber = existing?.atrNumber || generateCapaId()
+    const now = new Date()
+    const record = buildAtr({
+        id: existing?.id || atrNumber,
+        atrNumber,
+        observationId,
+        auditNumber,
+        department: department || '',
+        assignedTo: assignedTo || '',
+        reportTo: reportTo || '',
+        status: existing?.status || 'Submitted',
+        submittedBy: assignedTo || 'Pending owner',
+        submittedOn: existing?.submittedOn || now.toLocaleDateString('en-GB').replace(/\//g, '-'),
+        submittedOnTime:
+            existing?.submittedOnTime ||
+            now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        actionTaken: existing?.actionTaken || {
+            actionTaken: '',
+            solutionImplemented: '',
+            completionDate: dueDate || '',
+            responsiblePerson: assignedTo || '',
+            outcomeResult: '',
+            additionalRemarks: title || '',
+        },
+        evidence: existing?.evidence || {
+            beforePhotos: [],
+            afterPhotos: [],
+            documents: [],
+            videos: [],
+            links: [],
+            attachments: evidence || null,
+        },
+        verification: existing?.verification || {
+            departmentHead: reportTo || '',
+            acknowledgedOn: '',
+            acknowledgedOnTime: '',
+            superAdminDecision: 'Pending',
+            decisionOn: '',
+            decisionOnTime: '',
+            superAdminRemarks: '',
+        },
+        statusTimeline: existing?.statusTimeline || buildStatusTimeline(1),
+    })
+
+    const enriched = {
+        ...record,
+        dueDate: dueDate || existing?.dueDate || '',
+        findingRating: findingRating || existing?.findingRating || '',
+        riskLevel: riskLevel || existing?.riskLevel || '',
+        capaType: 'CAPA',
+        auditStream: 'QUALITY',
+    }
+
+    const next = [enriched, ...getAtrRecords().filter((item) => item.id !== enriched.id && item.atrNumber !== enriched.atrNumber)]
+    saveAtrRecords(next)
+    return enriched
+}
+
 export const hydrateFromApi = (seed = DEFAULT_ATR_RECORDS) => hydrateCampusKey(STORAGE_KEY, seed)
 export const usesApiStore = () => usesCampusApiForKey(STORAGE_KEY)

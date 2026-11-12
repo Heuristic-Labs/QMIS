@@ -353,10 +353,10 @@ export const emptyObservationForm = () => ({
 })
 
 export const createObservation = (form) => {
-    const observationId = generateObservationId()
+    const observationId = form.observationId || generateObservationId()
     const now = new Date()
-    const createdDate = now.toLocaleDateString('en-GB').replace(/\//g, '-')
-    const createdTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    const createdDate = form.createdDate || now.toLocaleDateString('en-GB').replace(/\//g, '-')
+    const createdTime = form.createdTime || now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
     const record = buildObservation({
         observationId,
@@ -366,9 +366,33 @@ export const createObservation = (form) => {
         createdTime,
     })
 
-    const next = [record, ...getObservations()]
+    const next = [record, ...getObservations().filter((item) => item.id !== record.id && item.observationId !== record.observationId)]
     saveObservations(next)
     return record
+}
+
+/** Upsert observation into campus-audit process-observations (by id / observationId). */
+export const upsertObservation = (form) => {
+    const existingId = form.id || form.observationId
+    const current = getObservations()
+    const match = existingId
+        ? current.find((item) => item.id === existingId || item.observationId === existingId)
+        : null
+
+    if (match) {
+        const record = {
+            ...match,
+            ...form,
+            id: match.id,
+            observationId: match.observationId,
+            auditStream: 'PROCESS',
+        }
+        const next = [record, ...current.filter((item) => item.id !== match.id && item.observationId !== match.observationId)]
+        saveObservations(next)
+        return record
+    }
+
+    return createObservation({ ...form, auditStream: 'PROCESS' })
 }
 
 export const AUDIT_REFERENCES = [

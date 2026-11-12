@@ -8,6 +8,25 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 12 November 2026 — Audit module P0 draft persistence + workflow
+
+**Status:** Local Audit Execute fixes complete (Process + Quality). No commit/push/prod.
+
+### Done
+- Voice note + Audit PDF review: place/date not enterable; drafts not surviving reload.
+- P0: fixed double `JSON.parse`, object→`[]` wipe in `setCampusMemory`, drafts stored as keyed arrays.
+- Editable Campus/Building/Area/Date; ResponseControl date/place/text; findings Compliant/Minor/Major NC + risk.
+- Observations upsert, evidence file ids, CAPA ATR stubs, audit history on submit.
+- Report: `docs/QMIS_AUDIT_MODULE_P0_WORKFLOW_IMPLEMENTATION_REPORT.md`.
+- Pytest focused audit suites **24 passed**; draft helper Node script PASS; `npm run build` PASS.
+
+### Still open
+- JD published templates / five process-check pillars not fully wired into Execute.
+- CAPA overdue escalation automation; live HR assign-to directory.
+- Browser UAT of full execute path not run in this session.
+
+---
+
 ## 11 November 2026 — HK & Maintenance full local implementation (PDF)
 
 **Status:** Local full-head pass complete. Audit + implementation + pytest + browser. **No commit/push/prod** (prompt boundary).

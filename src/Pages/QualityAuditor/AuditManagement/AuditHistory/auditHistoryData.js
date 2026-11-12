@@ -189,5 +189,33 @@ export const getAuditHistory = () => {
 export const getHistoryById = (id) =>
     getAuditHistory().find((item) => item.id === id || item.auditNumber === id) ?? null
 
+export const appendAuditHistory = (entry) => {
+    const record = buildHistory({
+        auditNumber: entry.auditNumber,
+        auditName: entry.auditName,
+        department: entry.department,
+        campus: entry.campus,
+        status: entry.status || 'Completed',
+        auditDate: entry.auditDate,
+        completedOn: entry.completedOn || new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+        compliancePercent: entry.compliancePercent ?? 0,
+        observations: entry.observations ?? 0,
+        result: entry.result || 'Partial',
+    })
+    const enriched = {
+        ...record,
+        building: entry.building || '',
+        area: entry.area || '',
+        findings: entry.findings || null,
+        evidenceSummary: entry.evidenceSummary || null,
+        generalRemarks: entry.generalRemarks || '',
+        auditStream: 'QUALITY',
+    }
+    const current = Array.isArray(getAuditHistory()) ? getAuditHistory() : []
+    const next = [enriched, ...current.filter((item) => item.id !== enriched.id && item.auditNumber !== enriched.auditNumber)]
+    saveAuditHistory(next)
+    return enriched
+}
+
 export const hydrateFromApi = (seed = DEFAULT_AUDIT_HISTORY) => hydrateCampusKey(STORAGE_KEY, seed)
 export const usesApiStore = () => usesCampusApiForKey(STORAGE_KEY)

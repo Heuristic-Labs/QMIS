@@ -13,7 +13,7 @@ import {
     approvalStatusColor,
 } from '../timetableApprovalsData'
 import { mapExamApiToTimetableRecord } from '../../Principal/ExaminationTimetable/examinationTimetableData'
-import { decideApprovalApi } from '../../../services/approvalsApi'
+import { canUseApprovalsApi, decideApprovalApi, listApprovalsInboxApi } from '../../../services/approvalsApi'
 import { canUseExamsApi, getExamApi, listExamsApi, mapExamFromApi } from '../../../services/examsApi'
 
 const formatDisplayDate = (iso) => {
@@ -66,59 +66,141 @@ const mapExamToApprovalRow = (exam) => {
     }
 }
 
+const dayStart = (value) => {
+    if (!value) return null
+    const d = value instanceof Date ? value : new Date(value)
+    if (Number.isNaN(d.getTime())) return null
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
 const ExamApprovals = () => {
     const api = canUseExamsApi()
-    const [fromDate, setFromDate] = useState(new Date())
-    const [toDate, setToDate] = useState(new Date())
+    const approvalsApi = canUseApprovalsApi()
+    const [fromDate, setFromDate] = useState(null)
+    const [toDate, setToDate] = useState(null)
     const [exportModal, setExportModal] = useState(false)
     const [viewRecord, setViewRecord] = useState(null)
     const [viewLoadingId, setViewLoadingId] = useState(null)
     const [denyModal, setDenyModal] = useState(false)
     const [selectedEntry, setSelectedEntry] = useState(null)
     const [search, setSearch] = useState('')
-    const [statusFilter, setStatusFilter] = useState('')
+    const [statusFilter, setStatusFilter] = useState('Pending')
     const [approvals, setApprovals] = useState(() => (api ? [] : [...EXAM_TIMETABLE_APPROVALS]))
     const [loading, setLoading] = useState(api)
+    const [loadError, setLoadError] = useState('')
 
-    useEffect(() => {
+    const refresh = async () => {
         if (!api) {
             setApprovals([...EXAM_TIMETABLE_APPROVALS])
+            setLoadError('')
             setLoading(false)
-            return undefined
+            return
         }
-        let cancelled = false
         setLoading(true)
-        listExamsApi({})
-            .then((rows) => {
-                if (cancelled) return
-                const mapped = (Array.isArray(rows) ? rows : [])
-                    .map(mapExamFromApi)
-                    .filter((exam) => exam.approvalId || String(exam.status).toLowerCase() !== 'draft')
-                    .map(mapExamToApprovalRow)
-                setApprovals(mapped)
+        setLoadError('')
+        try {
+            const [examRows, inboxRows] = await Promise.all([
+                listExamsApi({}),
+                approvalsApi ? listApprovalsInboxApi().catch(() => []) : Promise.resolve([]),
+            ])
+
+            const byId = new Map()
+            ;(Array.isArray(examRows) ? examRows : [])
+                .map(mapExamFromApi)
+                .filter((exam) => exam.approvalId || String(exam.status).toLowerCase() !== 'draft')
+                .map(mapExamToApprovalRow)
+                .forEach((row) => byId.set(String(row.id), row))
+
+            // Ensure every pending exam_timetable in Director inbox appears, even if list/exams lagged.
+            const pendingInbox = (Array.isArray(inboxRows) ? inboxRows : []).filter(
+                (row) => String(row.entityType || '').toLowerCase() === 'exam_timetable'
+                    && String(row.status || '').toLowerCase() === 'pending',
+            )
+            await Promise.all(
+                pendingInbox.map(async (row) => {
+                    const examId = String(row.entityId || '')
+                    if (!examId || byId.has(examId)) {
+                        if (byId.has(examId)) {
+                            byId.set(examId, {
+                                ...byId.get(examId),
+                                approvalId: row.id || byId.get(examId).approvalId,
+                                approvalStatus: 'Pending',
+                            })
+                        }
+                        return
+                    }
+                    try {
+                        const exam = mapExamFromApi(await getExamApi(examId))
+                        byId.set(examId, {
+                            ...mapExamToApprovalRow(exam),
+                            approvalId: row.id || exam.approvalId,
+                            approvalStatus: 'Pending',
+                        })
+                    } catch {
+                        byId.set(examId, {
+                            id: examId,
+                            examName: row.title || 'Exam timetable',
+                            className: '',
+                            section: '',
+                            classSection: '—',
+                            startDate: '—',
+                            endDate: '—',
+                            submittedBy: SUBMITTED_BY,
+                            submittedDate: formatSubmittedDateTime(row.createdAt),
+                            approvalStatus: 'Pending',
+                            approvalId: row.id,
+                            rejectionReason: '',
+                            timelines: [],
+                            source: 'api',
+                        })
+                    }
+                }),
+            )
+
+            const merged = [...byId.values()].sort((a, b) => {
+                if (a.approvalStatus === 'Pending' && b.approvalStatus !== 'Pending') return -1
+                if (b.approvalStatus === 'Pending' && a.approvalStatus !== 'Pending') return 1
+                return String(b.submittedDate).localeCompare(String(a.submittedDate))
             })
-            .catch(() => {
-                if (!cancelled) setApprovals([])
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-        return () => {
-            cancelled = true
+            setApprovals(merged)
+        } catch (error) {
+            setApprovals([])
+            const message = error?.message || 'Could not load exam timetable approvals.'
+            setLoadError(message)
+            toast.error(message)
+        } finally {
+            setLoading(false)
         }
-    }, [api])
+    }
+
+    useEffect(() => {
+        void refresh()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [api, approvalsApi])
 
     const filteredApprovals = useMemo(() => {
         const query = search.trim().toLowerCase()
+        const fromTs = dayStart(fromDate)
+        const toTs = dayStart(toDate)
         return approvals.filter((item) => {
             const matchesStatus = !statusFilter || item.approvalStatus === statusFilter
             const matchesSearch = !query
                 || String(item.id).toLowerCase().includes(query)
                 || item.examName.toLowerCase().includes(query)
                 || item.classSection.toLowerCase().includes(query)
-            return matchesStatus && matchesSearch
+            if (!matchesStatus || !matchesSearch) return false
+            if (fromTs == null && toTs == null) return true
+            const submittedTs = dayStart(
+                item.submittedDate && item.submittedDate !== '—'
+                    ? item.submittedDate.split(' ')[0].split('-').reverse().join('-')
+                    : null,
+            )
+            if (submittedTs == null) return true
+            if (fromTs != null && submittedTs < fromTs) return false
+            if (toTs != null && submittedTs > toTs) return false
+            return true
         })
-    }, [approvals, search, statusFilter])
+    }, [approvals, search, statusFilter, fromDate, toDate])
 
     const openTimetable = async (entry) => {
         if (!entry) return
@@ -219,24 +301,42 @@ const ExamApprovals = () => {
     const clearFilters = () => {
         setSearch('')
         setStatusFilter('')
+        setFromDate(null)
+        setToDate(null)
     }
 
     return (
         <section>
             <div className='bg-white rounded-2xl shadow-md p-4'>
                 <div className='flex justify-between md:items-center sm:items-stretch md:flex-row sm:flex-col flex-col gap-y-4'>
-                    <button
-                        type='button'
-                        onClick={clearFilters}
-                        className='bg-[#515DEF] text-white uppercase text-sm px-6 py-1.5 border border-[#515DEF] rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer'
-                    >
-                        Clear Filters
-                    </button>
+                    <div className='flex flex-wrap gap-2'>
+                        <button
+                            type='button'
+                            onClick={clearFilters}
+                            className='bg-[#515DEF] text-white uppercase text-sm px-6 py-1.5 border border-[#515DEF] rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer'
+                        >
+                            Clear Filters
+                        </button>
+                        {api ? (
+                            <button
+                                type='button'
+                                onClick={() => void refresh()}
+                                className='bg-white text-[#515DEF] uppercase text-sm px-4 py-1.5 border border-[#515DEF] rounded-lg hover:bg-[#515DEF] hover:text-white transition-all duration-200 cursor-pointer'
+                            >
+                                Refresh
+                            </button>
+                        ) : null}
+                    </div>
                     <p className='text-sm text-[#667085]'>
                         Examination timetables submitted by the Principal for Director approval.
-                        {api ? ' Live exam schedules.' : ''}
+                        {api ? ' Live exam schedules. Drafts are hidden until Principal chooses Published/Submit.' : ''}
                     </p>
                 </div>
+                {loadError ? (
+                    <p className='mt-3 text-sm text-[#980E0F] bg-[#980E0F10] border border-[#980E0F33] rounded-lg px-3 py-2'>
+                        {loadError}
+                    </p>
+                ) : null}
                 <div className='grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:mt-6 mt-2'>
                     <div className='flex flex-col gap-y-2'>
                         <label htmlFor='search' className='text-base font-medium text-[#808080]'>Search</label>
@@ -333,7 +433,9 @@ const ExamApprovals = () => {
                             ) : filteredApprovals.length === 0 ? (
                                 <tr>
                                     <td colSpan={10} className='px-2 py-8 text-center text-[#667085]'>
-                                        No exam timetable approvals found.
+                                        {approvals.length === 0
+                                            ? 'No submitted exam timetables yet. Principal must save with status Published (not Draft), then refresh this page.'
+                                            : 'No rows match the current filters. Clear Filters or set Approval Status to All.'}
                                     </td>
                                 </tr>
                             ) : (

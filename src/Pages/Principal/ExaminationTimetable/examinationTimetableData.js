@@ -76,7 +76,8 @@ export const defaultExamTimetableForm = () => ({
     className: '',
     section: '',
     teacherName: '',
-    status: 'Draft',
+    // Default Published so create submits to Director; use Draft only to keep unpublished.
+    status: 'Published',
     startDate: null,
     endDate: null,
     timelines: [createTimelineRow()],

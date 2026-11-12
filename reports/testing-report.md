@@ -1,26 +1,20 @@
 # Testing report
 
-Latest regression for Housekeeping + Maintenance full local implementation (11 November 2026).
+Latest regression for Audit module P0 draft persistence + workflow (12 November 2026).
 
 ## Focused suites
 
 ```bash
+node backend/scripts/_tmp_test_execute_audit_draft_store.mjs
 cd backend
-python -m pytest tests/test_maintenance_housekeeping_isolation.py tests/test_ops_designation_maps.py -q
+python -m pytest tests/test_audit_execute_draft_persistence.py tests/test_p1_security_isolation.py tests/test_ops_and_audit_collections.py -q
 ```
 
-**Pytest result:** isolation suite **9 passed** (+ designation maps → **15 passed** earlier); after tasks-key fix, isolation re-run **9 passed**.
+**Node draft-store result:** all assertions passed (object wrap, array upsert, legacy object load, double-parse bug documented).
 
-Covers designation split, ACL writers (`hk-*` vs `maint-*` including checklists/inventory/procurement/tasks), cross-dept 403, registry/route strings, and guard that HK Task Management does **not** reuse the schedules storage key.
+**Pytest result:** **24 passed**, 1 warning (Starlette TestClient deprecation).
 
-## API (running local uvicorn after reload)
-
-| Check | Result |
-|---|---|
-| Maint PUT `maint-inventory` | 200 |
-| HK PUT `maint-inventory` | 403 |
-| HK PUT `hk-checklists` | 200 |
-| Maint PUT `hk-checklists` | 403 |
+Covers process execute-draft persist/reload, non-array body 422, Process≠Quality draft isolation, teacher denied, observations + ATR CAPA + history writes, plus existing P1 security and ops/audit collection gates.
 
 ## Frontend
 
@@ -32,9 +26,6 @@ npm run build
 
 ## Browser
 
-- Maintenance Materials persist after API save (Total Records: 1).
-- Maintenance Announcement list loads.
-- Housekeeping Checklists loads with persisted row.
-- Both dashboards show PDF-aligned KPI cards.
+Not re-run in this session for the full Execute Audit UAT checklist (manual steps listed in implementation report).
 
-Production remap / deploy / commit: **not tested** (prohibited this prompt).
+Production data / deploy / commit: **not tested** (prohibited this prompt).
