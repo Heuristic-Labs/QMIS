@@ -3,7 +3,38 @@ export const ISSUE_TYPES = ['Hardware', 'Software', 'Network']
 
 export const PRIORITY_OPTIONS = ['Low', 'Medium', 'High', 'Critical']
 
-export const STATUS_OPTIONS = ['Open', 'Pending', 'In Progress', 'Resolved', 'Closed']
+/** Non-Academics PDF §4.5 lifecycle (primary). Legacy Open/Pending/Closed kept for existing rows. */
+export const STATUS_OPTIONS = [
+    'Raised',
+    'Assigned',
+    'In Progress',
+    'Resolved',
+    'Confirmed by Requester',
+    'Open',
+    'Pending',
+    'Closed',
+]
+
+export const PDF_TICKET_STATUSES = [
+    'Raised',
+    'Assigned',
+    'In Progress',
+    'Resolved',
+    'Confirmed by Requester',
+]
+
+export const normalizeTicketStatus = (status) => {
+    const value = String(status || '').trim()
+    if (value === 'Open') return 'Raised'
+    if (value === 'Pending') return 'Assigned'
+    if (value === 'Closed') return 'Confirmed by Requester'
+    return value || 'Raised'
+}
+
+export const isTicketOpenStatus = (status) => {
+    const value = normalizeTicketStatus(status).toLowerCase()
+    return !['resolved', 'confirmed by requester', 'closed', 'completed', 'verified'].includes(value)
+}
 
 export const priorityBadgeColor = {
     Low: 'bg-[#2196F333] text-[#2196F3]',
@@ -13,10 +44,13 @@ export const priorityBadgeColor = {
 }
 
 export const statusBadgeColor = {
+    Raised: 'bg-[#FF980033] text-[#FF9800]',
+    Assigned: 'bg-[#9C27B033] text-[#9C27B0]',
     Open: 'bg-[#FF980033] text-[#FF9800]',
     Pending: 'bg-[#FF980033] text-[#FF9800]',
     'In Progress': 'bg-[#2196F333] text-[#2196F3]',
     Resolved: 'bg-[#4CAF5033] text-[#4CAF50]',
+    'Confirmed by Requester': 'bg-[#4CAF5033] text-[#4CAF50]',
     Closed: 'bg-[#4CAF5033] text-[#4CAF50]',
 }
 

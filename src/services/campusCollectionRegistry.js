@@ -15,6 +15,8 @@ export const CAMPUS_COLLECTION_BY_STORAGE_KEY = {
     'schoolerp-security-team-attendance-v1': { kind: 'ops', collection: 'gate-team-attendance' },
     // Housekeeping registers
     'schoolerp-housekeeping-schedules-v1': { kind: 'ops', collection: 'hk-schedules' },
+    'schoolerp-housekeeping-tasks-v1': { kind: 'ops', collection: 'hk-tasks' },
+    'schoolerp-housekeeping-checklists-v1': { kind: 'ops', collection: 'hk-checklists' },
     'schoolerp-housekeeping-som-v1': { kind: 'ops', collection: 'hk-star-of-month' },
     'schoolerp-housekeeping-ro-testing-v1': { kind: 'ops', collection: 'hk-ro-testing' },
     'schoolerp-housekeeping-lost-found-v1': { kind: 'ops', collection: 'hk-lost-found' },
@@ -23,6 +25,10 @@ export const CAMPUS_COLLECTION_BY_STORAGE_KEY = {
     'schoolerp-maintenance-duty-v1': { kind: 'ops', collection: 'maint-duty-allotments' },
     'schoolerp-maintenance-schedules-v1': { kind: 'ops', collection: 'maint-schedules' },
     'schoolerp-maintenance-checklists-v1': { kind: 'ops', collection: 'maint-checklists' },
+    'schoolerp-maintenance-inventory-v1': { kind: 'ops', collection: 'maint-inventory' },
+    'schoolerp-maintenance-inventory-requirements-v1': { kind: 'ops', collection: 'maint-inventory-requirements' },
+    'schoolerp-maintenance-procurement-v1': { kind: 'ops', collection: 'maint-procurement' },
+    'schoolerp-maintenance-requests-v1': { kind: 'ops', collection: 'maint-requests' },
     // Shared inventory / procurement demos
     'schoolerp-inventory-v1': { kind: 'ops', collection: 'shared-inventory' },
     'schoolerp-inventory-movements-v1': { kind: 'ops', collection: 'shared-inventory-movements' },

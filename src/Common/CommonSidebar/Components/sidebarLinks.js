@@ -1203,6 +1203,36 @@ export const maintenanceManagerSidebarLinks = [
         to: "/maintenance-manager/checklists",
         icon: ClipboardCheck,
     },
+    {
+        id: 6,
+        title: "Materials",
+        to: "/maintenance-manager/materials",
+        icon: Package,
+    },
+    {
+        id: 7,
+        title: "Store Requests",
+        to: "/maintenance-manager/store-requests",
+        icon: ClipboardCheck,
+    },
+    {
+        id: 8,
+        title: "Inventory Requirement",
+        to: "/maintenance-manager/inventory-requirement",
+        icon: ShoppingCart,
+    },
+    {
+        id: 9,
+        title: "Purchase Workflow",
+        to: "/maintenance-manager/purchase-workflow",
+        icon: ShoppingCart,
+    },
+    {
+        id: 10,
+        title: "Announcement",
+        to: "/maintenance-manager/broadcast",
+        icon: Rss,
+    },
 ];
 
 export const housekeepingManagerSidebarLinks = [
@@ -1259,6 +1289,12 @@ export const housekeepingManagerSidebarLinks = [
         title: "Schedules",
         to: "/housekeeping-manager/schedules",
         icon: CalendarDays,
+    },
+    {
+        id: "hk-checklists",
+        title: "Checklists",
+        to: "/housekeeping-manager/checklists",
+        icon: ClipboardCheck,
     },
     {
         id: 9,

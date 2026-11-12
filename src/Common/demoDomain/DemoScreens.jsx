@@ -775,11 +775,12 @@ export function HousekeepingDutyPage() {
         <RegisterPage
             title='Duty Allotment'
             storageKey='schoolerp-housekeeping-duty-v1'
-            seed={[{ id: 'DUTY-2026-0001', staff: 'Lakshmi P.', area: 'Academic Block A', dutyType: 'Daily Cleaning', assignedBy: 'Housekeeping Manager', date: '2026-09-23', startTime: '07:00', endTime: '11:00', priority: 'Normal', instructions: 'Classrooms', remarks: '', status: 'Assigned' }]}
-            columns={[{ key: 'id', label: 'Duty ID' }, { key: 'staff', label: 'Staff' }, { key: 'area', label: 'Area' }, { key: 'dutyType', label: 'Duty' }, { key: 'date', label: 'Date' }, { key: 'status', label: 'Status' }, { key: 'remarks', label: 'Remarks' }]}
+            seed={[{ id: 'DUTY-2026-0001', staff: 'Lakshmi P.', area: 'Academic Block A', shift: 'Morning', dutyType: 'Daily Cleaning', assignedBy: 'Housekeeping Manager', date: '2026-09-23', startTime: '07:00', endTime: '11:00', priority: 'Normal', instructions: 'Classrooms', remarks: '', status: 'Assigned' }]}
+            columns={[{ key: 'id', label: 'Duty ID' }, { key: 'staff', label: 'Staff' }, { key: 'area', label: 'Area' }, { key: 'shift', label: 'Shift' }, { key: 'dutyType', label: 'Duty' }, { key: 'date', label: 'Date' }, { key: 'status', label: 'Status' }, { key: 'remarks', label: 'Remarks' }]}
             fields={[
                 { key: 'staff', label: 'Staff', required: true },
                 { key: 'area', label: 'Area', required: true },
+                { key: 'shift', label: 'Shift', type: 'select', options: ['Morning', 'Afternoon', 'Evening', 'Night'] },
                 { key: 'dutyType', label: 'Duty Type', type: 'select', options: ['Daily Cleaning', 'Deep Cleaning', 'Special'] },
                 { key: 'assignedBy', label: 'Assigned By' },
                 { key: 'date', label: 'Date', type: 'date' },
@@ -792,7 +793,7 @@ export function HousekeepingDutyPage() {
             ]}
             idPrefix='DUTY-2026-'
             statusKey='status'
-            searchKeys={['staff', 'area', 'dutyType', 'remarks']}
+            searchKeys={['staff', 'area', 'shift', 'dutyType', 'remarks']}
         />
     )
 }

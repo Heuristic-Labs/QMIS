@@ -7,7 +7,16 @@ import { logActivity } from '../../../Common/demoDomain/activityLog'
 import { getTickets, hydrateTicketsFromApi, TICKETS_UPDATED_EVENT } from '../../../Common/demoDomain/itTickets'
 import { ISSUE_TYPES, priorityBadgeColor, statusBadgeColor } from './supportTicketsData'
 
-const STATUSES = ['Open', 'Pending', 'In Progress', 'Resolved', 'Closed']
+const STATUSES = [
+    'Raised',
+    'Assigned',
+    'In Progress',
+    'Resolved',
+    'Confirmed by Requester',
+    'Open',
+    'Pending',
+    'Closed',
+]
 
 const SupportTicketsList = ({
     defaultDepartment = '',

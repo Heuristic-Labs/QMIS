@@ -9,6 +9,10 @@ const CARD_ICONS = {
     'Open Duties': ClipboardList,
     'Active Schedules': CalendarDays,
     'Pending Checklists': ClipboardCheck,
+    'Low Materials': Wrench,
+    'Store Requests': ClipboardList,
+    'Purchase Open': ClipboardCheck,
+    'Announcements': Ticket,
 }
 
 const thClass = 'px-2 py-3 text-[#0C1E5B] font-medium uppercase text-xs'
@@ -57,7 +61,7 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
                 {summaryCards.map((card) => {
                     const Icon = CARD_ICONS[card.label] ?? Ticket
                     return (

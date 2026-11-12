@@ -8,19 +8,35 @@ New days go at the top. Older days stay below so the history is in one file.
 
 ---
 
+## 11 November 2026 — HK & Maintenance full local implementation (PDF)
+
+**Status:** Local full-head pass complete. Audit + implementation + pytest + browser. **No commit/push/prod** (prompt boundary).
+
+### Done
+- Full audit: `docs/QMIS_HK_MAINTENANCE_FULL_IMPLEMENTATION_AUDIT.md`.
+- Shared tickets: PDF lifecycle (Raised→…→Confirmed by Requester), assign, requester confirm, history.
+- Housekeeping: checklists (`hk-checklists`), YEARLY schedules, duty shift, dashboard open-ticket/checklist KPIs.
+- Maintenance: announcements; materials / store requests / inventory requirement / purchase on `maint-*`; duty shift; dashboard store KPIs.
+- Isolation pytest **15 passed**; API cross-dept 403; browser UAT Maint materials + HK checklists PASS.
+- Local uvicorn reloaded once so new COLLECTIONS register.
+
+### Still open
+- Staff portals (BLOCKED — client decision); checklist photo/overdue→JD; ticket auto-escalate; prod Kausik remap; git push of this phase (needs approval).
+
+---
+
 ## 11 November 2026 — Maintenance Manager portal (separate from Housekeeping)
 
-**Status:** Local role + portal + Duty/Schedules/Checklists implemented and wiring verified against Non-Academics PDF. Ready for additive git push (no force). No production DB/credential remap.
+**Status:** Local role + portal + Duty/Schedules/Checklists implemented and wiring verified against Non-Academics PDF. Earlier additive push of phase 1–2 done; phase 3 not pushed.
 
 ### Done
 - Role `maintenancemanager` / portal `/maintenance-manager` with Facilities Tickets inbox.
 - Maintenance Duty Allotment, Schedules, Checklists on isolated `maint-*` collections (not `hk-*`).
 - Housekeeping portal and `hk-*` workflows left unchanged.
 - Docs: audit, implementation report, coverage matrix; gitignore allowlist for those docs.
-- Isolation tests **8 passed**; ACL wiring map PASS; browser UAT PASS for Maint + HK duty regression.
 
 ### Still open
-- Maintenance announcements / store-purchase; staff portals; production remap of EMP-QMIS-107 (needs separate approval).
+- See phase-3 section above.
 
 ---
 

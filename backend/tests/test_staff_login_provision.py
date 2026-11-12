@@ -97,8 +97,8 @@ def test_roster_loader_counts_and_eligibility():
     assert len(roster) == 120
     with_role = [row for row in roster if row.role]
     without_role = [row for row in roster if not row.role]
-    assert len(with_role) == 106
-    assert len(without_role) == 14
+    assert len(with_role) == 107
+    assert len(without_role) == 13
     assert all(row.employee_code.startswith("EMP-QMIS-") for row in roster)
     assert all(is_valid_login_email(row.email) for row in with_role)
     # Target ops portals carry explicit role codes in hrSeed.
@@ -108,8 +108,10 @@ def test_roster_loader_counts_and_eligibility():
     assert by_code["EMP-QMIS-092"].role == "cctv"
     assert by_code["EMP-QMIS-099"].role == "cctv"
     assert by_code["EMP-QMIS-105"].role == "fileroom"
-    assert by_code["EMP-QMIS-107"].role == "maintenancemanager"
-    assert by_code["EMP-QMIS-107"].department == "Maintenance"
+    assert by_code["EMP-QMIS-107"].role == "housekeepingmanager"
+    assert by_code["EMP-QMIS-107"].department == "Housekeeping"
+    assert by_code["EMP-QMIS-120"].role == "maintenancemanager"
+    assert by_code["EMP-QMIS-120"].department == "Maintenance"
     assert by_code["EMP-QMIS-110"].role == "pro"
     assert by_code["EMP-QMIS-117"].role == "fileroom"
     assert by_code["EMP-QMIS-117"].email == "emp-qmis-117@queenmira.com"

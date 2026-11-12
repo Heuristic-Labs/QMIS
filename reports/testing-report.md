@@ -1,6 +1,6 @@
 # Testing report
 
-Latest regression for Maintenance Manager portal + Housekeeping isolation (11 November 2026).
+Latest regression for Housekeeping + Maintenance full local implementation (11 November 2026).
 
 ## Focused suites
 
@@ -9,9 +9,18 @@ cd backend
 python -m pytest tests/test_maintenance_housekeeping_isolation.py tests/test_ops_designation_maps.py -q
 ```
 
-**Pytest result:** 14 passed, 1 warning (~15s).
+**Pytest result:** isolation suite **9 passed** (+ designation maps → **15 passed** earlier); after tasks-key fix, isolation re-run **9 passed**.
 
-Also verified ACL map helper: `hk-*` writers include `housekeepingmanager` only; `maint-*` writers include `maintenancemanager` only; tickets shared.
+Covers designation split, ACL writers (`hk-*` vs `maint-*` including checklists/inventory/procurement/tasks), cross-dept 403, registry/route strings, and guard that HK Task Management does **not** reuse the schedules storage key.
+
+## API (running local uvicorn after reload)
+
+| Check | Result |
+|---|---|
+| Maint PUT `maint-inventory` | 200 |
+| HK PUT `maint-inventory` | 403 |
+| HK PUT `hk-checklists` | 200 |
+| Maint PUT `hk-checklists` | 403 |
 
 ## Frontend
 
@@ -19,10 +28,13 @@ Also verified ACL map helper: `hk-*` writers include `housekeepingmanager` only;
 npm run build
 ```
 
-**Result:** PASS (MaintenanceManagerLayout chunk included; chunk-size warnings only).
+**Result:** PASS
 
-## Notes
+## Browser
 
-- Cross-department PUT isolation covered (Maintenance denied on `hk-*`; Housekeeping/teacher denied on `maint-*`).
-- Browser UAT (local): Maintenance duty/schedules/checklists/tickets + Housekeeping duty regression PASS.
-- Production account remap / deploy **not** tested.
+- Maintenance Materials persist after API save (Total Records: 1).
+- Maintenance Announcement list loads.
+- Housekeeping Checklists loads with persisted row.
+- Both dashboards show PDF-aligned KPI cards.
+
+Production remap / deploy / commit: **not tested** (prohibited this prompt).

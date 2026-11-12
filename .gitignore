@@ -41,6 +41,7 @@ dist-ssr
 !docs/QMIS_MAINTENANCE_HOUSEKEEPING_ROLE_AUDIT.md
 !docs/QMIS_MAINTENANCE_ROLE_IMPLEMENTATION_REPORT.md
 !docs/QMIS_HK_MAINTENANCE_DOCUMENT_COVERAGE.md
+!docs/QMIS_HK_MAINTENANCE_FULL_IMPLEMENTATION_AUDIT.md
 !reports/daily-work-report.md
 !reports/testing-report.md
 !reports/QMIS-ERP-Full-Panel-Test-Guide.md

@@ -84,9 +84,19 @@ def test_permission_matrix_includes_ops_for_both_roles():
 def test_ops_acl_writers_are_department_isolated():
     assert "housekeepingmanager" in _writers_for("hk-schedules")
     assert "housekeepingmanager" in _writers_for("hk-duty-allotments")
+    assert "housekeepingmanager" in _writers_for("hk-checklists")
     assert "maintenancemanager" not in _writers_for("hk-schedules")
     assert "maintenancemanager" not in _writers_for("hk-duty-allotments")
-    for collection in ("maint-requests", "maint-duty-allotments", "maint-schedules", "maint-checklists"):
+    assert "maintenancemanager" not in _writers_for("hk-checklists")
+    for collection in (
+        "maint-requests",
+        "maint-duty-allotments",
+        "maint-schedules",
+        "maint-checklists",
+        "maint-inventory",
+        "maint-inventory-requirements",
+        "maint-procurement",
+    ):
         assert "maintenancemanager" in _writers_for(collection)
         assert "housekeepingmanager" not in _writers_for(collection)
         assert "admin" in _writers_for(collection)
@@ -96,6 +106,9 @@ def test_ops_acl_writers_are_department_isolated():
     assert "housekeepingmanager" in _writers_for("it-support-tickets")
     assert "maintenancemanager" not in _readers_for("hk-schedules")
     assert "maintenancemanager" not in _readers_for("hk-duty-allotments")
+    # Shared Store collections include Maintenance for issue/receive participation (PDF §4.4).
+    assert "maintenancemanager" in _writers_for("shared-inventory-movements")
+    assert "housekeepingmanager" in _writers_for("shared-inventory-movements")
 
 
 def test_admin_can_create_maintenance_manager():
@@ -221,8 +234,57 @@ def test_frontend_registry_maps_maintenance_storage_keys():
     assert "maint-schedules" in registry
     assert "schoolerp-maintenance-checklists-v1" in registry
     assert "maint-checklists" in registry
+    assert "schoolerp-housekeeping-checklists-v1" in registry
+    assert "hk-checklists" in registry
+    assert "schoolerp-housekeeping-tasks-v1" in registry
+    assert "hk-tasks" in registry
+    # Tasks must not share the schedules storage key (overwrite collision).
+    task_data = (SRC / "Pages" / "HousekeepingManager" / "TaskManagement" / "taskData.js").read_text(encoding="utf-8")
+    assert "schoolerp-housekeeping-tasks-v1" in task_data
+    assert "TASKS_STORAGE_KEY = 'schoolerp-housekeeping-schedules-v1'" not in task_data
+    assert 'TASKS_STORAGE_KEY = "schoolerp-housekeeping-schedules-v1"' not in task_data
+    assert "schoolerp-maintenance-inventory-v1" in registry
+    assert "maint-inventory" in registry
+    assert "schoolerp-maintenance-requests-v1" in registry
+    assert "maint-requests" in registry
     routes = (SRC / "Routes" / "MaintenanceManagerRoutes.jsx").read_text(encoding="utf-8")
     assert "/maintenance-manager/duty-allotment" in routes
     assert "/maintenance-manager/schedules" in routes
     assert "/maintenance-manager/checklists" in routes
     assert "/maintenance-manager/tickets" in routes
+    assert "/maintenance-manager/materials" in routes
+    assert "/maintenance-manager/store-requests" in routes
+    assert "/maintenance-manager/inventory-requirement" in routes
+    assert "/maintenance-manager/purchase-workflow" in routes
+    assert "/maintenance-manager/broadcast" in routes
+    hk_routes = (SRC / "Routes" / "HousekeepingManagerRoutes.jsx").read_text(encoding="utf-8")
+    assert "/housekeeping-manager/checklists" in hk_routes
+
+
+def test_maintenance_store_and_hk_checklist_collections_persist_isolated(client):
+    hk = _login(client, "housekeepingmanager@qmis.edu", "housekeeping123")
+    mt = _login(client, "maintenancemanager@qmis.edu", "maintenance123")
+    hk_headers = {"Authorization": f"Bearer {hk['access_token']}"}
+    mt_headers = {"Authorization": f"Bearer {mt['access_token']}"}
+
+    hk_cl = client.put(
+        "/api/v1/ops/hk-checklists",
+        headers=hk_headers,
+        json=[{"id": "HCL-ISO-1", "title": "Washroom", "status": "Pending"}],
+    )
+    assert hk_cl.status_code == 200, hk_cl.text
+    assert client.put(
+        "/api/v1/ops/hk-checklists",
+        headers=mt_headers,
+        json=[{"id": "HCL-ISO-2", "title": "x", "status": "Pending"}],
+    ).status_code == 403
+
+    for path, row in (
+        ("/api/v1/ops/maint-inventory", {"id": "MINV-ISO-1", "item": "MCB", "quantity": 2, "status": "Available"}),
+        ("/api/v1/ops/maint-inventory-requirements", {"id": "MIR-ISO-1", "item": "Wrench", "quantity": 1, "status": "Pending"}),
+        ("/api/v1/ops/maint-procurement", {"id": "MPC-ISO-1", "title": "Battery", "status": "QUOTATION_PENDING"}),
+    ):
+        saved = client.put(path, headers=mt_headers, json=[row])
+        assert saved.status_code == 200, (path, saved.text)
+        denied = client.put(path, headers=hk_headers, json=[row])
+        assert denied.status_code == 403, (path, denied.text)

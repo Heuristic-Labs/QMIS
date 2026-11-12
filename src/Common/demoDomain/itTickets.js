@@ -55,8 +55,8 @@ export function createTicket(input) {
         department: input.department,
         issueType: input.issueType || 'Hardware',
         priority: input.priority || 'Medium',
-        assignedTo: 'IT Queue',
-        status: 'Open',
+        assignedTo: input.assignedTo || 'Unassigned',
+        status: 'Raised',
         createdDate: new Date().toISOString().slice(0, 10),
         createdAt: new Date().toISOString(),
         subject: input.subject,
@@ -67,7 +67,7 @@ export function createTicket(input) {
         attachmentName: input.attachmentName || '',
         outsideService: Boolean(input.outsideService),
         printerMaintenance: Boolean(input.printerMaintenance),
-        history: [{ at: new Date().toISOString(), event: 'Created', note: input.subject }],
+        history: [{ at: new Date().toISOString(), event: 'Raised', note: input.subject }],
     }
     saveTickets([ticket, ...tickets])
     logActivity({
@@ -87,10 +87,29 @@ export function updateTicket(ticketId, patch, actor = 'IT Support Manager') {
     if (!current) return null
     const history = [...(current.history || [])]
     if (patch.status && patch.status !== current.status) {
-        history.push({ at: new Date().toISOString(), event: patch.status === 'Closed' ? 'Closed' : 'Updated', note: `Status ${current.status} → ${patch.status}` })
+        const closedLike = ['Closed', 'Confirmed by Requester'].includes(patch.status)
+        history.push({
+            at: new Date().toISOString(),
+            event: closedLike ? patch.status : 'Status Change',
+            note: `Status ${current.status} → ${patch.status}`,
+        })
+    }
+    if (patch.assignedTo && patch.assignedTo !== current.assignedTo) {
+        history.push({
+            at: new Date().toISOString(),
+            event: 'Assigned',
+            note: `Assigned to ${patch.assignedTo}`,
+        })
     }
     if (patch.remarks && patch.remarks !== current.remarks) {
         history.push({ at: new Date().toISOString(), event: 'Remarks', note: patch.remarks })
+    }
+    if (patch.requesterConfirmed && !current.requesterConfirmed) {
+        history.push({
+            at: new Date().toISOString(),
+            event: 'Confirmed by Requester',
+            note: patch.confirmationNote || 'Requester confirmed resolution',
+        })
     }
     const next = tickets.map((ticket) => (
         ticket.ticketId === ticketId ? { ...ticket, ...patch, history } : ticket
@@ -101,8 +120,12 @@ export function updateTicket(ticketId, patch, actor = 'IT Support Manager') {
         action: 'STATUS_CHANGE',
         module: 'IT Tickets',
         recordId: ticketId,
-        before: { status: current.status, remarks: current.remarks },
-        after: { status: patch.status ?? current.status, remarks: patch.remarks ?? current.remarks },
+        before: { status: current.status, remarks: current.remarks, assignedTo: current.assignedTo },
+        after: {
+            status: patch.status ?? current.status,
+            remarks: patch.remarks ?? current.remarks,
+            assignedTo: patch.assignedTo ?? current.assignedTo,
+        },
     })
     return next.find((ticket) => ticket.ticketId === ticketId)
 }

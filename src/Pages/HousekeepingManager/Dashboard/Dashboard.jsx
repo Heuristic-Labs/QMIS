@@ -8,6 +8,8 @@ import {
     ClipboardCheck,
     MapPin,
     Sparkles,
+    Ticket,
+    CalendarDays,
 } from 'lucide-react'
 import {
     buildHousekeepingDashboard,
@@ -17,6 +19,10 @@ import {
 } from './dashboardData'
 
 const CARD_ICONS = {
+    'Open Tickets': Ticket,
+    'Checklist Pending': ClipboardCheck,
+    'Open Duties': ClipboardList,
+    'Active Schedules': CalendarDays,
     'Active Tasks Today': ClipboardList,
     'Tasks Completed': CheckCircle2,
     'Pending Tasks': Clock,
@@ -58,7 +64,7 @@ const Dashboard = () => {
                     </div>
                     <div>
                         <h2 className='text-xl font-semibold text-black'>Housekeeping Manager Dashboard</h2>
-                        <p className='text-sm text-[#667085] mt-0.5'>Overview of tasks, supplies, staff, and pending requests.</p>
+                        <p className='text-sm text-[#667085] mt-0.5'>Open tickets, checklist completion, duties, schedules, supplies, and store requests from persisted data.</p>
                     </div>
                 </div>
             </div>

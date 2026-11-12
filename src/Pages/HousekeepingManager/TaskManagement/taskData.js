@@ -48,15 +48,16 @@ export const statusBadgeColor = {
     'In Progress': 'bg-[#FF980033] text-[#FF9800]',
     'In Complete': 'bg-[#FF000033] text-[#FF0000]',
 }
-export const TASKS_STORAGE_KEY = 'schoolerp-housekeeping-schedules-v1'
+/** Dedicated tasks store — must NOT reuse schedules key (collision bug). */
+export const TASKS_STORAGE_KEY = 'schoolerp-housekeeping-tasks-v1'
 export function getHousekeepingTasks() {
-    return ensureCampusSeed('schoolerp-housekeeping-schedules-v1', DEFAULT_TASKS)
+    return ensureCampusSeed(TASKS_STORAGE_KEY, DEFAULT_TASKS)
 }
 export function saveHousekeepingTasks(rows) {
-    return saveCampusJson('schoolerp-housekeeping-schedules-v1', rows)
+    return saveCampusJson(TASKS_STORAGE_KEY, rows)
 }
 export function hydrateHousekeepingTasksFromApi() {
-    if (!usesCampusApiForKey('schoolerp-housekeeping-schedules-v1')) return Promise.resolve(false)
-    return hydrateCampusKey('schoolerp-housekeeping-schedules-v1', DEFAULT_TASKS)
+    if (!usesCampusApiForKey(TASKS_STORAGE_KEY)) return Promise.resolve(false)
+    return hydrateCampusKey(TASKS_STORAGE_KEY, DEFAULT_TASKS)
 }
 export const TASKS = DEFAULT_TASKS

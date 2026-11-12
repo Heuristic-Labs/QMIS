@@ -1,20 +1,33 @@
+import { getAnnouncementsForRole } from '../../../Common/Announcement/announcementData'
 import { ensureSeed } from '../../../Common/demoDomain/storage'
 import { hydrateCampusKey, usesCampusApiForKey } from '../../../services/campusJsonStore'
-import { getSupportTickets, hydrateSupportTicketsFromApi } from '../../ITSupportManager/SupportTickets/supportTicketsData'
+import {
+    getSupportTickets,
+    hydrateSupportTicketsFromApi,
+    isTicketOpenStatus,
+} from '../../ITSupportManager/SupportTickets/supportTicketsData'
 import {
     MAINT_CHECKLIST_KEY,
     MAINT_CHECKLIST_SEED,
     MAINT_DUTY_KEY,
     MAINT_DUTY_SEED,
+    MAINT_INVENTORY_KEY,
+    MAINT_INVENTORY_SEED,
+    MAINT_PROCUREMENT_KEY,
+    MAINT_PROCUREMENT_SEED,
+    MAINT_REQUEST_KEY,
+    MAINT_REQUEST_SEED,
+    MAINT_REQUIREMENT_KEY,
+    MAINT_REQUIREMENT_SEED,
     MAINT_SCHEDULE_KEY,
     MAINT_SCHEDULE_SEED,
 } from '../maintenanceOpsData'
 
 const FACILITIES_DEPARTMENT = 'Facilities'
 
-const isOpenStatus = (status) => {
+const isOpenOpsStatus = (status) => {
     const value = String(status || '').toLowerCase()
-    return value !== 'closed' && value !== 'resolved' && value !== 'completed' && value !== 'verified'
+    return value !== 'closed' && value !== 'resolved' && value !== 'completed' && value !== 'verified' && value !== 'issued' && value !== 'returned' && value !== 'fulfilled' && value !== 'rejected'
 }
 
 const getMaintRows = (key, seed) => ensureSeed(key, seed)
@@ -26,11 +39,26 @@ export function buildMaintenanceDashboard() {
     const duties = getMaintRows(MAINT_DUTY_KEY, MAINT_DUTY_SEED)
     const schedules = getMaintRows(MAINT_SCHEDULE_KEY, MAINT_SCHEDULE_SEED)
     const checklists = getMaintRows(MAINT_CHECKLIST_KEY, MAINT_CHECKLIST_SEED)
+    const materials = getMaintRows(MAINT_INVENTORY_KEY, MAINT_INVENTORY_SEED)
+    const storeRequests = getMaintRows(MAINT_REQUEST_KEY, MAINT_REQUEST_SEED)
+    const requirements = getMaintRows(MAINT_REQUIREMENT_KEY, MAINT_REQUIREMENT_SEED)
+    const procurement = getMaintRows(MAINT_PROCUREMENT_KEY, MAINT_PROCUREMENT_SEED)
+    const notices = getAnnouncementsForRole('maintenancemanager')
 
-    const openTickets = tickets.filter((row) => isOpenStatus(row.status))
-    const openDuties = duties.filter((row) => isOpenStatus(row.status))
+    const openTickets = tickets.filter((row) => isTicketOpenStatus(row.status))
+    const openDuties = duties.filter((row) => isOpenOpsStatus(row.status))
     const activeSchedules = schedules.filter((row) => String(row.status || '') === 'Active')
-    const pendingChecklists = checklists.filter((row) => isOpenStatus(row.status))
+    const pendingChecklists = checklists.filter((row) => isOpenOpsStatus(row.status))
+    const lowMaterials = materials.filter((row) => {
+        const status = String(row.status || '')
+        if (status === 'Low Stock' || status === 'Out of Stock') return true
+        const qty = Number(row.quantity)
+        const min = Number(row.minStock)
+        return Number.isFinite(qty) && Number.isFinite(min) && qty <= min
+    })
+    const pendingStore = storeRequests.filter((row) => String(row.status || '').toLowerCase() === 'pending')
+    const pendingReq = requirements.filter((row) => isOpenOpsStatus(row.status))
+    const openPurchase = procurement.filter((row) => !['COMPLETED', 'REJECTED'].includes(String(row.status || '')))
 
     const recentDuties = [...duties]
         .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
@@ -49,6 +77,10 @@ export function buildMaintenanceDashboard() {
             { label: 'Open Duties', value: String(openDuties.length), sub: 'Duty allotment', to: '/maintenance-manager/duty-allotment' },
             { label: 'Active Schedules', value: String(activeSchedules.length), sub: 'Preventive cadence', to: '/maintenance-manager/schedules' },
             { label: 'Pending Checklists', value: String(pendingChecklists.length), sub: 'Not yet verified', to: '/maintenance-manager/checklists' },
+            { label: 'Low Materials', value: String(lowMaterials.length), sub: 'Dept-held spares', to: '/maintenance-manager/materials' },
+            { label: 'Store Requests', value: String(pendingStore.length), sub: 'Pending Store', to: '/maintenance-manager/store-requests' },
+            { label: 'Purchase Open', value: String(openPurchase.length + pendingReq.length), sub: 'Requirement / PO path', to: '/maintenance-manager/purchase-workflow' },
+            { label: 'Announcements', value: String(notices.length), sub: 'Dept broadcasts', to: '/maintenance-manager/broadcast' },
         ],
         recentTickets: recentTickets.map((row) => ({
             ticketId: row.ticketId || row.id,
@@ -73,9 +105,18 @@ export function buildMaintenanceDashboard() {
 
 export async function hydrateMaintenanceDashboardFromApi() {
     const tasks = [hydrateSupportTicketsFromApi()]
-    if (usesCampusApiForKey(MAINT_DUTY_KEY)) tasks.push(hydrateCampusKey(MAINT_DUTY_KEY, MAINT_DUTY_SEED))
-    if (usesCampusApiForKey(MAINT_SCHEDULE_KEY)) tasks.push(hydrateCampusKey(MAINT_SCHEDULE_KEY, MAINT_SCHEDULE_SEED))
-    if (usesCampusApiForKey(MAINT_CHECKLIST_KEY)) tasks.push(hydrateCampusKey(MAINT_CHECKLIST_KEY, MAINT_CHECKLIST_SEED))
+    const keyed = [
+        [MAINT_DUTY_KEY, MAINT_DUTY_SEED],
+        [MAINT_SCHEDULE_KEY, MAINT_SCHEDULE_SEED],
+        [MAINT_CHECKLIST_KEY, MAINT_CHECKLIST_SEED],
+        [MAINT_INVENTORY_KEY, MAINT_INVENTORY_SEED],
+        [MAINT_REQUEST_KEY, MAINT_REQUEST_SEED],
+        [MAINT_REQUIREMENT_KEY, MAINT_REQUIREMENT_SEED],
+        [MAINT_PROCUREMENT_KEY, MAINT_PROCUREMENT_SEED],
+    ]
+    keyed.forEach(([key, seed]) => {
+        if (usesCampusApiForKey(key)) tasks.push(hydrateCampusKey(key, seed))
+    })
     await Promise.all(tasks)
     return buildMaintenanceDashboard()
 }

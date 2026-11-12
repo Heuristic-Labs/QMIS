@@ -12,6 +12,7 @@ export const MAINT_DUTY_SEED = [
         id: 'MDUTY-2026-0001',
         staff: 'Pradeep',
         area: 'Block B Electrical Panel',
+        shift: 'Morning',
         dutyType: 'Corrective Repair',
         assignedBy: 'Maintenance Manager',
         date: '2026-09-23',
@@ -21,6 +22,66 @@ export const MAINT_DUTY_SEED = [
         instructions: 'Replace faulty MCB and test corridor lighting circuit.',
         remarks: '',
         status: 'Assigned',
+    },
+]
+
+export const MAINT_INVENTORY_KEY = 'schoolerp-maintenance-inventory-v1'
+export const MAINT_REQUIREMENT_KEY = 'schoolerp-maintenance-inventory-requirements-v1'
+export const MAINT_PROCUREMENT_KEY = 'schoolerp-maintenance-procurement-v1'
+export const MAINT_REQUEST_KEY = 'schoolerp-maintenance-requests-v1'
+
+export const MAINT_INVENTORY_SEED = [
+    {
+        id: 'MINV-2026-0001',
+        item: 'MCB 32A',
+        category: 'Electrical spares',
+        unit: 'pcs',
+        quantity: 12,
+        minStock: 5,
+        location: 'Maint store locker',
+        returnable: 'Yes',
+        status: 'Available',
+        remarks: 'Department-held spare; master stock remains with Store Officer',
+    },
+]
+
+export const MAINT_REQUIREMENT_SEED = [
+    {
+        id: 'MIR-2026-0001',
+        item: 'Pipe wrench set',
+        quantity: 2,
+        requiredDate: '2026-09-30',
+        requestedBy: 'Maintenance Manager',
+        department: 'Maintenance',
+        status: 'Pending',
+        remarks: 'Plumbing preventive week',
+    },
+]
+
+export const MAINT_PROCUREMENT_SEED = [
+    {
+        id: 'MPC-2026-0001',
+        title: 'Emergency lighting battery pack',
+        amount: 8500,
+        minorPurchase: true,
+        status: 'QUOTATION_PENDING',
+        requestedBy: 'Maintenance Manager',
+        department: 'Maintenance',
+        primaryApprover: 'Joint Director Operations',
+    },
+]
+
+export const MAINT_REQUEST_SEED = [
+    {
+        id: 'MRQ-2026-0001',
+        requestType: 'Store Issue',
+        item: 'PVC pipe 1 inch',
+        quantity: 10,
+        status: 'Pending',
+        requestedBy: 'Maintenance Manager',
+        department: 'Maintenance',
+        approver: 'Store Officer',
+        remarks: 'Block A leak repair',
     },
 ]
 

@@ -72,6 +72,8 @@ COLLECTIONS: dict[str, str] = {
     "hk-requests": "HRQ",
     "hk-duty-allotments": "HDA",
     "hk-schedules": "HSCH",
+    "hk-tasks": "HTSK",
+    "hk-checklists": "HCL",
     "hk-star-of-month": "HSOM",
     "hk-ro-testing": "HRO",
     "hk-lost-found": "HLF",
@@ -82,6 +84,9 @@ COLLECTIONS: dict[str, str] = {
     "maint-duty-allotments": "MDA",
     "maint-schedules": "MSCH",
     "maint-checklists": "MCL",
+    "maint-inventory": "MINV",
+    "maint-inventory-requirements": "MIR",
+    "maint-procurement": "MPC",
     # Shared stores
     "shared-inventory": "INV",
     "shared-inventory-movements": "IMV",
@@ -149,7 +154,7 @@ _TICKET_DEPT_ROLES = {
     "accounthead",
     "financemanager",
 }
-_STORES = _CANTEEN | _IT | _STATIONERY | _HK
+_STORES = _CANTEEN | _IT | _STATIONERY | _HK | _MAINT
 _JD = {"jointdirector", "jointdirectorassistant"} | _ADMINS
 _BIOMETRIC = {"teacher", "coordinator", "principal", "director", "hr"} | _ADMINS
 _STAR_OF_MONTH = {"teacher", "coordinator", "principal", "director"} | _ADMINS

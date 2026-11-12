@@ -7,8 +7,9 @@
 | **Approved role** | `maintenancemanager` / Maintenance Manager / prefix `MTM` |
 | **Portal** | `/maintenance-manager` |
 | **MVP (phase 1)** | Dashboard + Facilities Tickets (heads-only) |
-| **Phase 2 (this update)** | Duty Allotment + Schedules + Checklists on `maint-*` |
-| **Production** | **DB/creds/deploy not touched** — additive git push of local Maintenance code only (no force, no prod remap) |
+| **Phase 2** | Duty Allotment + Schedules + Checklists on `maint-*` |
+| **Phase 3 (this update)** | Full PDF head scope — announcements, materials/store/purchase, ticket lifecycle, HK checklists, duty shift |
+| **Production** | **Not touched** — local only; **no commit/push** this phase |
 
 ### Status legend
 
@@ -38,7 +39,8 @@ Non-Academics PDF (v0.1) alignment: Housekeeping and Maintenance are **separate 
 | Local EMP-QMIS-107 seed → `maintenancemanager` | **PASS** |
 | Focused pytest (phase 2) | **PASS** — `14 passed` (`test_maintenance_housekeeping_isolation` + designation maps) |
 | `npm run build` | **PASS** |
-| Additive git push (code only) | **PASS** — requested after local wiring verify |
+| Phase 3 full head scope (store + announcements + ticket lifecycle) | **PASS** (local) |
+| Additive git push (this phase) | **NOT DONE** (prohibited by full-impl prompt) |
 | Production remap / deploy | **NOT TESTED** (still prohibited) |
 
 ---
@@ -217,12 +219,11 @@ Production account browser login for Kausik: **NOT TESTED** (no prod remap).
 
 ## 10. Remaining gaps
 
-1. **Maintenance Announcements** — PDF dept-head capability; not in this phase.
-2. **Maintenance store request / inventory / purchase** — not in this phase.
-3. **`maint-requests` UI** — collection exists; PDF primary path is Ticketing (optional).
-4. **Staff (non-head) portals** — heads-only.
-5. **Credential prep / prod Kausik remap** — still production `housekeepingmanager` until separate approval.
-6. **Nested checklist item schema** — PDF silent; current textarea-line model may need refinement if client specifies structured items.
+1. **Staff (non-head) portals** — BLOCKED pending client decision (PDF capabilities without portal UX).
+2. **Credential prep / prod Kausik remap** — still production `housekeepingmanager` until separate approval.
+3. **Nested checklist item schema / photo / overdue→JD** — PARTIAL vs full PDF depth.
+4. **Ticket auto-escalation** — statuses + history exist; automatic escalate chain not built.
+5. **Git commit/push for phase 3** — prohibited until review approval.
 
 ---
 
@@ -249,6 +250,6 @@ Requires **separate explicit approval**. Do not execute from this report.
 | Local implementation | **PASS** |
 | Local tests + build + browser UAT | **PASS** |
 | Production DB / accounts / credentials / Secrets / ECS | **NOT TESTED** (prohibited) |
-| Git commit / push / merge | **NOT DONE** (prohibited) |
+| Git commit / push / merge (phase 3) | **NOT DONE** (prohibited by full-impl prompt) |
 
-**Stop here.** Any production action needs a new written approval.
+**Stop here.** Review `docs/QMIS_HK_MAINTENANCE_FULL_IMPLEMENTATION_AUDIT.md` before any git or production action.

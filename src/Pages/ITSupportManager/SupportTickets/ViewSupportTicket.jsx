@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CircleCheck } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { getTicketById, updateTicket } from '../../../Common/demoDomain/itTickets'
-import { STATUS_OPTIONS, priorityBadgeColor, statusBadgeColor } from './supportTicketsData'
+import { STATUS_OPTIONS, normalizeTicketStatus, priorityBadgeColor, statusBadgeColor } from './supportTicketsData'
 
 const listPathFromLocation = (pathname = '') => {
     if (pathname.includes('/tickets/view-ticket/')) {
@@ -51,8 +51,10 @@ const ViewSupportTicket = () => {
     const listPath = listPathFromLocation(location.pathname)
     const { id } = useParams()
     const [ticket, setTicket] = useState(() => getTicketById(id))
-    const [status, setStatus] = useState(ticket?.status ?? 'Open')
+    const [status, setStatus] = useState(normalizeTicketStatus(ticket?.status ?? 'Raised'))
+    const [assignedTo, setAssignedTo] = useState(ticket?.assignedTo ?? '')
     const [remarks, setRemarks] = useState(ticket?.remarks ?? '')
+    const [requesterConfirmed, setRequesterConfirmed] = useState(Boolean(ticket?.requesterConfirmed))
     const [outsideService, setOutsideService] = useState(Boolean(ticket?.outsideService))
     const [printerMaintenance, setPrinterMaintenance] = useState(Boolean(ticket?.printerMaintenance))
     const [service, setService] = useState({
@@ -67,11 +69,36 @@ const ViewSupportTicket = () => {
     })
     const [saved, setSaved] = useState(false)
 
+    const statusChoices = STATUS_OPTIONS.includes(status)
+        ? STATUS_OPTIONS
+        : [status, ...STATUS_OPTIONS]
+
     const handleUpdateStatus = () => {
-        const next = updateTicket(id, { status, remarks, outsideService, printerMaintenance, ...service, serviceAsset: service.asset, serviceVendor: service.vendor, serviceCost: service.cost })
+        let nextStatus = status
+        if (requesterConfirmed && normalizeTicketStatus(status) === 'Resolved') {
+            nextStatus = 'Confirmed by Requester'
+            setStatus(nextStatus)
+        }
+        if (assignedTo && nextStatus === 'Raised') {
+            nextStatus = 'Assigned'
+            setStatus(nextStatus)
+        }
+        const next = updateTicket(id, {
+            status: nextStatus,
+            assignedTo,
+            remarks,
+            requesterConfirmed,
+            confirmationNote: requesterConfirmed ? 'Requester confirmed resolution' : '',
+            outsideService,
+            printerMaintenance,
+            ...service,
+            serviceAsset: service.asset,
+            serviceVendor: service.vendor,
+            serviceCost: service.cost,
+        })
         setTicket(next)
         setSaved(true)
-        toast.success('Ticket updated. The requester sees the same record.')
+        toast.success('Ticket updated. History retained; the requester sees the same record.')
     }
 
     return (
@@ -120,7 +147,10 @@ const ViewSupportTicket = () => {
                     </Section>
 
                     <Section title='Update Status'>
-                        <div className='flex flex-col sm:flex-row sm:items-end gap-4'>
+                        <p className='text-xs text-[#808080] mb-4'>
+                            Lifecycle: Raised → Assigned → In Progress → Resolved → Confirmed by Requester. History is retained; records are not deleted.
+                        </p>
+                        <div className='flex flex-col sm:flex-row sm:items-end gap-4 flex-wrap'>
                             <div className='flex flex-col gap-y-2'>
                                 <label htmlFor="ticket-status" className='text-base font-medium text-[#1E1E1E]'>Status</label>
                                 <select
@@ -132,10 +162,23 @@ const ViewSupportTicket = () => {
                                         setSaved(false)
                                     }}
                                 >
-                                    {STATUS_OPTIONS.map((option) => (
+                                    {statusChoices.map((option) => (
                                         <option key={option} value={option}>{option}</option>
                                     ))}
                                 </select>
+                            </div>
+                            <div className='flex flex-col gap-y-2'>
+                                <label htmlFor="ticket-assignee" className='text-base font-medium text-[#1E1E1E]'>Assigned To</label>
+                                <input
+                                    id="ticket-assignee"
+                                    className={selectClass}
+                                    value={assignedTo}
+                                    onChange={(e) => {
+                                        setAssignedTo(e.target.value)
+                                        setSaved(false)
+                                    }}
+                                    placeholder='Staff / queue name'
+                                />
                             </div>
                             <button
                                 type='button'
@@ -145,7 +188,18 @@ const ViewSupportTicket = () => {
                                 Update Status
                             </button>
                         </div>
-                        <label className='flex flex-col gap-2 mt-4 text-sm'>Remarks
+                        <label className='flex items-center gap-2 mt-4 text-sm'>
+                            <input
+                                type='checkbox'
+                                checked={requesterConfirmed}
+                                onChange={(event) => {
+                                    setRequesterConfirmed(event.target.checked)
+                                    setSaved(false)
+                                }}
+                            />
+                            Confirmed by requester
+                        </label>
+                        <label className='flex flex-col gap-2 mt-4 text-sm'>Remarks / resolution details
                             <textarea value={remarks} onChange={(event) => setRemarks(event.target.value)} rows={3} className='border border-[#D9D9D9] rounded-md px-2 py-2' />
                         </label>
                         <div className='flex gap-4 mt-3 text-sm'>

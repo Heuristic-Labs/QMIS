@@ -95,6 +95,12 @@ export const ANNOUNCEMENT_ROUTE_CONFIG = {
         view: '/housekeeping-manager/broadcast/view-broadcast',
         sentByDefault: 'Housekeeping Manager',
     },
+    maintenancemanager: {
+        list: '/maintenance-manager/broadcast',
+        add: '/maintenance-manager/broadcast/add-broadcast',
+        view: '/maintenance-manager/broadcast/view-broadcast',
+        sentByDefault: 'Maintenance Manager',
+    },
     jointdirector: {
         list: '/joint-director/broadcast',
         view: '/joint-director/broadcast/view-broadcast',

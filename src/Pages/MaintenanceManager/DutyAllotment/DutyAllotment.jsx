@@ -13,6 +13,7 @@ const DutyAllotment = () => (
             { key: 'id', label: 'Duty ID' },
             { key: 'staff', label: 'Staff' },
             { key: 'area', label: 'Area / Asset' },
+            { key: 'shift', label: 'Shift' },
             { key: 'dutyType', label: 'Duty' },
             { key: 'date', label: 'Date' },
             { key: 'status', label: 'Status' },
@@ -21,6 +22,12 @@ const DutyAllotment = () => (
         fields={[
             { key: 'staff', label: 'Staff', required: true },
             { key: 'area', label: 'Area / Asset', required: true },
+            {
+                key: 'shift',
+                label: 'Shift',
+                type: 'select',
+                options: ['Morning', 'Afternoon', 'Evening', 'Night'],
+            },
             {
                 key: 'dutyType',
                 label: 'Duty Type',
